@@ -1,0 +1,193 @@
+\newcommand{\kd}[1]{\todo[color=red!25,size=\footnotesize]{ \textbf{KD:}  #1}}
+\newcommand{\rd}[1]{\todo[color=blue!40,size=\footnotesize]{ \textbf{RD:}  #1}}
+\newcommand{\fr}[1]{\todo[color=orange!40,size=\footnotesize]{ \textbf{FrR:}  #1}}
+\newcommand{\fp}[1]{\todo[color=yellow!40,size=\footnotesize]{ \textbf{FrP:}  #1}}
+\newcommandx{\admiss}[1][1=f]{\mathsf{A}_{#1}}
+\newcommand{\arginf}{\mathrm{arginf}}
+\newcommand{\argmin}{\mathrm{argmin}}
+\newcommand{\argmax}{\mathrm{argmax}}
+\newcommand{\argsup}{\mathrm{argsup}}
+\newcommand{\as}{\mathrm{a.s.}}
+%\newcommand{\b}[1]{{\mathbf{#1}}}
+\newcommand{\ball}{\mathsf{B}}
+\newcommandx{\binfty}[1][1=\alpha]{|b|_{\infty, #1}}
+\newcommandx{\bmuf}[2][1=\mu, 2=\alpha]{ {b_{#1, #2}}}
+\newcommandx{\bmufk}[2][1=\mu, 2=\alpha]{\hat{b}_{#1, #2, M}}
+\newcommand{\bproof}{\textbf{Proof :}\quad}
+\newcommand{\card}{\mathrm{card}}
+\newcommand{\chunk}[3]{{#1}_{#2:#3}}
+\newcommandx{\couple}[2][1=\PQ, 2=\PP]{(#1 || #2)}
+\newcommand{\coupling}{\mathcal{C}}
+\newcommand{\Cov}{\mathbb{C}\mathrm{ov}}
+\newcommand{\cte}{\kappa}
+\newcommandx{\ctemono}[1][1=\alpha]{L_{#1, 1}}
+\newcommandx{\cteinf}[1][1=\alpha]{L_{#1, 2}}
+\newcommandx{\ctesup}[1][1=\alpha]{L_{#1, 3}}
+\newcommand{\data}{\mathscr{D}}
+\newcommand{\dimlabel}{\mathsf{m}}
+\newcommand{\dimU}{\mathsf{q}}
+\newcommand{\dimX}{\mathsf{d}}
+\newcommand{\dimY}{\mathsf{p}}
+\newcommand{\dlim}[1]{\stackrel{\mathcal{L}_{#1}}{\Rightarrow}}
+\newcommand{\dmX}{\gamma}
+\newcommandx{\diverg}[1][1=\alpha]{D_{#1}}
+\newcommandx{\Domain}[1][1=\alpha]{\Delta_{#1}}
+\newcommand{\eproof}{\quad \Box}
+\newcommand{\eremark}{</WRAP>}
+\newcommand{\eqdef}{:=}
+\newcommand{\eqlaw}{\stackrel{\mathcal{L}}{=}}
+\newcommand{\eqsp}{\;}
+\newcommand{\esssup}{\mathrm{essup}}
+\newcommand{\finv}{b_f}
+\newcommandx{\falpha}[1][1=\alpha]{f_{#1}}
+\newcommandx{\aei}[1][1=\alpha]{$(#1, \Gamma)$-}
+\newcommandx{\GammaAlpha}[1][1=\alpha]{ \Gamma}
+\renewcommand{\geq}{\geqslant}
+\newcommandx{\gmuf}[1][1=\mu]{ {g_{#1}}}
+\newcommand{\hmu}{\hat{\mu}}
+\newcommand{\Id}{\mathrm{Id}}
+\newcommand{\img}{\text{Im}}
+\newcommand{\indi}[1]{\mathbf{1}_{#1}}
+\newcommand{\indiacc}[1]{\mathbf{1}_{\{#1\}}}
+\newcommand{\indin}[1]{\mathbf{1}\{#1\}}
+\newcommand{\itemm}{\quad \quad \blacktriangleright \;}
+\newcommandx{\iteration}[1][1=\alpha]{\mathcal{I}_{#1}}
+\newcommandx{\iterationK}[1][1=\alpha]{\hat{\mathcal{I}}_{#1, M}}
+%\newcommand{\ker}{\text{Ker}}
+\newcommand{\klbck}[2]{\mathrm{K}\lr{#1||#2}}
+\newcommandx{\lbd}[2][1=]{
+    \ifthenelse{\equal{#1}{}}
+    {{\boldsymbol{\lambda}_{#2}}}
+    {\lambda_{#1,#2}}
+    }
+\newcommand{\law}{\mathcal{L}}
+\newcommand{\labelinit}{\pi}
+\newcommand{\labelkernel}{Q}
+\renewcommand{\leq}{\leqslant}
+\newcommand{\likelihood}[1][y]{p(\mathscr{D}, #1)}
+\newcommand{\llim}{\lim \limits}
+\newcommand{\lliminf}{\liminf \limits}
+\newcommand{\llimsup}{\limsup \limits}
+\newcommand{\lrav}[1]{\left|#1 \right|}
+\newcommand{\lr}[1]{\left(#1 \right)}
+\newcommand{\lrb}[1]{\left[#1 \right]}
+\newcommand{\lrc}[1]{\left\{#1 \right\}}
+\newcommand{\lrcb}[1]{\left\{#1 \right\}}
+\newcommand{\ltwo}{\mathrm{L}^2}
+\newcommand{\Ltwo}{\mathrm{L}^2}
+\newcommand{\marginal}{p(\mathscr{D})}
+\newcommand{\mc}[1]{\mathcal{#1}}
+\newcommand{\mcf}{\mathcal{F}}
+\newcommand{\meas}[1]{\mathrm{M}_{#1}}
+\newcommand{\muf}{{\mu^\star}}
+\newcommand{\mubar}{{\bar{\mu}}}
+\newcommand{\nset}{\mathbb N}
+\newcommand{\nstar}{\mathbb{N}^\star}
+\newcommand{\PE}{\mathbb E}
+\newcommandx{\posterior}[1][1=y]{p(#1|\mathscr{D})}
+\newcommand{\PP}{\mathbb P}
+\newcommand{\PQ}{\mathbb Q}
+\newcommandx{\Psifn}[1][1=\alpha]{\Psi_{#1, L}}
+\newcommandx{\Psif}[1][1=\alpha]{\Psi_{#1}}
+\newcommandx{\Psifk}[1][1=\alpha]{\Psi_{#1, L}}
+\renewcommand{\rho}{\varrho}
+\newcommand{\rmd}{\mathrm d}
+\newcommand{\rme}{\mathrm e}
+\newcommand{\rmi}{\mathrm i}
+\newcommand{\Rset}{\mathbb{R}}
+\newcommand{\rset}{\mathbb{R}}
+\newcommand{\rstar}{\mathbb{R}^\star}
+\newcommand{\rti}{\sigma}
+\newcommand{\set}[2]{\lrc{#1\eqsp: \eqsp #2}}
+\newcommand{\settxt}[2]{\{#1\eqsp: \eqsp #2\}}
+\newcommand{\simplex}{\mathcal{S}}
+\newcommand{\tgamma}{{\tilde{\Gamma}}}
+\newcommandx{\thetat}[2][1=j, 2=t]{\theta_{#1,#2}}
+\newcommand{\tmu}{{\tilde{\mu}}}
+\newcommand{\tv}[1]{\left\|#1\right\|_{TV}}
+\newcommand{\tvnorm}[1]{\left\|#1\right\|_{\mathrm{TV}}}
+\newcommand{\tq}{\tilde q}
+\newcommand{\Tset}{{\mathsf{T}}}
+\newcommand{\Tsigma}{\mathcal{T}}
+\newcommand{\unif}{\mathrm{Unif}}
+\newcommand{\Xset}{\mathsf T}
+\newcommand{\Xsigma}{\mathcal T}
+\newcommand{\Yset}{\mathsf Y}
+\newcommand{\Ysigma}{\mathcal Y}
+\newcommand{\Var}{\mathbb{V}\mathrm{ar}}
+\newcommand{\zset}{\mathbb{Z}}
+\newcommand{\Zset}{\mathsf{Z}}
+\newenvironment{encart}[1][]{\ \newline\noindent $\blacktriangleright$ \hrulefill \textcolor{violet}{\textbf{\textsc{ #1: start}}} \hrulefill $\blacktriangleleft$\newline}{\ \newline\noindent $\blacktriangleright$ \hrulefill \textcolor{violet}{\textbf{\textsc{ end }}}\hrulefill $\blacktriangleleft$ \newline} 
+
+\newcommand{\iid}{\stackrel{\mathrm{i.i.d}}{\sim}}
+\newcommandx{\dens}[3][1=,2=]%
+{
+\operatorname{p}_{#1}^{#2}(#3)
+}
+\newcommandx{\aslim}[1]{\ensuremath{\stackrel{#1 \mbox{-} \text{a.s.}}{\longrightarrow}}}
+% \newcommand{\Zset}{\mathsf{Z}}
+\newcommand{\Zsigma}{\mathcal{Z}}
+\newcommand{\borel}{\mathcal{B}}
+\newcommand{\weaklim}{\ensuremath{\stackrel{\mathcal{L}_{\PP}}{\Rightarrow}}}
+\newcommand{\eqLaw}{\stackrel{\mathcal L}{=}}
+\newcommand{\indep}{\rotatebox[origin=c]{90}{$\models$}}
+\newcommandx\functionsetspec[1][1=]{
+\ifthenelse{\equal{#1}{c}}{\mathrm{C}}%fonctions continues
+{\ifthenelse{\equal{#1}{bc}}{\mathrm{C}_b}%fonctions continues born\'{e}es
+{\ifthenelse{\equal{#1}{u}}{\mathrm{U}}%fonctions uniform\'{e}ment continues
+{\ifthenelse{\equal{#1}{bu}}{\mathrm{U}_b}%fonctions uniform\'{e}ment continues born\'{e}es
+{\ifthenelse{\equal{#1}{l}}{\mathrm{Lip}}%fonctions lipschitz
+{\ifthenelse{\equal{#1}{bl}}{\mathrm{Lip}_b}%fonctions lipschitz born\'{e}es
+{\mathbb{F}_{#1}}%le reste
+}}}}}}
+\newcommandx\sequence[3][2=,3=]
+{\ifthenelse{\equal{#3}{}}{\ensuremath{\{ #1_{#2}\}}}{\ensuremath{\{ #1_{#2}, \eqsp #2 \in #3 \}}}}
+% \newcommand{\Yset}{\mathsf{Y}}
+% \newcommand{\Ysigma}{\mathcal{Y}}
+\newcommandx\dsequence[4][3=,4=]{\ensuremath{\{ (#1_{#3}, #2_{#3}), \eqsp #3 \in #4 \}}}
+% \newcommand{\Id}{\mathrm{I}}
+% \newcommand{\lrav}[1]{\left|#1 \right|}
+% \newcommand{\rme}{\mathrm{e}}
+% \newcommand{\rmi}{\mathrm{i}}
+\newcommand{\fracc}[2]{\frac{#1}{#2}}
+\newcommand{\bs}{\begin{shaded}}
+\newcommand{\es}{\end{shaded}}
+\newcommand{\bfr}{\begin{framed}}
+\newcommand{\efr}{\end{framed}}
+\newcommand{\blb}{\begin{leftbar}}
+\newcommand{\elb}{\end{leftbar}}
+% \newcommand{\ltwo}{\mathrm{L}_2}
+% \newcommand{\dlim}[1]{\stackrel{\mathcal{L}_{#1}}{\Rightarrow}}
+\newcommand{\plim}[1]{\stackrel{#1-prob}{\longrightarrow}}
+\newcommand{\gauss}{\mathcal{N}}
+% \newcommand{\eqsp}{}
+
+\global\long\def\1{\mathbf{1}}%
+\global\long\def\as{\PP-\mbox{a.s.}}%
+\global\long\def\eqdef{:=}%
+\global\long\def\eqlaw{\stackrel{\mathcal{L}}{=}}%
+\global\long\def\funcset#1{\mathsf{F_{#1}}}%
+\global\long\def\indi#1{\1_{#1}}%
+\global\long\def\indiacc#1{\indi{\left\{  #1\right\}  }}%
+\global\long\def\lfuncset#1{\mathsf{L_{#1}}}%
+\global\long\def\lr#1{\left(#1\right)}%
+\global\long\def\PE{\mathbb{E}}%
+\global\long\def\lrb#1{\left[#1\right]}%
+\global\long\def\lrcb#1{\left\{  #1\right\}  }%
+\global\long\def\mcbb{\mathcal{B}}%
+\global\long\def\meas#1{\mathsf{M}_{#1}}%
+\global\long\def\mh#1{P_{\langle#1\rangle}^{MH}}%
+\global\long\def\nset{\mathbb{N}}%
+\global\long\def\mc#1{\mathcal{#1}}%
+\global\long\def\mcf{\mathcal{F}}%
+\global\long\def\mcg{\mathcal{G}}%
+\global\long\def\PP{\mathbb{P}}%
+\global\long\def\rmd{\mathrm{d}}%
+\global\long\def\rset{\mathbb{R}}%
+\global\long\def\seq#1#2{\lrcb{#1\,:\,#2}}%
+\global\long\def\set#1#2{\lrcb{#1\,:\,#2}}%
+\global\long\def\Xset{\mathsf{X}}%
+\global\long\def\Xsigma{\mathcal{X}}%
+
+
+

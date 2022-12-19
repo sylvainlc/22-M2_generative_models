@@ -1,0 +1,1071 @@
+\documentclass[usenames,dvipsnames]{beamer}
+
+\RequirePackage[OT1]{fontenc}
+\RequirePackage{amsthm,amsmath}
+\RequirePackage[numbers]{natbib}
+\resetcounteronoverlays{algocf}
+\usepackage{appendixnumberbeamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[ruled]{algorithm2e}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{changepage}
+\usepackage{empheq}
+\usepackage{mathrsfs}
+\usepackage{tikz}
+\usepackage{transparent}
+\usepackage{xcolor}
+\usepackage{xargs}
+
+\usepackage{pifont}% http://ctan.org/pkg/pifont
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+
+\input{defs.tex}
+
+\usetikzlibrary{tikzmark,positioning}
+
+\setbeamercovered{transparent}
+\DeclareOptionBeamer{compress}{\beamer@compresstrue}
+\ProcessOptionsBeamer
+\mode<presentation>
+
+\useoutertheme[footline=authortitle]{miniframes}
+\useinnertheme{circles}
+\usecolortheme{whale}
+\usecolortheme{orchid}
+
+\definecolor{beamer@blendedblue}{rgb}{0.137,0.466,0.741}
+
+\setbeamercolor{structure}{fg=beamer@blendedblue}
+\setbeamercolor{titlelike}{parent=structure}
+\setbeamercolor{frametitle}{fg=black}
+\setbeamercolor{title}{fg=black}
+\setbeamercolor{item}{fg=black}
+
+\mode
+<all>
+
+\usefonttheme{professionalfonts}
+
+\setbeamertemplate{footline}{%
+  \begin{beamercolorbox}[colsep=1.5pt]{upper separation line foot}
+  \end{beamercolorbox}
+  \begin{beamercolorbox}[ht=2.5ex,dp=1.125ex,%
+    leftskip=.3cm,rightskip=.3cm plus1fil]{title in head/foot}%
+    \leavevmode{
+    {\usebeamerfont{author in head/foot}\usebeamercolor[fg]{author in head/foot}\insertshortauthor  \,,\ Telecom Sudparis} \quad \quad \quad \quad \quad \quad \quad \quad \quad
+    \usebeamerfont{title in head/foot}\insertshorttitle}%
+    \hfill%
+    {\usebeamerfont{author in head/foot}\usebeamercolor[fg]{author in head/foot}\insertframenumber~/~\inserttotalframenumber}% NEW
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[colsep=1.5pt]{lower separation line foot}
+  \end{beamercolorbox}
+}
+
+\setbeamertemplate{headline}{}
+\setbeamertemplate{navigation symbols}{}
+
+\makeatletter
+\newcommand{\sub}[1][]{%
+    \beamer@ifempty{#1}{}{\def\beamer@defaultospec{#1}}%
+    \ifnum \@itemdepth >2\relax\@toodeep\else
+    \advance\@itemdepth\@ne
+    \beamer@computepref\@itemdepth% sets \beameritemnestingprefix
+    \usebeamerfont{itemize/enumerate \beameritemnestingprefix body}%
+    \usebeamercolor[fg]{itemize/enumerate \beameritemnestingprefix body}%
+    \usebeamertemplate{itemize/enumerate \beameritemnestingprefix body begin}%
+    \setlength{\csname leftmargin\romannumeral\@itemdepth\endcsname}{.5em}%
+    \list{}%
+     {\def\makelabel##1{%
+      {%
+      \hss\llap{{%
+       \usebeamerfont*{itemize \beameritemnestingprefix item}%
+       \usebeamercolor[fg]{itemize \beameritemnestingprefix item}##1}}%
+      }%
+     }%
+     }
+    \fi%
+    \beamer@cramped%
+    \raggedright%
+    \beamer@firstlineitemizeunskip%
+}
+\def\endsub{\enditemize}
+\makeatother
+
+\newcommand\Wider[2][3em]{%
+\makebox[\linewidth][c]{%
+  \begin{minipage}{\dimexpr\textwidth+#1\relax}
+  \raggedright#2
+  \end{minipage}%
+  }%
+}
+\newcommand\mycol[1]{{\color{red}#1}}
+\newcommand\mycoltwo[1]{{\color{blue}#1}}
+\newcommand\mycolthree[1]{{\color{Emerald}#1}}
+\newcommand\mycolm[1]{{\color{red}#1}}
+\newcommand\colbox[1]{\colorbox{Yellow}{#1}}
+\newcommand{\coloredeq}[1]{\begin{empheq}[box=\colorbox{yellow}]{align}#1\end{empheq}}
+\newcommand{\coloredeqstar}[1]{\begin{empheq}[box=\colorbox{yellow}]{align*}#1\end{empheq}}
+
+\title[M2DS: MCMC Theory and Applications]{Markov Chain Monte Carlo\\ \textsl{Theory and Practical applications}\\ \colbox{Chapters 2 and 3}}
+\author{Randal Douc and Sylvain Le Corff}
+
+\institute{T\'el\'ecom SudParis, Institut Polytechnique de Paris \\ randal.douc@telecom-sudparis.eu \vspace{0.1cm}}
+
+\date[\today]{
+\includegraphics[scale=0.1]{{logoIMT}.png}
+}
+
+\begin{document}
+\frame{\titlepage}
+
+
+\begin{frame}{Outline}
+    \tableofcontents[sectionstyle=show, subsectionstyle=show/show/hide]
+\end{frame}
+
+\AtBeginSection[]{%
+\begin{frame}{Outline}
+    \tableofcontents[currentsection, subsectionstyle=show/show/hide]
+\end{frame}
+}
+
+
+
+
+
+
+\section{Chap 2: Some recaps}
+
+\begin{frame}
+Recall that a Markov kernel $P$ is 
+\begin{enumerate}
+  \item $\pi$-invariant if $\pi P=\pi$ \pause
+  \item $\pi$-reversible if $\pi(\rmd x)P(x,\rmd y)=\pi(\rmd y)P(y,\rmd x)$ \pause
+  \item $\pi$-reversible implies $\pi$-invariance. 
+\end{enumerate}
+\pause
+\begin{block}{The Metropolis-Hastings algorithm}
+\textbf{Input:} $n$\\
+\noindent \textbf{Output:} $X_0,\ldots,X_n$\\
+\begin{itemize}
+  \item At $t=0$, draw $X_{0}$ according to some arbitrary distribution \pause
+  \item For $t\leftarrow 0$ to $n-1$
+  \begin{enumerate}
+    \item Draw independently $Y_{t+1}\sim \colbox{Q}(X_{t},\cdot)$ and $U_{t+1}\sim\mathrm{Unif}(0,1)$ \pause
+    \item Set $X_{t+1}=\begin{cases} Y_{t+1} & \mbox{if }U_{t+1}\leq\alpha(X_{t},Y_{t+1})\\ X_{t} & \mbox{otherwise} \end{cases}$
+  \end{enumerate}
+  where \colbox{$\alpha(x,y)=\alpha^{MH}(x,y)=\min\lr{\frac{\pi(y)q(y,x)}{\pi(x)q(x,y)},1}$}
+\end{itemize}  
+\end{block}
+\end{frame}
+
+
+\begin{frame}
+  The Markov kernel associated to $\seq{X_n}{n\in\nset}$ is given by
+$$
+  \mycoltwo{\mh{\pi,Q}(x,\rmd y)=Q(x,\rmd y)\alpha(x,y)+\bar{\alpha}(x)\delta_{x}(\rmd y)}.\label{eq:def:mh}
+$$  
+where $\bar{\alpha}(x)=1-\int_{\Xset} Q(x,\rmd y)\alpha(x,y)$. 
+\pause 
+
+\begin{block}{Lemma}
+  If the \colbox{detailed balance condition} 
+  \begin{equation}
+    \label{eq:detailed}
+    \alert{\pi(\rmd x) Q(x,\rmd y)\alpha(x,y)=\pi(\rmd y)Q(y,\rmd x) \alpha(y,x)}  
+  \end{equation}
+  is satisfied, then 
+  $\mh{\pi,Q}$ is $\pi$-reversible and hence, $\pi$-invariant.    
+\end{block}
+\pause 
+\begin{itemize}
+  \item \fbox{\mycoltwo{$\alpha^{MH}(x,y)=\min\lr{\frac{\pi(y)q(y,x)}{\pi(x)q(x,y)},1}$}} or 
+  \mycoltwo{$\alpha^{b}(x,y)=\frac{\pi(y)q(y,x)}{\pi(x)q(x,y)+\pi(y)q(y,x)}$} satisfy \eqref{eq:detailed}. \pause 
+\item   For all $\alpha$ satisfying \eqref{eq:detailed}, we have \colbox{$\alpha \leq \alpha^{MH}$}. \mycolthree{To be done on the blackboard.} 
+\end{itemize}
+\end{frame}
+
+\section{Chap 2: Uniqueness of invariant probability measures}
+
+
+\begin{frame}
+  \frametitle{Uniqueness under irreducibility assumptions}
+  \begin{block}{Proposition: \textbf{Irreducible Markov kernels}}
+    Assume that there exists a non-null measure \textup{$\mu\in\meas +(\Xset)$}
+satisfying the following property:
+\begin{enumerate}[$(\star)$]
+\item \alert{For all $A\in\Xsigma$ such that $\mu(A)>0$ and for all $x\in\Xset$,
+there exists $n\in\nset$ such that $P^{n}(x,A)>0$}.
+\end{enumerate}
+Then, $P$ admits \colbox{at most one} invariant probability measure.
+  \end{block}
+  \pause 
+  If condition $(\star)$ is satisfied, we say that $P$ is \mycoltwo{$\mu$-irreducible}. \pause 
+  \begin{block}{Application: \textbf{Metropolis-Hastings algorithms}}
+    Assume that 
+    \begin{itemize}
+      \item \alert{$Q(x,\rmd y)=q(x,y) \lambda(\rmd y)$ 
+      and $\pi(\rmd x)=\pi(x)\lambda(\rmd x)$ with \colbox{$q>0$ and $\pi>0$}.  } 
+    \end{itemize}
+  
+    Then $\mh{\pi,Q}$ admits $\pi$ as its \colbox{unique probability
+    measure}.         
+  \end{block}
+\end{frame}
+\begin{frame}
+  \frametitle{Proof of the uniqueness of the invariant probability measure for irreducible Markov chains}
+  The following lemma is useful for the proof... 
+  \begin{block}{Lemma}
+    If $P$ admits two distinct invariant
+    probability measures, it also admits distinct invariant probability
+    measures $\pi_{0}$ and $\pi_{1}$ that are mutually singular, i.e.,
+    such that there exists $A\in\Xsigma$ such that $\pi_{0}(A)=\pi_{1}(A^{c})=0$.
+  \end{block}
+  \pause 
+  \mycolthree{To be done on the blackboard.} 
+\end{frame}
+
+\section{Chap 3: Dynamical systems}
+\begin{frame}
+  \frametitle{Dynamical systems}
+  \begin{block}{Definition}
+    \textbf{(Dynamical systems)}
+    A \colbox{dynamical system}\index{dynamical system} $\mathcal{D}$
+is a quadruplet $\mathcal{D}=(\Omega,\mcf,\mathbb{P},T)$ where $(\Omega,\mcf,\mathbb{P})$
+is a probability space and $T:\Omega\rightarrow\Omega$ is a measurable
+mapping such that \fbox{\alert{$\mathbb{P}=\mathbb{P}\circ T^{-1}$}}.
+  \end{block}
+\pause
+  \begin{lemma} \textbf{(Invariant sets)}
+    The collection of sets $\mc I=\set{A\in\mcf}{\indi A=\indi A\circ T}$
+    is a $\sigma$-field and any set in $\mc I$ is called an \colbox{invariant set.} \index{invariant!set}
+    \end{lemma}
+    \pause    
+    \begin{definition}
+      \textbf{(Ergodicity)} \index{ergodic dynamical system} A dynamical system $(\Omega,\mcf,\mathbb{P},T)$
+      is said to be \colbox{ergodic} if \colbox{invariant sets are $\PP$-trivial} that is if $A\in\mc I$
+      then either $\mathbb{P}(A)=0$ or $\mathbb{P}(A)=1$.
+      \end{definition}
+      
+\end{frame}
+
+\begin{frame}
+  \frametitle{The Birkhoff theorem}
+  \begin{theorem}
+    \textbf{\label{thm:birk:dynam}(The Birkhoff theorem)} \index{Birkhoff's theorem}Let $\mathcal{D}=(\Omega,\mcf,\mathbb{P},T)$
+    be an \colbox{ergodic dynamical system} and let $h\in\lfuncset 1(\Omega)$.
+    Then,
+    \[
+    \alert{\lim_{n\to\infty}n^{-1}\sum_{k=0}^{n-1}h\circ T^{k}=\PE[h]\ ,\quad\PP-a.s.}
+    \]
+    \end{theorem}
+    \end{frame}
+
+
+    
+    \section{Chap 3:Markov chains and ergodicity}
+
+\begin{frame}
+  \frametitle{}
+  Let $S$ be the shift operator: if $\omega=(\omega_k)_{k\in\nset} \in \Xset^{\nset}$, we set $S(\omega)=\omega' \in \Xset^{\nset}$ where $\omega'_k=\omega_{k+1}$ for all $k\in\nset$.  
+  \begin{lemma}[MC and dynamical systems]
+    Let $P$ be a Markov kernel admitting an \alert{invariant probability measure}
+    $\pi$. Then, the quadruplet $(\Xset^{\nset},\Xsigma^{\otimes\nset},\PP_{\pi},S)$
+    is a \colbox{dynamical system}.
+    \end{lemma}
+    \pause
+    \begin{theorem}[MC and ergodicity]
+      Let $P$ be a Markov kernel on $\Xset\times\Xsigma$. Assume that
+      $P$ admits a \alert{unique invariant probability measure} $\pi$. Then, the
+      dynamical system $(\Xset^{\nset},\Xsigma^{\otimes\nset},\PP_{\pi},S)$
+      is \colbox{ergodic}.
+      \end{theorem}
+      \pause 
+      \mycolthree{The proof of the Theorem will be done on the blackboard. }
+\end{frame}  
+
+\begin{frame}
+  \frametitle{}
+  \begin{theorem}[The Birkhoff theorem for MC]
+    Let $P$ be a Markov kernel admitting a
+\alert{unique invariant probability measure} $\pi.$ Then, for all $h\in\funcset{}(\Xset^{\nset})$
+such that $\PE_{\pi}[|h|]<\infty$, we have
+\[
+\mycoltwo{\lim_{n\to\infty}n^{-1}\sum_{k=0}^{n-1}h(X_{k:\infty})=\PE_{\pi}[h]\,,\quad\PP_{\pi}-a.s.}
+\]
+  \end{theorem}
+\pause
+  \begin{corollary}[LLN Starting from stationarity]
+  Let $P$ be a Markov kernel admitting a
+  \alert{unique invariant probability measure} $\pi.$ Then, for all $f\in\funcset{}(\Xset)$
+  such that $\pi(|f|)=\int_{\Xset}\pi(\rmd x)|f(x)|<\infty$, we have
+  \begin{equation}
+  \mycoltwo{\lim_{n\to\infty}n^{-1}\sum_{k=0}^{n-1}f(X_{k})=\pi(f)\,,\quad\PP_{\pi}-a.s.\label{eq:markov:LLN}}
+  \end{equation}
+  \end{corollary}
+ 
+  
+ 
+\end{frame}
+
+\begin{frame}
+  \frametitle{}
+  \begin{corollary}[Other starting points]
+    Let $P$ be a Markov kernel admitting
+    a \alert{unique invariant probability measure} $\pi.$ Then, for all $f\in\funcset{}(\Xset)$
+    such that $\pi(|f|)=\int_{\Xset}\pi(\rmd x)|f(x)|<\infty$, we have
+    \colbox{for $\pi$-almost all $x\in\Xset$},
+    \begin{equation}
+    \mycoltwo{\lim_{n\to\infty}n^{-1}\sum_{k=0}^{n-1}f(X_{k})=\pi(f)\,,\quad\PP_{x}-a.s.\label{eq:lln:almost}}
+    \end{equation}
+    \end{corollary}
+  \end{frame}
+
+  \begin{frame}
+    Assume that \alert{$Q(x,\rmd y)=q(x,y)\lambda(\rmd y)$} and \alert{$\pi(\rmd y)=\pi(y)\lambda(\rmd y)$}
+    where \colbox{$q>0$, $\pi>0$} and $\lambda$ is a $\sigma$-finite measure
+    on $(\Xset,\Xsigma)$.
+  \begin{theorem} \label{thm:lln:hm}
+    The Markov chain $\seq{X_{n}}{n\in\nset}$ generated
+    by the Metropolis-Hastings algorithm is such that: \alert{for all initial
+    distributions $\nu\in\meas 1(\Xset)$} and all $f\in\funcset{}(\Xset)$
+    such that $\pi(|f|)=\int_{\Xset}\pi(\rmd x)|f(x)|<\infty$,
+    \begin{equation}
+    \mycoltwo{\lim_{n\to\infty}n^{-1}\sum_{k=0}^{n-1}f(X_{k})=\pi(f)\,,\quad\PP_{\nu}-a.s\label{eq:LLN:MH}}
+    \end{equation}
+    \end{theorem}
+  
+\end{frame}
+\begin{frame}
+  \frametitle{}
+  What if $P$ is not the Markov kernel of a Metropolis-Hastings algorithm? 
+  \begin{theorem}
+    If $P$ is a Markov kernel on $\Xset \times\Xsigma$ that admits a \colbox{unique invariant} \colbox{probability measure} $\pi$. Assume in addition that for all bounded functions $h$ and all measures $\nu\in\meas 1(\Xset)$,
+    \begin{equation}
+    \label{eq:setwise}
+    \alert{\lim_{n \to \infty}  \nu P^n h=\pi(h)}
+    \end{equation}
+    \pause 
+    Then, \colbox{for all initial
+    distributions} $\nu\in\meas 1(\Xset)$ and all $f\in\funcset{}(\Xset)$
+    such that $\pi(|f|)=\int_{\Xset}\pi(\rmd x)|f(x)|<\infty$,
+    \begin{equation}
+    \mycoltwo{\lim_{n\to\infty}n^{-1}\sum_{k=0}^{n-1}f(X_{k})=\pi(f)\,,\quad\PP_{\nu}-a.s\label{eq:LLN:gener}}
+    \end{equation}
+    \end{theorem}
+    
+  
+
+\end{frame}
+
+\end{document}
+\begin{frame}
+\frametitle{Variational Inference within the $\alpha$-divergence family}
+\scalebox{0.8}{
+\begin{minipage}[t]{1.2\linewidth}
+
+
+$(\Yset,\Ysigma, \nu)$ : measured space, $\nu$ is a $\sigma$-finite measure on $(\Yset, \Ysigma)$.
+
+$\PQ$ and $\PP$ : $\PQ \preceq \nu$, $\PP \preceq \nu$ with $\frac{\rmd \PQ}{\rmd \nu} = q$, $\frac{\rmd \PP}{\rmd \nu} = p(\cdot|\data)$.
+
+\begin{block}{$\alpha$-divergence between $\PQ$ and $\PP$} \vspace{-0.7cm}
+\begin{align*}
+\diverg\couple[\PQ][\PP] = \int_\Yset f_\alpha \left(\dfrac{q(y)}{p(y|\data)}\right) p(y|\data) \nu(\rmd y) \eqsp,
+\end{align*} \vspace{-0.5cm}
+
+where \vspace{-0.5cm}
+\begin{equation*}
+  \falpha = \begin{cases}
+    \frac{1}{\alpha(\alpha-1)} \left[  u^\alpha -1 - \alpha(u-1) \right], & \mbox{if } \alpha \in \rset \setminus \lrcb{0,1}, \\
+    1 - u + u\log(u), & \mbox{if } \alpha = 1 \mbox{ (Forward KL),} \\
+    u-1 -\log(u), & \mbox{if } \alpha = 0 \mbox{ (Reverse KL).}
+  \end{cases}
+\end{equation*} \vspace{-0.3cm}
+\end{block} \pause
+
+$\rightarrow$ We can get rid of $p(\data)$ in the optimisation ! \vspace{-0.3cm}
+$$
+q^\star = \arginf_{q \in \mathcal{Q}} \int_\Yset \falpha \left(\dfrac{q(y)}{p(y)}\right) {p(y)} \nu(\rmd y) \quad \mbox{with } p(y) = p(y, \data) \eqsp.
+$$ \vspace{-0.5cm} \pause
+
+$\rightarrow$ $\falpha$ is \mycolthree{convex} !
+
+\end{minipage}}
+
+\end{frame}
+
+\begin{frame}{Our approach}
+
+\scalebox{0.8}{
+\begin{minipage}[t]{1.2\linewidth}
+
+\begin{itemize}
+  \item Usually in Variational Inference : parametric family \vspace{-0.2cm}
+$$
+\set{y \mapsto k_\theta(y)}{\theta \in \Tset} \eqsp.
+$$ \vspace{-0.7cm} \pause
+\item Let us consider a broader approximating family \vspace{-0.2cm}
+$$
+\set{y \mapsto \int_\Tset \mycoltwo{\mu(\rmd \theta)} k_\theta(y)}{\mu \in \mathsf{M}} \eqsp,
+$$
+$\mathsf{M}$ : subset of $\meas{1}(\Tset)$, the set of probability measures on $(\Tset, \Tsigma)$. \newline \vspace{-0.4cm}
+
+$\rightsquigarrow$ \mycoltwo{Example} : Mixture models $\mu = \sum_{j=1}^{J} \lambda_j \delta_{\theta_j}$. \vspace{0.4cm} \pause
+\end{itemize} \vspace{-0.5cm}
+
+\begin{block}{Optimisation problem}
+\begin{itemize}
+\item $\mu k(y) = \int_\Tset \mu(\rmd \theta) k(\theta, y)$, where $K:(\theta,A) \mapsto \int_A k(\theta,y)\nu(\rmd y)$ is a  Markov transition kernel on $\Tset \times \Ysigma$ with kernel density $k$
+\item $p$ : \mycolthree{measurable positive function} on $(\Yset,\Ysigma)$
+\end{itemize}
+\begin{center}
+\colbox{$
+\arginf_{\mu \in \mathsf{M}} \underbrace{\mathlarger{\int_\Yset} \falpha \left(\dfrac{\mu k(y)}{p(y)}\right) {p(y)} \nu(\rmd y)}_{ \eqdef \Psif(\mu)}
+$}
+\end{center}
+
+
+\end{block}
+\end{minipage}}
+
+\end{frame}
+
+
+%\begin{frame}
+%\tableofcontents
+%\end{frame}
+
+%More flexible families of divergence $D$
+
+%$\mathcal{F}$: $f$ divergence
+
+%\begin{itemize}
+%  \item $\mathcal{F}$: More flexible families of divergences $D$.
+%  \item $q_\theta$: Monte Carlo methods and Black-Box inference techniques.
+%  \item Scalable methods (Stochastic Gradient Descent...).
+%\end{itemize}
+
+
+
+
+
+%$\rightarrow$ \mycol{Posterior density approximation} : $p(y) = \posterior$
+
+
+\section{The \aei descent}
+
+\begin{frame}{The \aei descent}
+
+\scalebox{0.9}{
+\begin{minipage}{1.\linewidth}
+
+\underline{Optimisation problem} \vspace{-0.3cm}
+$$
+\arginf_{\mu \in \mathsf{M}} \Psif(\mu) \quad \mbox{with} \quad \Psif(\mu) \eqdef \mathlarger{\int_\Yset} \falpha \left(\dfrac{\mu k(y)}{p(y)}\right) {p(y)} \nu(\rmd y)
+$$
+
+
+\underline{Algorithm}
+
+Let $\mu_1 \in\meas{1}(\Tset)$ such that $\Psif(\mu_1) < \infty$. We define the sequence of probability measures $(\mu_n)_{n \in \nstar}$ iteratively by
+\begin{equation}
+\label{eq:def:mu}
+\mu_{n+1}= \iteration (\mu_n)\;,\qquad n\in\nstar \eqsp.
+\end{equation} \vspace{-0.4cm}
+
+\end{minipage}
+}
+
+\begin{minipage}{1.\linewidth}
+\begin{center}
+\scalebox{0.9}{
+\begin{algorithm}[H]
+\caption{\em Exact \aei descent one-step transition}
+\label{algo:aei}
+\noindent \vspace{-0.5cm}
+\begin{enumerate}
+\item \underline{Expectation step} : \setlength{\parindent}{1cm} $\bmuf(\theta)= \mathlarger{\int_\Yset} k(\theta,y)  \falpha' \left(\dfrac{\mu k(y)}{p(y)}\right) \nu(\rmd y)$
+\item \underline{Iteration step} : \setlength{\parindent}{1cm} $\iteration (\mu)(\rmd \theta)= \dfrac{\mu(\rmd \theta) \cdot \GammaAlpha(\bmuf(\theta)+ \cte)}{\mu(\GammaAlpha(\bmuf + \cte))}$
+\end{enumerate} \
+\end{algorithm}}
+\end{center}
+
+\end{minipage} \vspace{0.1cm}
+
+%$\rightarrow$ Example : $\GammaAlpha(v) = e^{-\eta v}$, $\eta > 0$, $\cte \in \Rset$.
+%
+%\quad \ Infinite-Dimensional \mycolthree{Entropic Mirror Descent}.
+
+\end{frame}
+
+\begin{frame}{Monotonicity}
+
+\begin{flushleft}
+\mycoltwo{(A1)} For all $(\theta,y) \in \Tset \times \Yset$, $k(\theta,y)>0$, $p(y)>0$ and $\int_\Yset p(y) \nu(\rmd y)<\infty$. \\ \pause
+\end{flushleft}
+
+\begin{flushleft}
+\mycoltwo{(A2)} The function $\GammaAlpha: \Domain \to\rset_{> 0}$ is decreasing, continuously differentiable and satisfies the inequality
+    \begin{align*}
+        \left[(\alpha -1)(v- \cte) + 1\right] (\log {\GammaAlpha})'(v) + 1 \geq 0 \eqsp.
+    \end{align*}
+\end{flushleft} \pause \vspace{-0.3cm}
+
+\begin{block}{Theorem 1}
+
+  Assume \mycoltwo{(A1)} and \mycoltwo{(A2)}. Let $\mu\in\meas{1}(\Tset)$ be such that $\Psif(\mu)<\infty$ and $\mu(\GammaAlpha(\bmuf + \cte)) < \infty$. Then, the two following assertions hold. \vspace{-0.1cm}
+\begin{enumerate}
+\item \label{item:mono1} We have  $\Psif \circ \iteration (\mu) \leq \Psif(\mu)$.
+\item \label{item:mono2} We have $\Psif \circ \iteration (\mu) =\Psif(\mu)$ if and only if $\mu=\iteration (\mu)$.
+\end{enumerate}
+\end{block}
+\end{frame}
+
+
+\begin{frame}{Examples satisfying \mycoltwo{(A2)}}
+
+\begin{flushleft}
+\mycoltwo{(A2)} The function $\GammaAlpha: \Domain \to\rset_{> 0}$ is decreasing, continuously differentiable and satisfies the inequality
+    \begin{align*}
+        \left[(\alpha -1)(v- \cte) + 1\right] (\log {\GammaAlpha})'(v) + 1 \geq 0 \eqsp.
+    \end{align*}
+\end{flushleft} \pause
+
+\begin{enumerate}
+  \item Entropic MD : $\eta \in (0,1]$, $\cte \in \rset$ and $\alpha = 1$
+  $$
+  \GammaAlpha(v) = e^{-\eta v} \eqsp.$$
+   \pause
+  \item \mycolthree{Power descent :} $\eta \in(0,1]$, $(\alpha-1)\cte \geq 0$ and $\alpha \neq 1$
+  $$
+  \GammaAlpha(v) =  [ \left(\alpha -1 \right)v + 1]^{\frac{\eta}{1-\alpha}} \eqsp.
+  $$
+
+\end{enumerate}
+\end{frame}
+
+\begin{frame}{Limiting behavior}
+Table 1: Examples of allowed $(\GammaAlpha, \cte)$ in the \aei descent
+
+\includegraphics[scale=0.51]{{table2}.png}
+\pause
+
+\begin{tikzpicture}[
+          remember picture,
+          overlay,
+          expl/.style={draw=white,fill=white,rounded corners,text width=.9cm},
+          arrow/.style={Orchid!80!black,ultra thick,->,>=latex}
+        ]
+        %\node<2->[expl] (ak) at (-.9,.8) {$a_K(\theta)$};
+        %\node<2-> (akTarget) at (.7,1.3) {};
+
+        %\node<2->[expl] (ck) at (9.5,.8) {};
+        %\node<2-> (ckTarget) at (8,1.3) {};
+
+        %\node<3->[expl] (target) at (-0.2,2.7) {\scalebox{0.8}{\color{Orchid!80}{$a_K(\theta) = 0$}} \\ \scalebox{0.8}{$b_K(\theta) = ||\bmufk(\theta)|^\phi-|\bmuf(\theta)|^\phi|$} \\ \scalebox{0.8}{$c_K(\theta) = |\bmufk(\theta)|^\phi + |\bmuf(\theta)|^\phi$}};
+
+        %\draw<2->[arrow] (ak.east) to[out=0,in=200] (akTarget);
+        %\draw<2->[arrow] (ck.west) to[out=180,in=340] (ckTarget);
+
+
+        \draw [line width=0.7mm, Orange] (9.85,0.56) -- (9.85,0.945);
+
+        \draw [line width=0.7mm, Emerald] (9.85,1.0) -- (9.85,2.27);
+
+\end{tikzpicture}
+
+\vspace{-0.2cm}
+
+$\rightarrow$ {\mycolthree{Convergence towards the optimum value at a $O(1/N)$ rate} \vspace{0.2cm}
+
+{$\rightarrow$ {\color{Orange}{Convergence towards the optimum value}} \vspace{-0.2cm}
+%$$
+%\Psif(\mu^\star) = \inf_{\zeta \in \meas{1, \mu_1}(\Tset)} \Psif(\zeta)
+%$$
+}
+
+
+%$$
+%\Psif(\mu_N) - \Psif(\mu^\star) \leq \frac{\cteinf}{N} \left[ KL\couple[\mu^\star][\mu_1] + L\frac{ \ctesup}{\ctemono} \delta_1 \right]
+%$$
+}
+
+\end{frame}
+
+\begin{frame}{An $O(1/N)$ convergence rate?}
+
+\scalebox{0.82}{
+\begin{minipage}[t]{1.2\linewidth}
+
+\mycol{\xmark}~$\beta$-smooth assumption \mycol{not satisfied} in general for the $\alpha$-divergence (e.g Gaussian family). \vspace{0.2cm} \pause
+
+\mycoltwo{\cmark} Quantify the improvement in terms of the {\mycoltwo{variance of $\bmuf$}} \vspace{-0.3cm}
+
+\begin{block}{\vspace{-0.3cm}}\vspace{-0.3cm}
+$$
+\frac{\ctemono}{2} \Var_\mu \left( \bmuf\right) \leq \Psif(\mu) - \Psif\circ \iteration(\mu) \eqsp,
+$$\vspace{-0.2cm}
+
+where \scalebox{0.9}{$\ctemono \eqdef \inf_{v \in \Domain} \lrcb{ \left[(\alpha -1) (v- \cte) + 1\right] (\log \GammaAlpha)'(v) + 1 } \times \inf_{v \in \Domain}  - \GammaAlpha'(v)$.}
+
+\end{block} \pause
+
+
+$\rightsquigarrow$ Projected Gradient descent : $f$ is $\beta$-smooth on $\rset$ \vspace{-0.2cm}
+$$
+\forall u \in \Rset, \quad \frac{1}{\beta} \| \nabla f(u) \|^2 \leq f(u) - f\left(u- \frac{1}{\beta} \nabla f(u)\right) \eqsp.
+$$
+\end{minipage}}
+
+\end{frame}
+
+\begin{frame}{Mixture models and \aei descent}
+
+\scalebox{0.8}{
+\begin{minipage}[t]{1.2\linewidth}
+
+$S_J = \set{ \lbd{}= (\lambda_1, ..., \lambda_J) \in \rset^J}{ \forall j \in \lrcb{1,..., J}, \eqsp \lambda_j \geq 0 \eqsp \mbox{and} \eqsp \sum_{j=1}^J \lambda_j = 1}$.
+
+Let $\theta_1, ..., \theta_J \in \Tset$ \mycoltwo{be fixed} and denote
+\begin{center}
+$\mu_{\lbd{}} = \sum_{j=1}^J \lambda_j \delta_{\theta_j} \quad \mbox{with} \quad \lbd{} \in \simplex_J \eqsp.$
+\end{center} \vspace{-0.6cm}
+
+\begin{block}{\vspace*{-3ex}}
+Then, $\mycoltwo{\mu_n = \underbrace{\iteration \circ \dots \circ \iteration}_{n\ \text{times}}(\mu_{\lbd{}})}$ is of the form
+%Initiating by $\mu_0= \mu_{\lbd{}}$, we obtain by induction :
+$
+\mu_n=\sum_{j=1}^J \lbd[j]{n} \delta_{\theta_j}$
+with \vspace{-.5cm}
+
+\begin{center}
+\begin{equation}
+\begin{cases}
+\lbd{1}=\lbd{}  \\
+\lbd[j]{n+1}= \frac{\lbd[j]{n} \GammaAlpha(\bmuf[\mu_n](\theta_j) + \cte)}{ \sum_{i=1}^J \lbd[i]{n} \GammaAlpha(\bmuf[\mu_n](\theta_i) + \cte)} \eqsp.
+\end{cases}
+\end{equation}
+\end{center}
+\vspace{-0.2cm} \pause
+\end{block}
+
+\begin{itemize}
+  \item {\mycoltwo{Exploitation step}} which requires no information on the distribution of $\lrcb{\theta_1, ..., \theta_J}$ (as opposed to Importance Sampling) \pause
+  \item In practice, we will use
+\begin{center}
+\scalebox{0.9}{$\bmufk[\mu_n](\theta_j) = \dfrac{1}{M} \sum \limits_{m=1}^M \frac{k(\theta_j, Y_{m, n})}{\mu_n k(Y_{m, n})}  \falpha'\left( \frac{\mu_n k(Y_{m, n})}{p(Y_{m, n})} \right)$,}
+\end{center}
+with $Y_{1, n}, ..., Y_{M, n}$ drawn independently from $\mu_n k$.
+\end{itemize}
+
+
+%\mycoltwo{Exploitation step}
+%  \begin{itemize}
+%  \item Free to choose the kernel $K$, the $\alpha$-divergence being optimised.
+%
+%  \item No information on the distribution of $\lrcb{\theta_1, ..., \theta_J}$ required.
+%  \end{itemize}
+%  \item {\color{Orchid!80!black}{Exploration}}
+
+
+%\end{enumerate}
+\end{minipage}}
+
+\end{frame}
+
+\section{Numerical Experiments}
+
+
+\begin{frame}{Numerical Experiments}
+
+\begin{itemize}
+\item Framework
+\scalebox{0.8}{
+\begin{minipage}[t]{1.2\linewidth}
+\textbf{Kernel:} Gaussian transition kernel $k_{h_t}$ with bandwidth $h_t$. \vspace{-0.2cm}
+$$
+\set{y \mapsto \mu_{\lbd{}} k_{h_t}(y) = \sum_{j= 1}^{J_t} \lambda_j k_{h_t}(y- \thetat[j][t])}{\lbd{} \in \simplex_{J_t}, (\thetat[j][t])_{1 \leq j \leq J_{t}} \in \Tset^{J_t} }\eqsp.
+$$ \vspace{-0.2cm}
+
+$h_t \propto J_t^{-1/(4 + d)}$, where $d$ is the dimension of the latent space. \newline \vspace{-0.2cm} \pause
+\begin{enumerate}
+  \item {\mycoltwo{Exploitation step}} Optimise $\lbd{}$ using the Mixture \aei descent (with Monte Carlo approximation of $\bmuf$). \pause
+  \item {\color{Orchid!80!black}{Exploration step}} Sample $(\thetat[j][t+1])_{1 \leq j \leq J_{t+1}}$ according to $ \mu_{\lbd{}} k_{h_t}$. \vspace{0.2cm}
+\end{enumerate}
+
+
+
+%\textbf{Alpha}: $\alpha < 1$. \newline
+\end{minipage}} \pause
+
+\item Toy example
+
+\scalebox{0.8}{ $
+p(y) = Z \times \left[ 0.5 \mathcal{N}(\boldsymbol{y}; -s \boldsymbol{u_d}, \boldsymbol{I_d}) + 0.5 \mathcal{N}(\boldsymbol{y}; s \boldsymbol{u_d}, \boldsymbol{I_d}) \right]
+$} \vspace{0.3cm} \pause
+
+\item Bayesian Logistic Regression \scalebox{0.8}{Covertype dataset ($581,012$ data points and $54$ features)}
+\end{itemize}
+
+\end{frame}
+
+
+
+
+\begin{frame}{Toy Example: Mirror Descent vs Power Descent}
+
+\scalebox{0.8}{
+\begin{minipage}[t]{1.2\linewidth}
+We compare:
+\begin{itemize}
+\item \underline{$0.5$-Mirror descent :} $\GammaAlpha(v) = e^{-\eta v}$ with $\alpha = 0.5$,
+\item \underline{$0.5$-Power descent :} $\GammaAlpha(v) = [ \left(\alpha -1 \right)v + 1]^{\eta/(1-\alpha)}$ with $\alpha =0.5$.
+\end{itemize} \vspace{0.2cm}
+
+\quad $J = M = 100$, initial weights: $[1/J, ..., 1/J]$, $N=10$, $T=20$.
+
+\end{minipage}} \vspace{-0.2cm}
+
+\begin{figure}[!ht]
+\caption{Average Renyi-Bound for the 0.5-Power and 0.5-Mirror descent computed over 100 replicates with $\eta_0 = 0.5$.}
+\label{fig:toy}
+\begin{tabular}{ccc}
+\includegraphics[scale=0.22]{{mixtureDim8Alpha05}.png}  &
+\includegraphics[scale=0.22]{{mixtureDim16Alpha05}.png} & \includegraphics[scale=0.22]{{mixtureDim32Alpha05}.png}
+\end{tabular}
+\end{figure}
+\vspace{-0.5cm} \pause
+
+
+\scalebox{0.8}{
+\begin{minipage}[t]{1.2\linewidth}
+\begin{align*}
+  \mbox{\color{Mahogany}{Mirror} } \quad \lbd[j]{n} &\propto \exp\left( \frac{\eta}{1-\alpha} \left( (\alpha-1)\bmuf[\mu_{\lbd{n}}](\theta_j) + (\alpha-1)\cte \right) \right) \\
+  \mbox{\color{MidnightBlue}{Power} } \quad \lbd[j]{n} &\propto \exp\left( \frac{\eta}{1-\alpha} {\color{MidnightBlue}{\boldsymbol\log} \left(  {\color{Black}{(\alpha-1)\bmuf[\mu_{\lbd{n}}](\theta_j) + (\alpha-1)\cte}} \right)} \right) \eqsp.
+\end{align*}
+\end{minipage}}
+
+\end{frame}
+
+
+\begin{frame}{Bayesian Logistic Regression}
+
+\scalebox{0.8}{
+\begin{minipage}[t]{1.2\linewidth}
+
+We compare :
+\begin{itemize}
+\item \underline{$0.5$-Power descent}
+\item \underline{AIS} (Adaptive Importance Sampling)
+\end{itemize}
+
+$N = 1$, $T = 500$, $J_0 = M_0 = 20$
+
+$J_{t+1} = M_{t+1} = J_t + 1$, initial weights: $[1/J_t, ..., 1/J_t]$.
+\end{minipage}}
+
+\begin{figure}[!ht]
+\caption{Average Accuracy and Log-likelihood computed over 100 replicates for the 0.5-Power descent ($\eta_0 = 0.05$) and the AIS algorithm.}
+\label{fig:compareRealData}
+\begin{tabular}{cc}
+\includegraphics[scale=0.26]{{covertypeAccLin}.png} &
+\includegraphics[scale=0.26]{{covertypeLLHLin}.png}
+\end{tabular}
+\end{figure}
+
+
+\end{frame}
+
+\section{Conclusion}
+
+\begin{frame}{Conclusion}
+
+The \aei descent
+\begin{itemize}
+\item \mycolthree{performs an update of measures}
+      \begin{itemize}
+        \item sufficient conditions on $(\alpha, \GammaAlpha)$ leading to a systematic {\color{orange}{decrease}}
+        \item includes {\color{orange} Entropic Mirror Descent}
+        \item convergence to an {\color{orange}optimum} and {\color{orange}$O(1/N)$} convergence rates,
+      \end{itemize} \pause \vspace{0.2cm}
+
+\item {\color{Orchid}can be applied to density approximation}
+\begin{itemize}
+  \item handles the case of {\color{RoyalPurple} Mixture Models} for any kernel $K$
+  \item requires no information on the distribution of {\color{RoyalPurple}{$\lrcb{\theta_1, ..., \theta_J}$}}
+  \item empirical benefit of using the {\color{RoyalPurple}{Power descent}}. \pause
+\end{itemize}
+\end{itemize}
+\vspace{0.3cm}
+
+
+%Perspectives : convergence rate for a general $\GammaAlpha$, optimal $\eta$, try other types of Exploration steps, variance reduction ... \newline \pause
+
+\scalebox{0.8}{[1] Kamélia Daudel, Randal Douc and François Portier (2020).}
+
+\scalebox{0.8}{Infinite-dimensional gradient-based descent for alpha-divergence minimisation.}
+
+\scalebox{0.8}{https://hal.telecom-paris.fr/hal-02614605.}
+
+\scalebox{0.8}{[2] Kamélia Daudel, Randal Douc, François Portier and François Roueff (2019).}
+
+\scalebox{0.8}{The $f$-Divergence Expectation Iteration Scheme. https://arxiv.org/abs/1909.12239.}
+
+
+\end{frame}
+
+\appendix
+
+\begin{frame}
+
+\textbf{Some additional slides...}
+
+\end{frame}
+
+\begin{frame}{Idea of the proof: Monotonicity}
+\scalebox{0.8}{
+\begin{minipage}[t]{1.2\linewidth}
+\textbf{Step 1:} Let $\mu,\zeta\in\meas{1}(\Tset)$ be such that $\zeta \preceq \mu$ and $\Psif(\mu) < \infty$. We show that \vspace{-0.1cm} \begin{center} \colbox{$
+A_\alpha \leq  \Psif(\mu) - \Psif(\zeta)$} \end{center} where \vspace{-0.4cm}
+\begin{align}\label{eq:Aalpha}
+  A_\alpha \eqdef \int_\Yset  \nu(\rmd y)  \int_\Tset \mu(\rmd \theta) k(\theta,y)  \falpha' \left( \frac{g(\theta)\mu k(y) }{p(y)} \right) \left[ 1 - g(\theta) \right]
+\end{align}
+and $\zeta(\rmd \theta)=\mu(\rmd \theta) g(\theta)$. Furthermore equality holds iif $\zeta=\mu$. \vspace{0.5cm}
+%
+%\begin{block}{\vspace*{-3ex}} \vspace{-0.2cm}
+%$$
+%h_\alpha(\zeta, \mu) = \int_\Yset \nu(\rmd y) p(y)  \int_\Tset \frac{\mu(\rmd \theta) k(\theta,y)}{\mu k(y)} \falpha \left( \frac{g(\theta)\mu k(y)}{p(y)} \right)
+%$$
+%\end{block} \pause
+
+\textbf{Step 2:} We set $g \propto \GammaAlpha(\bmuf + \cte)$ in \eqref{eq:Aalpha} and we show that $A_\alpha \geq 0$. \vspace{-0.3cm}
+
+\begin{block}{\vspace*{-3ex}}
+Probability space $(\Tset,\Tsigma,\mu)$, $V(\theta)=\bmuf(\theta)+ \cte$ and $\tgamma (v) = \GammaAlpha(v) / \mu(\GammaAlpha(\bmuf + \cte))$\vspace{-0.3cm}
+\begin{align*}
+\alpha \in \rset \setminus \lrcb{1} : \quad &A_\alpha = \Cov \left( \left(V - \cte + \frac{1}{\alpha-1} \right)\tgamma^{\alpha-1}(V), 1- \tgamma(V) \right) \\
+&A_1 = \Cov(\log \tgamma (V) + V, 1- \tgamma(V)) \eqsp.
+\end{align*}
+\end{block}
+
+\end{minipage}}
+\end{frame}
+
+
+
+
+\begin{frame}{Limiting behavior (1)}
+\vspace{-0.2cm}
+\scalebox{0.78}{
+\begin{minipage}[t]{1.2\linewidth}
+ \mycoltwo{(A3)} The function $\GammaAlpha: \Domain \to\rset_{> 0}$ is $L$-smooth and the function $- \log \GammaAlpha$ is concave increasing.
+\vspace{-0.9cm}
+
+\begin{align*}
+\cteinf^{-1} &\eqdef \inf_{v \in \Domain} (- \log \GammaAlpha)' (v) \eqsp, \\
+\ctesup^{-1} &\eqdef \inf_{v \in \Domain} \GammaAlpha(v) \eqsp, %\\
+\end{align*}
+\vspace{-0.6cm}
+
+{$\meas{1, \mu_1}(\Tset)$ : set of probability measures dominated by $\mu_1$. \vspace{-0.1cm}}
+
+
+\begin{block}{Theorem 2}
+Assume \mycoltwo{(A1)}, \mycoltwo{(A2)}  and \mycoltwo{(A3)}. Further assume that $\ctemono$, $\cteinf > 0$ and that $0 <\inf_{v \in \Domain} \GammaAlpha(v) \leq \sup_{v \in \Domain} \GammaAlpha(v) < \infty$. Moreover, let $\mu_1\in\meas{1}(\Tset)$ be such that
+$\Psif(\mu_1)<\infty$. Then, the following assertions hold.
+
+\begin{enumerate}
+\item \label{item:admiss1} The sequence $(\mu_n)_{n\in\nstar}$ defined by \eqref{eq:def:mu} is well-defined and the sequence
+$(\Psif (\mu_n))_{n\in\nstar}$ is non-increasing.
+
+\item \label{item:admiss2} For all $N \in \nstar$, we have
+\begin{align}\label{eq:rate}
+  \frac{1}{N} \sum_{n=1}^{N} \Psif(\mu_n) - \Psif(\mu^\star) \leq \mycol{\frac{{\color{black}{\cteinf}}}{N}} \left[ KL\couple[\mu^\star][\mu_1] + L\frac{ \ctesup}{\ctemono} \delta_1 \right]\eqsp,
+\end{align}
+where $\mu^\star$ is such that $\Psif(\mu^\star) = \inf_{\zeta \in \meas{1, \mu_1}(\Tset)} \Psif(\zeta)$ and where we have defined $\delta_1 = \Psif(\mu_1) - \Psif(\mu^\star)$ and $KL\couple[\mu^\star][\mu_1] = \int_\Tset \log \left(\frac{\rmd\mu^\star}{\rmd\mu_1} \right) \rmd\mu^\star$.
+\end{enumerate} \vspace{-0.1cm}
+\end{block}
+\end{minipage}}
+
+
+\end{frame}
+
+\begin{frame}{Limiting behavior (2)}
+
+\scalebox{0.82}{
+\begin{minipage}[t]{1.2\linewidth}
+\mycoltwo{(A4)}
+\begin{enumerate}
+\item \label{item:theta:one}$\Tset$ is a compact metric space and $\Tsigma$ is
+  the associated Borel $\sigma$-field;
+\item \label{item:theta:two} for all $y \in \Yset$, $\theta \mapsto k(\theta,y)$ is continuous;
+\item \label{item:theta:four} we have $\displaystyle\int_\Yset {\sup_{\theta \in \Tset}k(\theta,y)} \times \sup_{\theta' \in \Tset} \lr{\frac{k(\theta',y)}{p(y)}}^{\alpha-1} \nu(\rmd y)<\infty$.
+\end{enumerate}
+
+\begin{block}{Theorem 3}
+  Assume \mycoltwo{(A1)} and
+  \mycoltwo{(A4)}. Let $\alpha < 1$, $\cte \leq 0$ and set $\GammaAlpha(v) = [ \left(\alpha -1 \right)v + 1]^{\eta/(1-\alpha)}$ for all $v \in \Domain$. Then, for all
+  $\zeta\in\meas{1}(\Tset)$, any $\eta > 0$ satisfies $\zeta(\GammaAlpha(\bmuf[\zeta] + \cte)) < \infty$ and $\Psif(\zeta) < \infty$.
+
+  Let $\eta \in (0,1]$. Further assume that there exists $\mu_1,\muf \in\meas{1}(\Tset)$ such that the (well-defined) sequence $(\mu_n)_{n\in\nstar}$ defined by \eqref{eq:def:mu} weakly converges to $\muf$ as
+  $n\to\infty$. Then the following assertions hold
+\begin{enumerate}
+%\item $\phi$ is $\muf$-admissible,
+\item $(\Psif(\mu_n))_{n\in\nstar}$ is non-increasing,
+\item $\muf$ is a fixed point of $\iteration$,
+\item $\Psif(\muf)=\inf_{\zeta \in \meas{1,\mu_1}(\Tset)} \Psif(\zeta)$.
+\end{enumerate}
+\end{block}
+\end{minipage}}
+
+\end{frame}
+
+\begin{frame}{Mixture Stochastic \aei descent}
+
+\scalebox{0.82}{
+\begin{minipage}[t]{1.2\linewidth}
+\begin{algorithm}[H]
+\caption{{\em Mixture Stochastic \aei descent}}
+\label{algo:mixture}
+\textbf{Input:} $p$: measurable positive function, $K$: Markov transition kernel, $M$: number of samples, $\Theta_J = \{\theta_1, ..., \theta_J\} \subset \Tset$: parameter set. \\
+\textbf{Output:} Optimised weights $\lbd{}$. \\
+\BlankLine
+Set $\lbd{} = [\lambda_{1, 1}, ..., \lambda_{J,1}]$.\\
+\While{not converged}{
+\begin{enumerate}
+\item \underline{Sampling step} : \setlength{\parindent}{1cm} Draw independently $M$ samples $Y_{1}, ..., Y_{M}$ from $\mu_{\lbd{}} k$.
+\item \underline{Expectation step} : \setlength{\parindent}{1cm} Compute $\boldsymbol{B}_{\lbd{}} = (b_{j})_{1 \leq j \leq J}$ where \vspace{-0.2cm}
+\begin{align}\label{eq:aj}
+b_{j} = \dfrac{1}{M} \sum \limits_{m=1}^M \frac{k(\theta_j, Y_{m})}{\mu_{\lbd{}} k(Y_{m})}  \falpha'\left( \frac{\mu_{\lbd{}} k(Y_{m})}{p(Y_{m})} \right)
+\end{align}
+and deduce $\boldsymbol{W}_{\lbd{}}  = (\lambda_j \GammaAlpha(b_{j} + \cte))_{1\leq j\leq J}$ and $w_{\lbd{}}  = \sum_{j=1}^J \lambda_j \GammaAlpha(b_{j} + \cte)$.
+\item \underline{Iteration step} : \setlength{\parindent}{1cm} Set \vspace{-0.2cm}
+\begin{align*}
+\lbd{} \leftarrow \frac{1}{w_{\lbd{}} } \boldsymbol{W}_{\lbd{}}
+\end{align*} \vspace{-0.2cm}
+\end{enumerate}
+}
+\end{algorithm}
+\end{minipage}}
+
+\end{frame}
+
+\begin{frame}{Renyi-bound [3]}
+
+\scalebox{0.8}{
+\begin{minipage}[t]{1.2\linewidth}
+For any variational density $q$, we have
+\begin{align*}
+\mathcal{L}_{1}(q; \data) & \eqdef \int_\Yset \log \left( \frac{p(y, \data)}{q(y)} \right) q(y) \nu(\rmd y ) \\
+\mathcal{L}_\alpha(q; \data) & \eqdef \frac{1}{1-\alpha} \log \left( \int_\Yset \left( \frac{p(y, \data)}{q(y)} \right)^{1-\alpha} q(y) \nu(\rmd y ) \right) \eqsp,
+\end{align*}
+and in our case
+\begin{align}\label{eq:renyibound}
+\mathcal{L}_{1}(\mu_n k, \data) &= -\sum_{j=1}^J \lbd[j]{n} \bmuf[\mu_n](\theta_j) \\
+\mathcal{L}_\alpha(\mu_n k, \data) &= \frac{1}{1-\alpha} \log \left( (\alpha-1)\sum_{j=1}^J \lbd[j]{n} \bmuf[\mu_n](\theta_j) + 1 \right) \eqsp. \nonumber
+\end{align}
+
+[3] Yingzhen Li and Richard E Turner. R\'enyi divergence variational inference. In D. D.
+Lee, M. Sugiyama, U. V. Luxburg, I. Guyon, and R. Garnett, editors, Advances in
+Neural Information Processing Systems 29, pages 1073–1081. Curran Associates, Inc.,
+2016.
+\end{minipage}}
+
+\end{frame}
+
+
+\begin{frame}{Toy Example}
+
+\scalebox{0.8}{
+\begin{minipage}[t]{1.2\linewidth}
+We compare:
+\begin{itemize}
+\item \underline{$1$-Mirror descent :} $\GammaAlpha(v) = e^{-\eta v}$ with $\alpha = 1$,
+\item \underline{$0.5$-Power descent :} $\GammaAlpha(v) = [ \left(\alpha -1 \right)v + 1]^{\eta/(1-\alpha)}$ with $\alpha =0.5$.
+\end{itemize}
+\end{minipage}}
+
+\begin{figure}[!ht]
+\caption{Plotted is the average Log-likelihood for 0.5-Power and 1-Mirror descent in dimension $d = \lrcb{8, 16,32}$ computed over 100 replicates with $\eta_0 = 0.5$.}
+\label{fig:compare}
+\begin{tabular}{ccc}
+\includegraphics[scale=0.24]{{mixtureDim8llh}.png} &
+\includegraphics[scale=0.24]{{mixtureDim16llh}.png} &
+\includegraphics[scale=0.24]{{mixtureDim32llh}.png}  \\
+\end{tabular}
+\end{figure}
+
+
+\end{frame}
+
+\begin{frame}{Bayesian Logistic Regression}
+
+Same setting as in [4]:
+
+Inference on $p(y|\data)$ with $y = [w, \log \beta]$, $c = \lrcb{-1, 1}$, $x \in \Rset^d$.
+
+\begin{equation*}
+\begin{cases}
+  p_0(w|\beta) = \mathcal{N} (w, \beta^{-1}
+) \\
+  p_0(\beta) = \mathrm{Gamma}(\beta, 1, 0.01) \\
+  p(c=1|x, w) = \frac{1}{1+e^{-w^T x}}
+\end{cases}
+\end{equation*} \vspace{0.3cm}
+
+\scalebox{0.8}{[4] Samuel Gershman, Matt Hoffman, and David Blei.}
+
+\scalebox{0.8}{Nonparametric variational inference. In Proceedings of the 29th International }
+
+\scalebox{0.8}{Conference on Machine Learning,
+Edinburgh, Scotland, UK, 2012.}
+
+\end{frame}
+
+\begin{frame}{Mass-covering/Mode-seeking}
+%
+%\begin{align*}
+%\lbd[j]{n+1}= \frac{\lbd[j]{n} \GammaAlpha(\bmufk[\mu_n](\theta_j) + \cte)}{ \sum_{i=1}^J \lbd[i]{n} \GammaAlpha(\bmufk[\mu_n](\theta_i) + \cte)} \eqsp,
+%\end{align*}
+%with $Y_{1, n}, ..., Y_{M, n}$ drawn independently from $\mu_n k$ and
+%\begin{align*}
+%\bmufk[\mu_n](\theta_j) = \dfrac{1}{M} \sum \limits_{m=1}^M \frac{k(\theta_j, Y_{m, n})}{\mu_n k(Y_{m, n})}  \falpha'\left( \frac{\mu_n k(Y_{m, n})}{p(Y_{m, n})} \right) \eqsp.
+%\end{align*}
+
+\scalebox{0.8}{
+\begin{minipage}[t]{1.2\linewidth}
+\begin{itemize}
+\item \underline{Mirror descent :} $\GammaAlpha(v) = e^{-\eta v}$ with $\alpha = 1$. Then,
+    \begin{align*}
+    \bmufk[\mu_n](\theta_j) &= \dfrac{1}{M} \sum \limits_{m=1}^M \frac{k(\theta_j, Y_{m, n})}{\mu_n k(Y_{m, n})}  \log\left( \frac{\mu_n k(Y_{m, n})}{p(Y_{m, n})} \right)
+    \end{align*}
+    and
+    \begin{align*}
+      \lbd[j]{n+1} \propto \prod \limits_{m=1}^M \left( \frac{p(Y_{m, n})}{\mu_n k(Y_{m, n})} \right)^{\frac{\eta}{M}\frac{k(\theta_j, Y_{m, n})}{\mu_n k(Y_{m, n})}} \eqsp.
+      \end{align*}%
+
+\item \underline{Power descent:} $\GammaAlpha(v) = ((\alpha-1)v + 1)^{\eta/(1-\alpha)}$. Then,
+    \begin{align*}
+    \bmufk[\mu_n](\theta_j) &= \dfrac{1}{M(\alpha-1)} \sum \limits_{m=1}^M \frac{k(\theta_j, Y_{m, n})}{\mu_n k(Y_{m, n})}  \left( \frac{\mu_n k(Y_{m, n})}{p(Y_{m, n})} \right)^{\alpha-1} - \frac{1}{\alpha-1}
+    \end{align*}
+    and
+    \begin{align*}
+      \lbd[j]{n+1} \propto \left( \frac{1}{M} \sum \limits_{m=1}^M \frac{k(\theta_j, Y_{m, n})}{\mu_n k(Y_{m, n})}  \left( \frac{p(Y_{m, n})}{\mu_n k(Y_{m, n})} \right)^{1-\alpha} + \cte(\alpha-1) \right)^{\frac{\eta}{1-\alpha}} \eqsp.
+      \end{align*}
+
+\end{itemize}
+\end{minipage} }
+
+
+
+\end{frame}
+
+
+
+\end{document} 

@@ -1,0 +1,362 @@
+\documentclass[usenames,dvipsnames]{beamer}
+
+\RequirePackage[OT1]{fontenc}
+\RequirePackage{amsthm,amsmath}
+\RequirePackage[numbers]{natbib}
+\resetcounteronoverlays{algocf}
+\usepackage{appendixnumberbeamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[ruled]{algorithm2e}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{changepage}
+\usepackage{empheq}
+\usepackage{mathrsfs}
+\usepackage{tikz}
+\usepackage{transparent}
+\usepackage{xcolor}
+\usepackage{xargs}
+
+\usepackage{pifont}% http://ctan.org/pkg/pifont
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+
+\input{defs.tex}
+
+\usetikzlibrary{tikzmark,positioning}
+
+\setbeamercovered{transparent}
+\DeclareOptionBeamer{compress}{\beamer@compresstrue}
+\ProcessOptionsBeamer
+\mode<presentation>
+
+\useoutertheme[footline=authortitle]{miniframes}
+\useinnertheme{circles}
+\usecolortheme{whale}
+\usecolortheme{orchid}
+\usetheme{Berkeley}
+
+\definecolor{beamer@blendedblue}{rgb}{0.137,0.466,0.741}
+
+\setbeamercolor{structure}{fg=beamer@blendedblue}
+\setbeamercolor{titlelike}{parent=structure}
+\setbeamercolor{frametitle}{fg=black}
+\setbeamercolor{title}{fg=black}
+\setbeamercolor{item}{fg=black}
+
+\mode
+<all>
+
+\usefonttheme{professionalfonts}
+
+\setbeamertemplate{footline}{%
+  \begin{beamercolorbox}[colsep=1.5pt]{upper separation line foot}
+  \end{beamercolorbox}
+  \begin{beamercolorbox}[ht=2.5ex,dp=1.125ex,%
+    leftskip=.3cm,rightskip=.3cm plus1fil]{title in head/foot}%
+    \leavevmode{
+    {\usebeamerfont{author in head/foot}\usebeamercolor[fg]{author in head/foot}\insertshortauthor  \,,\ Telecom Sudparis} \quad \quad \quad \quad \quad \quad \quad \quad \quad
+    \usebeamerfont{title in head/foot}\insertshorttitle}%
+    \hfill%
+    {\usebeamerfont{author in head/foot}\usebeamercolor[fg]{author in head/foot}\insertframenumber~/~\inserttotalframenumber}% NEW
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[colsep=1.5pt]{lower separation line foot}
+  \end{beamercolorbox}
+}
+
+\setbeamertemplate{headline}{}
+\setbeamertemplate{navigation symbols}{}
+
+\makeatletter
+\newcommand{\sub}[1][]{%
+    \beamer@ifempty{#1}{}{\def\beamer@defaultospec{#1}}%
+    \ifnum \@itemdepth >2\relax\@toodeep\else
+    \advance\@itemdepth\@ne
+    \beamer@computepref\@itemdepth% sets \beameritemnestingprefix
+    \usebeamerfont{itemize/enumerate \beameritemnestingprefix body}%
+    \usebeamercolor[fg]{itemize/enumerate \beameritemnestingprefix body}%
+    \usebeamertemplate{itemize/enumerate \beameritemnestingprefix body begin}%
+    \setlength{\csname leftmargin\romannumeral\@itemdepth\endcsname}{.5em}%
+    \list{}%
+     {\def\makelabel##1{%
+      {%
+      \hss\llap{{%
+       \usebeamerfont*{itemize \beameritemnestingprefix item}%
+       \usebeamercolor[fg]{itemize \beameritemnestingprefix item}##1}}%
+      }%
+     }%
+     }
+    \fi%
+    \beamer@cramped%
+    \raggedright%
+    \beamer@firstlineitemizeunskip%
+}
+\def\endsub{\enditemize}
+\makeatother
+
+\newcommand\Wider[2][3em]{%
+\makebox[\linewidth][c]{%
+  \begin{minipage}{\dimexpr\textwidth+#1\relax}
+  \raggedright#2
+  \end{minipage}%
+  }%
+}
+\newcommand\mycol[1]{{\color{red}#1}}
+\newcommand\mycoltwo[1]{{\color{blue}#1}}
+\newcommand\mycolthree[1]{{\color{Emerald}#1}}
+\newcommand\mycolm[1]{{\color{red}#1}}
+\newcommand\colbox[1]{\colorbox{Yellow}{#1}}
+\newcommand{\coloredeq}[1]{\begin{empheq}[box=\colorbox{yellow}]{align}#1\end{empheq}}
+\newcommand{\coloredeqstar}[1]{\begin{empheq}[box=\colorbox{yellow}]{align*}#1\end{empheq}}
+
+\title[MCMC: Theory and Applications]{Markov Chain Monte Carlo\\ \textsl{Theory and Practical applications}\\ \colbox{Chapter 4}: \alert{Geometric ergodicity and CLT}}
+\author{R. Douc and S. Le Corff}
+
+\institute{T\'el\'ecom SudParis, Institut Polytechnique de Paris \\ randal.douc@telecom-sudparis.eu \vspace{0.1cm}}
+
+\date[\today]{
+\includegraphics[scale=0.1]{{logoIMT}.png}
+}
+
+\begin{document}
+\frame{\titlepage}
+
+
+\begin{frame}{Outline}
+    \tableofcontents[sectionstyle=show, subsectionstyle=show/show/hide]
+\end{frame}
+
+\AtBeginSection[]{%
+\begin{frame}{Outline}
+    \tableofcontents[currentsection, subsectionstyle=show/show/hide]
+\end{frame}
+}
+
+
+
+
+
+
+\section{Introduction}
+
+\begin{frame}
+    \colbox{Geometric ergodicity} means that there exists constants $C>0$ and $\rho\in(0,1)$ such that for all $n\in\nset$, 
+    $$
+    \mycoltwo{\tvnorm{\mu P^n -\pi} \leq C \rho^n}
+    $$
+    where $\tvnorm{\cdot}$ is the \alert{total variation norm} (to be defined later) between two measures. 
+    \pause
+    \begin{enumerate}
+        \item $\mu P^n$ is the law of $X_n$ starting from $X_0\sim \mu$ \pause
+        \item $\pi$ is the law of $X_n$ starting from $X_0\sim \pi$\pause
+        \item \alert{Geometric ergodicity for Markov chains} should not be confused with the notion of \mycoltwo{ergodic dynamical systems}
+    \end{enumerate}
+    \pause
+    \colbox{CLT} means that  
+    $$
+    \mycoltwo{n^{-1/2} \sum_{k=0}^{n-1} \{h(X_k)-\pi(h)\} \dlim{\PP_\pi} \gauss(0,\sigma_\pi^2(h))}
+    $$
+    where $h$ belongs to some class of functions and $\sigma_\pi$ should be explicit. 
+\end{frame}
+
+
+\section{Coupling and total variation}
+\begin{frame}
+    \frametitle{What is a coupling?}
+    \begin{definition}
+        Let $(\Xset,\Xsigma)$ be a measurable space and let $\nu,\mu$ be two probability measures $\mu,\nu \in \meas 1(\Xset)$. We define $\coupling(\mu,\nu)$, the \colbox{coupling set} associated to $(\mu,\nu)$ as follows
+    $$ 
+\alert{    \coupling(\mu,\nu)=\set{\gamma\in\meas 1(\Xset^2)}{\gamma(\cdot\times\Xset)=\mu(\cdot), \gamma(\Xset\times \cdot)=\nu(\cdot)}}     
+    $$
+       Any $\gamma\in\coupling(\mu,\nu)$ is called a \colbox{coupling} of $(\mu,\nu)$.
+        \end{definition}
+        \pause
+        \begin{enumerate}
+            \item In words, $\gamma$ is a \colbox{coupling of $(\mu,\nu)$} if the following property holds: if $(X,Y) \sim \gamma$, then we have the \colbox{marginal conditions}: $X\sim\mu$ and $Y\sim \nu$. \pause 
+            \item \colbox{Example:} The law of \alert{$(X,X)$} where $X\sim \mu$ is a coupling of $(\mu,\mu)$. Other example if $X\sim \mu$ and $Y\sim \mu$ and $X \perp Y$, then, the law of \alert{$(X,Y)$} is a coupling of $(\mu,\mu)$. 
+        \end{enumerate}
+\end{frame}
+
+
+\begin{frame}
+    \frametitle{What are the different expressions of the total variation norm?}
+    \begin{definition} \label{def:totvar}
+        \index{total variation distance}
+        Let $(\Xset,\Xsigma)$ be a measurable space and let $\nu,\mu$ be two probability measures $\mu,\nu \in \meas 1(\Xset)$. Then the \colbox{total variation norm} between $\mu$ and $\nu$ noted $\tvnorm{\mu-\nu}$, is defined by
+        \begin{align}
+        \tvnorm{\mu-\nu}&=\alert{2\sup\set{|\mu(f)-\nu(f)|}{f\in \funcset{}(\Xset), 0\leq f\leq 1}} \label{eq:def:totvar:one}\\
+                &=\mycoltwo{\int |\varphi_0-\varphi_1|(x) \zeta(\rmd x)} \label{eq:def:totvar:two}\\
+                &=\textcolor{brown}{2\inf\set{\PP(X\neq Y) }{ (X,Y) \sim \gamma \mbox{ where } \gamma \in \coupling(\mu,\nu)}} \label{eq:def:totvar:three}
+        \end{align}
+        where \colbox{$\mu(\rmd x)=\varphi_0(x) \zeta(\rmd x)$} and \colbox{$\nu(\rmd x)=\varphi_1(x) \zeta(\rmd x)$}.
+        \end{definition}
+        \mycolthree{Proof is given in the lecture notes}
+\end{frame}
+
+\section{Geometric ergodicity}
+
+\begin{frame}
+    \frametitle{Two types of assumptions}
+
+        \begin{block}{Assumption A1}
+         [\colbox{\bf Minorizing condition}] for all $d>0$, there exists $\epsilon_d>0$ and a probability measure $\nu_d$ such that \index{minorizing condition}
+        \begin{equation}
+        \label{eq:minor}
+        \alert{\forall x\in C_d\eqdef\{V\leq d\}, \quad
+        P(x,\cdot) \geq \epsilon_d \nu_d(\cdot)}
+        \end{equation}
+        \end{block}
+        \pause
+        \begin{block}{Assumption A2}
+         [\colbox{\bf Drift condition}] \index{drift condition}there exists a constants $(\lambda,b)\in (0,1) \times \rset^+$ such that for all $x\in\Xset$,
+        $$
+        \alert{PV(x) \leq \lambda V(x)+b}
+        $$
+        \end{block}
+        
+
+\end{frame}
+\begin{frame}
+    \frametitle{Geometric ergodicity and initial condition}
+    \begin{theorem}{\colbox{\textbf{(Forgetting of the initialization)}}}\label{thm:ergo:geom}  \index{geometric ergodicity}
+        Assume (A1) and (A2)\  for some measurable function $V\geq1$.
+        \pause
+        Then, there exists a constant $\varrho \in (0,1)$ such that for all $x,x'\in\Xset$ and all $n\in\nset$,
+        $$
+        \alert{\tvnorm{P^n(x,\cdot)-P^n(x',\cdot)} \leq \varrho^n \lrb{V(x)+V(x')}}  .
+        $$
+        \end{theorem}
+       \mycolthree{Proof is hard. It is given in the lecture notes.} 
+\end{frame}
+\begin{frame}
+    \frametitle{The geometric ergodicity theorem}
+    \begin{corollary}{\colbox{\bf (Geometric ergodicity)}} \label{cor:ergod}
+        Assume that (A1) and (A2)\ hold for some measurable function $V\geq 1$. \pause Then, the Markov kernel $P$ admits a \mycoltwo{unique invariant probability measure $\pi$}. \pause Moreover, $\pi(V)<\infty$ and there exists constants $(\varrho,\alpha) \in (0,1) \times \rset^+$ such that for all $\mu\in\meas 1(\Xset)$ and all $n\in\nset$,
+        $$
+        \alert{\tvnorm{\mu P^n-\pi} \leq \alpha \varrho^n \mu(V)}  .
+        $$
+        \end{corollary}
+        \mycolthree{Proof should be done on the blackboard}
+    
+
+\end{frame}
+\section{Central Limit theorem}
+\subsection{Recap on martingales}
+
+\begin{frame}
+    % \frametitle{Refresh on Martingales}
+    Let $(M_n)_{n \in \nset}$ be a sequence of random variables on the same probability space $(\Omega,\mcf,\PP)$ and let $(\mcf_n)_{n\in\nset}$ be a filtration (ie for all $n\in\nset$, $\mcf_n\subset \mcf_{n+1}\subset \mcf$). 
+    \begin{definition}
+        We say that $(M_n)_{n \in \nset}$ is a \colbox{\rm $(\mcf_n)$-martingale} if for all $n\in\nset$, $M_n$ is integrable and for all $n\geq 1$,
+    $$
+    \alert{\PE[M_n|\mcf_{n-1}]=M_{n-1}}
+    $$
+    \pause 
+    The \colbox{\em increment process} of the martingale is by definition $(M_{n+1}-M_n)_{n\in\nset}$.
+    \end{definition}
+    \pause    
+    \begin{theorem} \label{thm:clt:marting} \index{martingales!central limit theorem}
+    If a sequence $(M_n)_{n \in \nset}$ is a \colbox{$(\mcf_n)$-martingale with stationary} \colbox{and square integrable increments}, then
+    $$
+    \alert{n^{-1/2} M_n \dlim{\PP} \gauss\lr{0,\PE[(M_1-M_0)^2]}}
+    $$
+    \end{theorem}
+\end{frame}
+
+\subsection{The Poisson equation}
+\begin{frame}
+    \frametitle{What is the Poisson equation ?}
+    \begin{definition} \index{Poisson equation}
+        For a given measurable function $h$ such that $\pi|h|<\infty$, the \colbox{Poisson equation} is defined by
+        \begin{equation} \label{eq:Poisson}
+        \alert{\hat h - P \hat h=h-\pi(h)}
+        \end{equation}
+        A solution to the Poisson equation is a function $\hat h$ for which \eqref{eq:Poisson} holds provided that $P|\hat h|(x)<\infty$ for all $x\in\Xset$.
+        
+        \end{definition}
+\end{frame}
+\begin{frame}
+    \frametitle{Link between Poisson equations and Martingales}
+    \begin{center}
+        \mycoltwo{ \bf Link between Poisson equations and Martingales}
+    \end{center}Define
+    \begin{align*}
+        S_n(h)&=\sum_{k=0}^{n-1} \lrcb{h(X_k)-\pi(h)} \pause\\
+        &=M_n(\hat h)+\hat h(X_0)-\hat h(X_n)    
+    \end{align*}
+    \pause
+    where
+    \begin{equation}\label{eq:def:marting}
+    \alert{M_n(\hat h)=\sum_{k=1}^n \lrcb{\hat h(X_k)-P\hat h(X_{k-1})}}
+    \end{equation}
+    \pause
+    Note that $\lrcb{M_n(\hat h)}_{n\in\nset}$ is indeed a \colbox{$(\mcf_k)$-martingale} where $\mcf_k=\sigma(X_0,\ldots,X_k)$. \pause Indeed we have
+    \mycoltwo{\begin{align*}
+        \PE[M_n(\hat h)|\mcf_{n-1}]-M_{n-1}(h)&=\PE[\hat h(X_n)-P\hat h(X_{n-1})|\mcf_{n-1}]\\
+        &=P\hat h(X_{n-1})-P\hat h(X_{n-1})=0
+    \end{align*}}
+    
+    
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{How can we express the solution of a Poisson equation?}
+    \begin{theorem} \label{thm:solPoiss}
+        Assume that (A1) and (A2) hold for some measurable function $V\geq 1$. Then, for any function $h$ such that $|h|\leq V$, the function
+       \begin{equation}\label{eq:solPoisson}
+        \alert{\hat h=\sum_{n=0}^\infty \lrcb{P^n h-\pi(h)}}
+       \end{equation}
+       is well-defined. Moreover, $\hat h$ is a \colbox{solution of the Poisson} \colbox{ equation} associated to $h$ and there exists a constant $\gamma$ such that  for all $x\in\Xset$,
+       $$
+       \alert{|\hat h(x)|\leq \gamma V(x)}
+       $$
+        \end{theorem}
+        \mycolthree{Proof should be done on the blackboard}
+\end{frame}
+
+\begin{frame}
+    \frametitle{CLT}
+    \begin{theorem}{\colbox{\bf (CLT with Poisson assumption)}}
+        \label{thm:clt-poisson} \index{central limit theorem}
+        Let $P$ be a  Markov kernel with a unique invariant probability measure $\pi$. Let
+        $h \in \ltwo(\pi)$. Assume that there exists a solution
+        \colbox{$\hat{h} \in \ltwo(\pi)$} to the Poisson equation $\hat{h} - P \hat{h} = h$. \pause Then
+        \begin{align*}
+            \alert{n^{-1/2} \sum_{k=0}^{n-1} \{h(X_k)-\pi(h)\} \dlim{\PP_\pi} \gauss(0,\sigma_\pi^2(h))} \eqsp ,
+        \end{align*}
+        where
+        \begin{equation}
+        \label{eq:equality-variance}
+        \alert{\sigma_\pi^2(h) = \PE_\pi[ \{\hat{h}(X_1)-P\hat{h}(X_0)\}^2]} %= \pi(\hat{h}^2 - (P\hat{h})^2)
+      %  = 2 \pi(h\hat{h})-\pi(h^2) \eqsp.
+        \end{equation}
+      \end{theorem}
+      \mycolthree{Proof should be done on the blackboard}
+    
+
+\end{frame}
+\subsection{Central limit theorems}
+\begin{frame}
+    \frametitle{CLT}
+    \begin{theorem}{\colbox{\bf (CLT with A1-A2 assumptions)}} \label{thm:clrHairer}
+        Assume that (A1 and (A2)\ hold for some function $V$. \pause Then, for all measurable functions $h$ such that $|h|^2\leq V$,
+          \begin{align*}
+            \alert{n^{-1/2} \sum_{k=0}^{n-1} \{h(X_k)-\pi(h)\}  \dlim{\PP_\pi} \gauss(0,\sigma_\pi^2(h))} \eqsp ,
+          \end{align*}
+          where
+          \begin{equation}
+          \label{eq:equality-variance}
+          \alert{\sigma_\pi^2(h) = \PE_\pi[ \{\hat{h}(X_1)-P\hat{h}(X_0)\}^2]} %= \pi(\hat{h}^2 - (P\hat{h})^2)
+        %  = 2 \pi(h\hat{h})-\pi(h^2) \eqsp.
+          \end{equation}
+        and $\hat h$ is defined as in \eqref{eq:solPoisson}.
+        \end{theorem}
+        
+        \mycolthree{Proof should be done on the blackboard} 
+
+\end{frame}
+\end{document} 
