@@ -226,34 +226,35 @@
 
 
 
-\title{Markov Chain Monte Carlo\\ {\em Theory and practical applications}}
-\author{Randal Douc and Sylvain Le Corff}
-\subtitle{A crash course in Monte Carlo methods by Markov chains
-\begin{figure}[!h]
-\centering
-\includegraphics[height=80pt]{hamilton.jpg}
-\includegraphics[height=80pt]{bayes.jpg}
-\includegraphics[height=80pt]{markov.jpg}
-\includegraphics[height=80pt]{ulam.jpg}
-\includegraphics[height=80pt]{metropolis.png}
-\includegraphics[height=80pt]{hastings.jpg}
-\end{figure}
+\title{Sampling for generative models\\ {\em Theory and practical applications}}
+\author{Sylvain Le Corff}
+\subtitle{A crash course Monte Carlo methods for generative models
+%\begin{figure}[!h]
+%\centering
+%\includegraphics[height=80pt]{hamilton.jpg}
+%\includegraphics[height=80pt]{bayes.jpg}
+%\includegraphics[height=80pt]{markov.jpg}
+%\includegraphics[height=80pt]{ulam.jpg}
+%\includegraphics[height=80pt]{metropolis.png}
+%\includegraphics[height=80pt]{hastings.jpg}
+%\end{figure}
 }
 \date{}
 
 \maketitle
 \chapter*{Introduction}
-This document contains the lecture notes for the course given at the  MSc. Data Science (2nd year),  Institut Polytechnique de Paris.\footnote{\url{https://www.ip-paris.fr/education/masters/mention-mathematiques-appliquees-statistiques/master-year-2-data-science}} The schedule is roughly the following:
-\begin{enumerate}[$\blacktriangleright$]
-\item Chapter 1-2. Lecture, 1.5H. Tutorial: 2H.
-\item Chapter 2-3. Lecture, 1.5H. Tutorial: 2H.
-\item Chapter 3-4. Lecture, 1.5H. Tutorial: 2H.
-\item Chapter 4-5. Lecture, 1.5H. Tutorial: 2H.
-\item Chapter 5-6. Lecture, 1.5H. Tutorial: 2H.
-\item Chapter 6. Lecture, 1.5H. Tutorial: 2H.
-\end{enumerate}
+%This document contains the lecture notes for the course given at the  MSc. Data Science (2nd year),  Institut Polytechnique de Paris.\footnote{\url{https://www.ip-paris.fr/education/masters/mention-mathematiques-appliquees-statistiques/master-year-2-data-science}} The schedule is roughly the following:
+%\begin{enumerate}[$\blacktriangleright$]
+%\item Chapter 1-2. Lecture, 1.5H. Tutorial: 2H.
+%\item Chapter 2-3. Lecture, 1.5H. Tutorial: 2H.
+%\item Chapter 3-4. Lecture, 1.5H. Tutorial: 2H.
+%\item Chapter 4-5. Lecture, 1.5H. Tutorial: 2H.
+%\item Chapter 5-6. Lecture, 1.5H. Tutorial: 2H.
+%\item Chapter 6. Lecture, 1.5H. Tutorial: 2H.
+%\end{enumerate}
 Numerical illustrations through Jupyter Notebook are given during the course and the source can be run directly in a {\em colaboratory google site} \href{https://colab.research.google.com/drive/1Ey5TNx-_74gPH0FG-rhXSuGGok0T10wS\#}{by following this link}.
-\textcolor{red}{Add github repository with notebooks: independent MH, MALA, HMC.} Since these notes only focus on Markov Chains Monte Carlo algorithms, we only give a flavor of Markov chain theory. It can be a bit frustrating to some of you and we strongly encourage the most curious readers to consult one of the books.
+%\textcolor{red}{Add github repository with notebooks: independent MH, MALA, HMC.} 
+The most curious readers can consult one of these books.
 \begin{itemize}
 \item {\em Markov Chains and Stochastic Stability} S. Meyn and R. Tweedie. Springer, 2005 (2nd edition).
 \item {\em Markov Chains} by R. Douc, E. Moulines, P. Priouret and P. Soulier. Springer, jan. 2019.
@@ -270,11 +271,11 @@ We thank Kamelia Daudel for her thorough reading and insightful comments.
 \subsection*{Notation}
 The following notations are used throughout these lecture notes.
 \begin{itemize}
-\item i.i.d means independent and identically distributed.
-\item r.v. means random variables.
+\item i.i.d.:  independent and identically distributed.
+\item r.v.:  random variables.
 \item For $r,s \in \nset$ such that $r\leq s$, we write $[r:s]=\{r,r+1,\ldots,s\}$.
-\item $X\indep Y$ means $X$ and $Y$ are independent random variables.
-\item $X \eqLaw Y$ means $X$ and $Y$ have the same law.
+\item $X\indep Y$ means that $X$ and $Y$ are independent random variables.
+\item $X \eqLaw Y$ means that $X$ and $Y$ have the same law.
 \item $\liminf_n a_n=\lim_{n \to\infty} \lr{\inf_{k \geq n} a_k}$ and similarly, $\limsup_n a_n=\lim_{n \to\infty} \lr{\sup_{k \geq n} a_k}$. Moreover, $\lim_n a_n$ exists if and only if $\liminf_n a_n=\limsup_n a_n$.
 \item For any $a\in \rset$, $a^+=\max(a,0)$ and $a^-=\max(-a,0)=-\min(a,0)$ and we have $|a|=a^++a^-$ and $a=a^+-a^-$.
 \end{itemize}
@@ -285,7 +286,7 @@ We also consider the following notions for convergence for random variables.
      \item For all bounded continuous functions $h$, $\lim_{n}\PE[h(X_n)]=\PE[h(X)]$.
     \item  For all $A \in \borel(\rset)$ such that $\PP(X \in \partial A)=0$,  $\lim_n \PP(X_n \in A)=\PP(X\in A)$.
         \item For all $x\in \rset$ such that $\PP(X=x)=0$, $\lim_n \PP(X_n \leq x)=\PP(X \leq x)$.
-\item For all $u \in \rset$, $\lim_n \PP\lrb{\rme^{\rmi u X_n}}=\PE\lrb{\rme^{\rmi u X}}$.
+\item For all $u \in \rset$, $\lim_n \PE\lrb{\rme^{\rmi u X_n}}=\PE\lrb{\rme^{\rmi u X}}$.
      \end{enumerate}
      In (b), the notation $\partial A$ means the frontier of $A$, that is, the set of points $x$ such that in any neighborhood of $x$, there are an infinite number of distinct points of $A$ and an infinite number of points in $A^c$.
      By abuse of terminology, we may also say that \fbox{\em \bf $X_n$ weakly converges to $X$} instead of stating the distribution of $X_n$ converges weakly to the distribution of $X$.
@@ -300,7 +301,7 @@ $$
 \end{enumerate}
 \fbox{Almost sure convergence implies convergence in probability}.
 \newcommand{\var}{\mathrm{var}}
-We recall the following properties.
+The following properties are used many times in these lecture notes.
 \begin{enumerate}[(i)]
 \item If $X_n \weaklim X$ then for all continuous functions $f$, $f(X_n) \weaklim f(X)$. Note that this property  holds, when $f$ is continuous (and not necessarily bounded), for example $f(u)=u^2$ so that $X_n^2 \weaklim X^2$.
 \item \textbf{The Slutsky Lemma.} If $X_n \plim{\PP} c$ where $c$ is a constant and if $Y_n \weaklim Y$, then $(X_n,Y_n) \weaklim (c,Y)$ that is for all continuous functions $f$, $f(X_n,Y_n) \weaklim f(c,Y)$.
@@ -324,29 +325,29 @@ We recall the following properties.
 Markov chains, Markov property, Metropolis Hastings, canonical space.
 \end{keywords}
 
-These short lecture notes introduce very basic tools in
-the Markov Chain Monte Carlo (MCMC) theory. We only focus on the
-most fundamental properties that will be useful for a first understanding
-of Metropolis-Hastings (MH) algorithms. Let us start with a gentle and
-smooth introduction to Markov chains.
+%These short lecture notes introduce very basic tools in
+%the Markov Chain Monte Carlo (MCMC) theory. We only focus on the
+%most fundamental properties that will be useful for a first understanding
+%of Metropolis-Hastings (MH) algorithms. Let us start with a gentle and
+%smooth introduction to Markov chains.
 
 \section{Main notation}
 
 Let $(\Xset,\Xsigma)$ be a measurable space, i.e.  $\Xsigma$ is a $\sigma$-algebra on $\Xset$, and consider the following notations.
 \begin{itemize}
-\item $\meas +(\Xset)$ is the set of (non-negative) measures on $(\Xset,\Xsigma)$.
+\item $\meas +(\Xset)$ is the set of non-negative measures on $(\Xset,\Xsigma)$.
 \item $\meas 1(\Xset)$ is the set of probability measures on $(\Xset,\Xsigma)$.
 \item $\funcset{}(\Xset)$ is the set of real-valued measurable functions
 $f$ on $\Xset$ and $\funcset{}_{+}(\Xset)$ the set of non-negative measurable
 functions on $\Xset$.
 \item If $k\leq\ell$,  $u_{k:\ell}$ means $(u_{k},\ldots,u_{\ell})$ and $u_{k:\infty}$ means $(u_{k+\ell})_{\ell\in\nset}$.
 \end{itemize}
-Other notation will be introduced progressively.
+%Other notation will be introduced progressively.
 
 \section{Definitions}
 
-We first describe a Markov kernel, which will then be fundamental
-for the definition of a Markov chain. 
+%We first describe a Markov kernel, which will then be fundamental
+%for the definition of a Markov chain. 
 \bs
 \begin{definition}
 We\index{Markov kernel} say that $P:\Xset\times\Xsigma\to\rset^{+}$
@@ -356,7 +357,7 @@ is a Markov kernel, if for all $(x,A)\in\Xset\times\Xsigma$,
 \item $\Xsigma\ni B\mapsto P(x,B)$ is a probability measure on $(\Xset,\Xsigma)$.
 \end{itemize}
 \end{definition}
-\es In words, for all $(x,A)\in\Xset\times\Xsigma$, as a function
+\es For all $(x,A)\in\Xset\times\Xsigma$, as a function
 of the first component only, $P(\cdot,A)$ is measurable and as a
 function of the second component only, $P(x,\cdot)$ is a probability
 measure. In particular, $P(x,\Xset)=1$ for all $x\in\Xset$. Since
@@ -365,7 +366,7 @@ $P(x,\rmd y)$. For example,
 $$
 P(x,A)=\int_{\Xset}\indi A(y)P(x,\rmd y)=\int_{A}P(x,\rmd y)\eqsp.
 $$
-In almost all the course, a Markov kernel $P$ allows to move a point $x$ from a measurable space $(\Xset,\Xsigma)$ to another point on the same measurable space, that is, $P$ is defined on $\Xset\times \Xsigma$ but we can more generally define a Markov kernel from a measurable space $(\Xset,\Xsigma)$ to another measurable space $(\Yset,\Ysigma)$. In such case, $P$ will be a  Markov kernel on $\Xset \times \Ysigma$. We can now move on to the definition of a Markov chain.\bs
+In almost all the course, a Markov kernel $P$ allows to move a point $x$ from a measurable space $(\Xset,\Xsigma)$ to another point on the same measurable space, that is, $P$ is defined on $\Xset\times \Xsigma$ but we can more generally define a Markov kernel from a measurable space $(\Xset,\Xsigma)$ to another measurable space $(\Yset,\Ysigma)$. In such case, $P$ will be a  Markov kernel on $\Xset \times \Ysigma$. 
 \begin{definition}
 \label{def:MarkovChain} Let\index{Markov chain} $\seq{X_{k}}{k\in\nset}$
 be a sequence of random variables on the same probability space $(\Omega,\mcg,\PP)$
@@ -378,14 +379,14 @@ $\PP$-a.s.
 \item $\PP(X_{0}\in A)=\nu(A)$.
 \end{enumerate}
 \end{definition}
-\es Note that in the definition we consider $\PP(X_{k+1}\in A|X_{0:k})$,
+Note that in the definition we consider $\PP(X_{k+1}\in A|X_{0:k})$,
 that is, the conditional probability is with respect to the sigma-field
 $\sigma(X_{0:k})$. We can actually replace $\sigma(X_{0:k})$ by
 $\mcf_{k}$ as soon as we know that $(X_{k})_{k\geq0}$ is $(\mcf_{k})_{k\geq0}$-adapted.
 
-What does it mean exactly? Well, recall that if $\seq{\mcf_{k}}{k\in\nset}$
+If $\seq{\mcf_{k}}{k\in\nset}$
 is a sequence of embedded sigma-fields on $\Xset$ (that is, $\mcf_{k}\subset\mcf_{k+1}$
-for all $k$), then $\seq{\mcf_{k}}{k\in\nset}$ is called a \textbf{filtration} \index{filtration}
+for all $k\in\nset$), then $\seq{\mcf_{k}}{k\in\nset}$ is called a \textbf{filtration} \index{filtration}
 on $\Xset$ and we say that $(X_{k})_{k\geq0}$ is $(\mcf_{k})_{k\geq0}$-adapted
 if $X_{k}$ is $\mcg/\mcf_{k}$-measurable for all $k\in\nset$. Of
 course, the most natural filtration for $\seq{X_{k}}{k\in\nset}$
@@ -411,9 +412,9 @@ This allows to apply the tower property, which yields
 and therefore if we assume \Eqref{def:MC:F-k}, then as soon as $(X_{k})_{k\geq0}$
 is $(\mcf_{k})_{k\geq0}$-adapted, we can conclude that $\seq{X_{k}}{k\in\nset}$
 is a Markov chain with Markov kernel $P$. Why is it useful? Well,
-sometimes you define iteratively $X_{k+1}$ using other variables
+Sometimes, we define iteratively $X_{k+1}$ using other variables
 rather than $X_{0:k}$ only and therefore, considering $\PP(X_{k+1}\in A|\mcf_{k})$
-is easier to deal with. Let us see it in action through a very simple
+is easier to deal with. Let us see it in action with a very simple
 example.
 \begin{example}
 Let $\seq{\epsilon_{k}}{k\geq1}$ be i.i.d. random variables on $\rset^{p}$
@@ -442,15 +443,15 @@ filtration of $\seq{X_{k}}{k\in\nset}$ but we even do not need to
 check this property for getting that $\seq{X_{k}}{k\in\nset}$ is
 a Markov chain.
 \end{example}
-\blb\textbf{ What have we learned so far?} At this stage, we are able
+\blb\textbf{ Key notions. } At this stage, we know how 
 to solve typical exercises where some random variables are given and
 the question is to determine whether these random variables form a
 Markov chain or not and if yes, what is the expression of the associated
 Markov kernel. \elb
 As an illustration, interested readers might try to solve Exercise~\ref{ex:arch}.
-\subsection{Additional notation}
 
-We are now ready (and eager) to absorb frantically other notation...
+
+\subsection{Additional notation}
 For all $\mu\in\meas +(\Xset)$, all Markov kernels $P$, $Q$ on
 $\Xset\times\Xsigma$, and all measurable non-negative or bounded
 functions on $h$ on $\Xset$, we use the following convention and
@@ -465,11 +466,10 @@ $\mu P$ is also a probability measure (since $\mu P(\Xset)=\int_{\Xset}\mu(\rmd 
 With this notation, using Fubini's theorem,
 \begin{align*}
 \mu(P(Qh)) & =(\mu P)(Qh)=(\mu(PQ))h\\
- & =\mu((PQ)h)=\idotsint_{\Xset^{3}}\mu(\rmd x)P(x,\rmd y)Q(y,\rmd z)h(z).
+ & =\mu((PQ)h)=\int_{\Xset^{3}}\mu(\rmd x)P(x,\rmd y)Q(y,\rmd z)h(z).
 \end{align*}
 Therefore, all these parenthesis can be discarded and we can write
-$\mu PQh$ without any ambiguity. That is excellent news because it
-is simpler to deal with expressions without all these parenthesis.
+$\mu PQh$ without any ambiguity. 
 To sum up, measures act on the left side of a Markov kernel whereas
 functions acts on the right side. To make sure you have mastered all
 the notation, check your understanding with the following equalities
@@ -493,12 +493,11 @@ Then, for any $n\in\nset$, the law of $X_{0:n}$ is $\nu(\rmd x_{0})\prod_{i=0}^{
 \begin{svmultproof}
 Recall that for all $(n,A)\in\nset\times\Xsigma$, $\PP(X_{n+1}\in A|X_{0:n})=P(X_{n},A)$,
 $\PP$-a.s. or equivalently for all non-negative measurable functions
-$h_{k+1}$ on $\Xset$, $\PE\left[h_{n+1}(X_{n+1})|X_{0:n}\right]=Ph_{n+1}(X_{n})$ $\PP$-a.s.
+$h_{n+1}$ on $\Xset$, $\PE\left[h_{n+1}(X_{n+1})|X_{0:n}\right]=Ph_{n+1}(X_{n})$ $\PP$-a.s.
 We now show by induction that for all $n\in\nset$,
 \begin{center}
 $(H_{n})$ the law of $X_{0:n}$ is $\nu(\rmd x_{0})\prod_{i=0}^{n-1}P(x_{i},\rmd x_{i+1})$.
 \par\end{center}
-
 We first note that $(H_{0})$ is true since by assumption, $X_{0}\sim\nu$.
 Assume now that $(H_{n})$ holds for some $n\in\nset$. Then, for
 all non-negative measurable functions $h_{0},\ldots,h_{n+1}$ on $\Xset$,
@@ -510,27 +509,26 @@ the tower property yields
  and since the inner term in the rhs only depends on $X_{0:n}$, we
 can apply $(H_{n})$ and thus,
 \begin{align*}
-\PE\left[\prod_{i=0}^{n+1}h_{i}(X_{i})\right] & =\idotsint_{\Xset^{n+1}}\left[\nu(\rmd x_{0})\prod_{i=0}^{n-1}P(x_{i},\rmd x_{i+1})\right]\left(\prod_{i=0}^{n}h_{i}(x_{i})\right)\ Ph_{n+1}(x_{n})\\
- & =\idotsint_{\Xset^{n+1}}\left[\nu(\rmd x_{0})\prod_{i=0}^{n}P(x_{i},\rmd x_{i+1})\right]\left(\prod_{i=0}^{n+1}h_{i}(x_{i})\right),
+\PE\left[\prod_{i=0}^{n+1}h_{i}(X_{i})\right] & =\int_{\Xset^{n+1}}\left[\nu(\rmd x_{0})\prod_{i=0}^{n-1}P(x_{i},\rmd x_{i+1})\right]\left(\prod_{i=0}^{n}h_{i}(x_{i})\right)\ Ph_{n+1}(x_{n})\\
+ & =\int_{\Xset^{n+1}}\left[\nu(\rmd x_{0})\prod_{i=0}^{n}P(x_{i},\rmd x_{i+1})\right]\left(\prod_{i=0}^{n+1}h_{i}(x_{i})\right),
 \end{align*}
- showing that the law of $X_{0:n+1}$ is $\nu(\rmd x_{0})\prod_{i=0}^{n}P(x_{i},\rmd x_{i+1})$
+which shows that the law of $X_{0:n+1}$ is $\nu(\rmd x_{0})\prod_{i=0}^{n}P(x_{i},\rmd x_{i+1})$
 and $\left(H_{n+1}\right)$ is thus proved.
 \end{svmultproof}
-
 As a consequence, the marginal law of $X_{n}$ is given by integrating
 $\nu(\rmd x_{0})\prod_{i=0}^{n-1}P(x_{i},\rmd x_{i+1})$ over $x_{0:n-1}$
 and thus, for all $A\in\Xsigma$,
 \[
-\PP(X_{n}\in A)=\idotsint_{\Xset^{n+1}}\indi A(X_{n})\nu(\rmd x_{0})\prod_{i=0}^{n-1}P(x_{i},\rmd x_{i+1})=\nu P^{n}(A),
+\PP(X_{n}\in A)=\int_{\Xset^{n+1}}\indi A(X_{n})\nu(\rmd x_{0})\prod_{i=0}^{n-1}P(x_{i},\rmd x_{i+1})=\nu P^{n}(A),
 \]
  that is, $\nu P^{n}$ is the distribution of $X_{n}$ or in a compact
 notation, $\boxed{X_{n}\sim\nu P^{n}}$.
 
 \section{Canonical space} \index{canonical space}
 
-So far, the situation is the following: the $\seq{X_{k}}{k\in\nset}$
+In the previous sections, the $\seq{X_{k}}{k\in\nset}$
 are already given and we check the two items in the definition of
-a Markov chain (\Defref{MarkovChain}) with Markov kernel P and initial
+a Markov chain (\Defref{MarkovChain}) with Markov kernel $P$ and initial
 distribution $\nu$. We now turn to the reverse situation where a
 couple $(\nu,P)$  of initial distribution and Markov kernel are given
 beforehand and we intend to construct the random variables $\seq{X_{k}}{k\in\nset}$
@@ -550,19 +548,19 @@ $(\Omega_{n},\mcg_{n},\PP_{\nu,n})$ as follows:
 $\PP_{\nu,n}$ is the probability measure defined on $(\Omega_{n},\mcg_{n})$
 by
 \[
-\mcg_{n}\ni A\mapsto\PP_{\nu,n}(A)=\idotsint_{\Xset^{n+1}}\indi A(\omega_{0:n})\nu(\rmd\omega_{0})\prod_{i=1}^{n}P(\omega_{i-1},\rmd\omega_{i}),
+\mcg_{n}\ni A\mapsto\PP_{\nu,n}(A)=\int_{\Xset^{n+1}}\indi A(\omega_{0:n})\nu(\rmd\omega_{0})\prod_{i=1}^{n}P(\omega_{i-1},\rmd\omega_{i}),
 \]
 \end{itemize}
-and for $\omega\in\Omega_{n}$, set $X_{k}(\omega)=\omega_{k}$, (that
-$X_{k}(\omega)$ is the projection of the k-th component of $\omega$).
+and for $\omega\in\Omega_{n}$, set $X_{k}(\omega)=\omega_{k}$, i.e.
+$X_{k}(\omega)$ is the projection of the k-th component of $\omega$.
 
 We aim to show that for all $A\in\Xsigma$ and all $k\in[0:n-1]$,
 we have $\PP_{\nu,n}(X_{k+1}\in A|X_{0:k-1})=P(X_{k},A),\;\PP_{\nu,n}-a.s.$
 To do so, write for any $k\in[0:n-1]$, any non-negative measurable
 function $h$ on $\Xset^{k+1}$ and any $A\in\Xsigma$
 \begin{align*}
-\PE_{\nu,n}\lrb{h(X_{0:k})\indi A(X_{k+1})} & =\idotsint_{\Xset^{k+2}}h(\omega_{0:k})\indi A(\omega_{k+1})\nu(\rmd\omega_{0})\prod_{i=1}^{k+1}P(\omega_{i-1},\rmd\omega_{i})\\
- & =\idotsint_{\Xset^{k+2}}h(\omega_{0:k})P(\omega_{k},A)\nu(\rmd\omega_{0})\prod_{i=1}^{k}P(\omega_{i-1},\rmd\omega_{i})\\
+\PE_{\nu,n}\lrb{h(X_{0:k})\indi A(X_{k+1})} & =\int_{\Xset^{k+2}}h(\omega_{0:k})\indi A(\omega_{k+1})\nu(\rmd\omega_{0})\prod_{i=1}^{k+1}P(\omega_{i-1},\rmd\omega_{i})\\
+ & =\int_{\Xset^{k+2}}h(\omega_{0:k})P(\omega_{k},A)\nu(\rmd\omega_{0})\prod_{i=1}^{k}P(\omega_{i-1},\rmd\omega_{i})\\
  & =\PE_{\nu,n}\lrb{h(X_{0:k})P(X_{k},A)}.
 \end{align*}
 Since h is arbitrary, this is equivalent to saying that $\PP_{\nu,n}(X_{k+1}\in A|X_{0:k})=P(X_{k},A)\,,\quad\PP-a.s.$
@@ -570,14 +568,15 @@ Since h is arbitrary, this is equivalent to saying that $\PP_{\nu,n}(X_{k+1}\in 
 \subsection{The general case }
 
 We now consider the general case where $k\in\nset$ instead of $k\in[0:n-1]$.
-Define the coordinate process $(X_{n})$ by $X_{n}(\omega)=\omega_{n}$
+Define the coordinate process $(X_{n})_{n\geq 0}$ by $X_{n}(\omega)=\omega_{n}$
 for all $\omega\in\Xset^{\nset}$. We will sometimes use $X_{k:\ell}:\omega\mapsto(\omega_{k},\ldots,\omega_{\ell})$
 for $k\leq\ell$ and by extension $X_{k:\infty}:\omega\mapsto(\omega_{k},\ldots,\omega_{\ell},\omega_{\ell+1},\dots)$.
-In particular, $X_{0:\infty}(\omega)=I(\omega)=\omega$ where $I$
+In particular, $X_{0:\infty}(\omega)=\mathrm{Id}(\omega)=\omega$ where $\mathrm{Id}$
 is the identity function.
 
 \bs
 \begin{theorem}
+\label{th:canonical}
 \textbf{(The canonical space)}\index{canonical space} Let $(\Xset,\Xsigma)$ be a measurable
 space and let $P$ be a Markov kernel on $\Xset\times\Xsigma$. For
 every probability measure $\nu\in\meas 1(\Xset)$, there exists a
@@ -595,8 +594,7 @@ here that $(\Xset,\Xsigma)$ is a measurable space, which is quite
 minimal). In the canonical representation, we therefore set $\Omega=\Xset^{\nset}$,
 $\mcg=\Xsigma^{\otimes\nset}$ and $\PP=\PP_{\nu}$. In the particular
 case where the initial distribution $\nu$ is a Dirac mass, we use
-the compact notation $\boxed{\PP_{x}=\PP_{\delta_{x}}}$. Thus, the
-theorem allows to define not only one probability measure but a family
+the compact notation $\boxed{\PP_{x}=\PP_{\delta_{x}}}$. Thus, Theorem~\ref{th:canonical} allows to define not only one probability measure but a family
 of probability measures $(\PP_{\nu})_{\nu\in\meas 1(\Xset)}$ on the
 space of trajectories.
 
@@ -624,7 +622,7 @@ An illustration is given in Exercise~\ref{exo:solidarite}.
 \subsection{The Markov property.} \index{Markov property}
 
 Define the shift operator $S$ by $S:\Xset^{\nset}\ni\omega\mapsto\omega'\in\Xset^{\nset}$
-where $\omega=(\omega_{i})_{i\in\nset}$ and $\omega'=(\omega_{i+1})_{i\in\nset}$
+where $\omega=(\omega_{i})_{i\in\nset}$ and $\omega'=(\omega_{i+1})_{i\in\nset}$.
 
 \bs
 \begin{theorem}
@@ -638,11 +636,10 @@ where $\mathcal{F}_{k}=\sigma(X_{0:k})$.
 \end{theorem}
 \es
 
-The expression of the Markov property, as it stands, may seem a bit
-cryptic. Recalling the definition of $X_{k:\infty}$, we have $\PP_{\nu}-a.s.$,
+By definition of $X_{k:\infty}$, we have $\PP_{\nu}-a.s.$,
 \begin{align*}
-\PE_{\nu}\left[h(X_{k:\infty})|\mcf_{k}\right] & =\PE_{\nu}\left[h\circ S^{k}\circ X_{0:\infty}|\mcf_{k}\right]=\PE_{\nu}\left[h\circ S^{k}\circ I|\mcf_{k}\right]\\
- & =\PE_{\nu}\left[h\circ S^{k}|\mcf_{k}\right]=\PE_{X_{k}}[h]=\PE_{X_{k}}[h\circ I]\\
+\PE_{\nu}\left[h(X_{k:\infty})|\mcf_{k}\right] & =\PE_{\nu}\left[h\circ S^{k}\circ X_{0:\infty}|\mcf_{k}\right]=\PE_{\nu}\left[h\circ S^{k}\circ \mathrm{Id}|\mcf_{k}\right]\\
+ & =\PE_{\nu}\left[h\circ S^{k}|\mcf_{k}\right]=\PE_{X_{k}}[h]=\PE_{X_{k}}[h\circ \mathrm{Id}]\\
  & =\PE_{X_{k}}[h(X_{0:\infty})].
 \end{align*}
  Therefore, for any $\nu\in\meas 1(\Xset)$,
@@ -657,19 +654,18 @@ its statement is \Eqref{MarkovProperty} with the exception that $k$
 is replaced by a stopping time $\tau$ and that the identity only
 holds on the event $\left\{ \tau<\infty\right\} $. The strong Markov
 property is extremely important in Markov Chain theory but, quite
-surprisingly, it is not needed in this basic course. To satisfy readers' curiosity, Exercise~\ref{exo:strongMarkov} states and proves the Strong Markov property.
+surprisingly, it is not needed in this course.  Exercise~\ref{exo:strongMarkov} states and proves the Strong Markov property.
 
 
-\section{After studying this chapter...}
+\section{Key notions of this chapter}
 \begin{center}
 \shadowbox{\begin{minipage}{0.9\textwidth}
 \begin{enumerate}[a)]
-\item I can write perfectly expression of Markov kernels if it is asked.
-\item I understand the different notation $\mu P Q f...$
-\item I perfectly understand the canonical space.
-\item I can understand \eqref{eq:relation:P}.
-\item I perfectly understand the Markov property \eqref{eq:MarkovProperty}.
-\item I love Markov chains.
+\item Writing expressions of Markov kernels.
+\item Understand the different notations $\mu P$,  $Q f$...
+\item Understanding the canonical space.
+\item Understanding \eqref{eq:relation:P}.
+\item Making use of the Markov property \eqref{eq:MarkovProperty}.
 \end{enumerate}
 \end{minipage}
 }
@@ -730,11 +726,11 @@ for the Markov kernel $P$ on $\Xset\times\Xsigma$ if $\pi P=\pi$.
 \end{definition}
 \end{framed}
 
-In words, if $(X_{k})$ is a Markov chain with Markov kernel $P$
+If $(X_{k})$ is a Markov chain with Markov kernel $P$
 and assuming that $X_{0}\sim\pi$, then for all $k\geq1$, we have
-$X_{k}\sim\pi$. (This is due to the fact that applying $P^{k}$ on
-both sides of $\pi P=\pi$ shows that $\pi P^{k+1}=\pi P^{k}$and
-therefore, for all $k\in\nset$, $\pi P^{k}=\pi$). This result on
+$X_{k}\sim\pi$ since applying $P^{k}$ on
+both sides of $\pi P=\pi$ shows that $\pi P^{k+1}=\pi P^{k}$ and
+therefore, for all $k\in\nset$, $\pi P^{k}=\pi$. This result on
 the (marginal) distribution of $X_{k}$ may be extended to $n$-tuples.
 
 More precisely, it can be readily checked that if $\pi$ is an \emph{invariant
@@ -765,7 +761,7 @@ on $\left(\Xset^{2},\Xsigma^{\otimes2}\right)$,
 \iint_{\Xset^{2}}h(x,y)\pi(\rmd x)P(x,\rmd y)=\iint_{\Xset^{2}}h(x,y)\pi(\rmd y)P(y,\rmd x).\label{eq:reversibility:h}
 \end{equation}
 \end{definition}
-\es In words, a Markov kernel $P$ is $\pi$-reversible if and only
+\es A Markov kernel $P$ is $\pi$-reversible if and only
 if the probability measure $\pi(\rmd x)P(x,\rmd y)$ is symmetric
 with respect to $(x,y)$. \bs
 \begin{proposition}
