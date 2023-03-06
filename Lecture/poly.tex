@@ -228,7 +228,7 @@
 
 \title{Sampling for generative models\\ {\em Theory and practical applications}}
 \author{Sylvain Le Corff}
-\subtitle{A crash course Monte Carlo methods for generative models
+%\subtitle{A crash course Monte Carlo methods for generative models
 %\begin{figure}[!h]
 %\centering
 %\includegraphics[height=80pt]{hamilton.jpg}
@@ -238,7 +238,7 @@
 %\includegraphics[height=80pt]{metropolis.png}
 %\includegraphics[height=80pt]{hastings.jpg}
 %\end{figure}
-}
+%}
 \date{}
 
 \maketitle
@@ -252,7 +252,7 @@
 %\item Chapter 5-6. Lecture, 1.5H. Tutorial: 2H.
 %\item Chapter 6. Lecture, 1.5H. Tutorial: 2H.
 %\end{enumerate}
-Numerical illustrations through Jupyter Notebook are given during the course and the source can be run directly in a {\em colaboratory google site} \href{https://colab.research.google.com/drive/1Ey5TNx-_74gPH0FG-rhXSuGGok0T10wS\#}{by following this link}.
+Numerical illustrations of these notes are obtained with Jupyter Notebooks given during the course. % and the source can be run directly in a {\em colaboratory google site} \href{https://colab.research.google.com/drive/1Ey5TNx-_74gPH0FG-rhXSuGGok0T10wS\#}{by following this link}.
 %\textcolor{red}{Add github repository with notebooks: independent MH, MALA, HMC.} 
 The most curious readers can consult one of these books.
 \begin{itemize}
@@ -263,7 +263,7 @@ Interested readers on Monte Carlo techniques can find some inspiration in
 \begin{itemize}
 \item {\em Monte Carlo Statistical Methods} by G. Casella and C. Robert. Springer, 2004.
 \end{itemize}
-We thank Kamelia Daudel for her thorough reading and insightful comments.
+This course is an adapted and extended version of a former course given at Institut Polytechnique de Paris with Randal Douc and that benefited from insightful comments by Kamelia Daudel.
 
 \clearpage
 \newpage
@@ -318,6 +318,379 @@ The following properties are used many times in these lecture notes.
 
 \dominitoc
 \tableofcontents
+
+\chapter{Target distributions and first approaches}
+In a general framework, generative modeling aims at designing algorithms to obtain samples from a complex distribution $\pi$ defined on a measurable space $(\mathsf{X},\mathcal{X})$. Such algorithms can be applied in many situations, we describe in this chapter some examples from recent applications. The target distribution $\pi$ can take several forms depending on the different contexts.
+ For instance, in \cite{ng2001discriminative}, the authors discuss generative classifiers and propose to learn a model of a joint probability function of the inputs $X$ and the outputs $Y$ so that predictions can be made by using Bayes rule to compute the distribution of $Y$ given $X$. Without being restricted to classification problems, we focus in these notes on generative models where the data distribution depends on other variables or parameters, and we propose to model the joint distribution of all random variables. In such a setting, we assume that the random variables $(X,Y)$ have an unknown distribution and we usually propose a parametric family of joint probability distributions $(x,y)\mapsto p_\theta(x,y)$, $\theta\in\Theta$, with respect to a dominating measure $\lambda$, in order to approximate this unknown distribution. 
+
+In machine/statistical learning most of the problems we aim to solve require then to sample random variables from a complex distribution. Depending on the context, this distribution can be given for instance by a marginal density $p_\theta(y) = \int p_\theta(x,y) \lambda(\rmd x)$ or by a conditional/posterior distribution $p_\theta(x|y) = p_\theta(x)p_\theta(y|x)/\int p_\theta(x,y) \lambda(\rmd x)$.
+
+ In this course, we introduce different algorithms, depending on the framework, to solve machine learning tasks based on sampling random variables.  In particular, we detail Markov Chain Monte Carlo (MCMC) methods, which allow to construct a process $(X_k)_{k\in\nset}$ that targets an unknown distribution $\pi$. Sometimes $(X_k)_{k\in\nset}$ is itself a Markov chain with invariant probatility measure $\pi$, sometimes, $(X_k)_{k\in\nset}$ is the first component process of an extended Markov chain that targets an extended distribution where the marginal distribution on the first component is $\pi$.
+
+
+\section{Target distributions}
+We first introduce several contexts where target distributions appear naturally. In Bayesian inference, the target distribution is the posterior distribution of the parameter given all the data. In partially observed models, the target distribution is the distribution of the unobserved variables given the data. In these lecture notes, the target distribution we aim to sample from is written $\pi$, although it may depend on may parameters or input data as detailed in the examples of this chapter.
+
+\subsection{Bayesian inference}
+\index{bayeasian inference}
+In  Bayesian inference, prior belief  is combined with
+data to obtain posterior distributions on which statistical inference is based.
+%Although we focus primarily on  likelihood based inference in this text,
+%it is also worthwhile to consider Bayesian  inference  for some problems.
+Except for some simple cases, Bayesian inference can be computationally
+intensive and may rely on  computational techniques.
+
+The basic idea in Bayesian analysis is that a parameter vector $ \theta \in \Theta$ is unknown, so it is endowed with a \emph{prior} distribution
+$\pi_0( \theta)\lambda(\rmd \theta)$.  We also
+introduce a model or likelihood, $\dens[][]{ y_{1:n} \mid \theta}$, that is
+a probability density function for the data $Y=y_{1:n}$ which depends on the parameter vector.
+Inference about $ \theta$ is then based on the \emph{posterior}
+distribution, which is obtained via Bayes's theorem,
+\begin{equation} \label{eq:target:bayes}
+\theta \mapsto \pi(\theta) =\frac{\pi_0( \theta) \dens[][]{ y_{1:n} \mid \theta}}{\int \pi_0( \theta) \dens[][]{ y_{1:n} \mid \theta} \lambda(\rmd \theta)}.
+\end{equation}
+  In some simple cases, the prior  and
+the likelihood are \emph{conjugate}  distributions that may be combined easily.
+For example, in $n$ fixed repeated (iid) Bernoulli experiments with probability of success $\theta$,
+a \emph{Beta-Binomial} conjugate pair is taken.  In this case the prior is
+Beta($a,b$):
+$\pi_0(\theta) \propto \theta^{a} (1-\theta)^{b}$; the values $a,b > -1$  are called
+hyperparameters. The likelihood in this example is
+Binomial$(n,\theta)$:
+$\dens[][]{ y \mid \theta} \propto \theta^y (1-\theta)^{n-y}$, from which
+we easily deduce that the
+posterior is also Beta,
+$\pi ( \theta ) \propto \theta^{y+a}(1-\theta)^{n+b-y }
+$, and from which inference may easily be achieved.
+
+In more complex experiments, the posterior distribution is often difficult to obtain by direct calculation,
+so alternatives have to be deployed to obtain samples approximately distributed as the posterior distribution. Note that in \eqref{eq:target:bayes}, the numerator is usually known and explicit while, due to the integral, the denominator is a multiplicative unknown constant.  
+
+\begin{example}
+In Bayesian deep learning, uncertainty quantification may be obtained by analyzing the posterior distribution of the weights, as in \cite{blundell2015weight}. In this setting, using an input $x\in \rset^p$, the observations $Y$, conditionally on the parameter $\theta$, has a Gaussian distribution with mean $m_\theta(x)$ and covariance $\Sigma_\theta(x)$. The quantities  $m_\theta(x)$ and  $\Sigma_\theta(x)$ are outputs of a neural network (for instance a Multi-layer Perceptron) with input $x$ and parameters $\theta$. The prior distribution of $\theta$ is Gaussian with independent entries with mean $\mu \in\rset$ and varriance $\sigma^2>0$. Since $m_\theta(x)$ and  $\Sigma_\theta(x)$ contain many nonlinearities the posterior distribution $\pi$ of $\theta$, i.e. the distribution of $\theta$ given $Y$ and the input $x$, is unknown.
+\begin{figure}
+\centering
+\includegraphics[scale = .8]{bayesbybackprop.png}
+\caption{Left: each weight (parameter) has a fixed value, as provided by classical backpropagation. Right: each weight is assigned a distribution, as provided by Bayes by Backprop. From \cite{blundell2015weight}.
+}
+\label{fig:bayesbybackprop}
+\end{figure}
+\end{example}
+
+%Nevertheless, even when $\theta$ is in a small dimension space, the numerical calculation of $p(y_{1:n}|\theta)$ may be hard to obtain  precisely due to the fact that $n$ is large. For example, in the case of iid random variables, $p(y_{1:n}|\theta)$ is
+%a large product
+%$\prod_{i=1}^n p(y_i|\theta)$  (since $n$ is the number of the observations).
+
+\subsection{Energy based models}
+\index{ebm}
+Energy-based models (EBM) are very flexible models which describe the target distribution using an unnormalized function, referred to as the energy function. These models are easier to design that models with a tractable likelihood such as autoregressive models, in particular in high-dimensional setting. As the energy function is not normalized, it can
+be easily parameterized with any nonlinear regression function. Using neural networks such as Multi-layer Perceptrons, or convolutional neural networks, is it straightforward to introduce energy function with specific structures depending nonlinearly on the input. We can choose specific
+architectures tailored for every type of data, see \cite{song2021train} for a recent overview of EBM.
+
+In a generic setting, the target random variable take values in $(\rset^d,\mathcal{B}(\rset^d))$ and the target distribution (the target density with respect to the Lebesgue measure) is written:
+$$
+x\mapsto \pi_\theta(x) \propto \exp\left(-\mathrm{E}_\theta(x)\right) = \frac{\exp\left(-\mathrm{E}_\theta(x)\right)}{\int \exp\left(-\mathrm{E}_\theta(u)\right)\rmd u},
+$$
+where $\theta$ is an unknown parameter to estimate and $\mathrm{E}_\theta$ is the energy function. The normalizing constant is often written $Z_\theta$ and referred to as the partition function:
+$$
+Z_\theta = \int \exp\left(-\mathrm{E}_\theta(u)\right)\rmd u.
+$$
+Since $Z_\theta$ is an intractable integral, evaluation and
+differentiation of $x\mapsto \log \pi_\theta(x)$ is not possible in usual settings. In order to estimate the unknwon parameter $\theta$ using i.i.d. data an appealing approach is to use gradient-based maximization procedureof the likelihood function. This means that we need to compute:
+$$
+x\mapsto \nabla_\theta \log\pi_\theta(x) = -\nabla_\theta\mathrm{E}_\theta(x) - \nabla_\theta \log Z_\theta.
+$$
+The first term can be evaluated easily as $\mathrm{E}_\theta(x)$ is known. For the second term, we can write, under regularity assumptions on the model:
+\begin{multline*}
+\nabla_\theta \log Z_\theta = Z_\theta^{-1} \int \nabla_\theta\exp\left(-\mathrm{E}_\theta(u)\right)\rmd u \\=  \int \left\{-\nabla_\theta \mathrm{E}_\theta(u)\right\}Z_\theta^{-1}\exp\left(-\mathrm{E}_\theta(u)\right)\rmd u = \int \left\{-\nabla_\theta \mathrm{E}_\theta(u)\right\}\pi_\theta(u)\rmd u .
+\end{multline*}
+Therefore $\nabla_\theta \log Z_\theta = \mathbb{E}_{\pi_\theta}[-\nabla_\theta \mathrm{E}_\theta(X)]$ where $\mathbb{E}_{\mu}[f(X)]$ denotes the expectation of $f(X)$ when $X\sim \mu$. Therefore, it is possible to train an EBM by providing a Monte Carlo estimate of $\nabla_\theta \log Z_\theta$ which requires to obtain samples from $\pi_\theta$. However, this is not straightforward as $\pi_\theta$ is known only up to a multiplicative normalizing constant (as in the Bayesian setting).
+%
+%\subsection{Variational auto-encoders}
+%\index{vae}
+
+
+\subsection{Models with Latent variables}
+In some situations, observations are partial and unfortunately, do not contain some variables of interest. In such a case, given a generative process for the data, we might be interested in reconstructing the distribution of the missing variables given the data. This will be our target distribution. 
+
+\begin{example}[Deep latent variable model]
+In \cite{kingma2013auto}, the authors study a deep latent variable model for multivariate Benoulli data. In this setting, $Y\in\{0,1\}^D$ and conditionally on a variable $X\in\rset^d$, $(Y_1,\ldots,Y_D)$ are independent with Bernoulli distribution with parameters ${\bf p}_\theta(X) = (p_{1,\theta}(X),\ldots, p_{D,\theta}(X))$, where ${\bf p}_\theta(X) $ is the output of a Multi-layer Perceptron with input $X$ and parameters $\theta$ (weights and biases). In this example, the input variable has a prior distribution $X\sim \mathcal{N}(0,I_d)$ and, for any value of $\theta$, the conditional distribution of $X$ given $Y$ is not available explicitly.
+\end{example}
+
+%Let us be more specific with the example of Hidden Markov Models (HMM).
+\index{hidden Markov models} \index{latent variables}
+\begin{example}[Hidden Markov models]
+Such a model is defined by a bivariate Markov chain $(Z_k)_{k\in\nset}=(X_k,Y_k)_{k\in\nset}$ on $\Xset\times\Yset$ where $(\Xset,\Xsigma)$ and $(\Yset,\Ysigma)$ are two measurable spaces, and where the transition is defined as follows.
+\begin{align*}
+\mathrm{Conditionally \; on \;} Z_{0:k-1}, \; X_k \sim Q(X_{k-1},\cdot),\\
+\mathrm{Conditionally \; on \; } (X_k,Z_{0:k-1}), \;  Y_k \sim G(X_k,\cdot),
+\end{align*}
+with $Q$  a Markov kernel on $\Xset \times \Xsigma$ and $G$  a Markov kernel on $\Xset \times \Ysigma$.
+
+
+\begin{figure}[!h]
+\begin{center}
+\begin{tikzpicture}[node  distance=1.5cm]
+\node(a){$X_{k-1}$};
+\node(b)[right of =a]{$X_{k}$};
+\node(c)[below of =b]{$Y_{k}$};
+\node(d)[left of =c]{$Y_{k-1}$};
+\node(e)[right of =b]{};
+\node(f)[left of =a]{};
+
+\draw[->, blue,thick](a)--(b)node[pos=0.5, below]{$Q$};
+\draw[->, red,thick](b)--(c)node[pos=0.5, right]{$G$};
+\draw[->, dashed, blue](b)--(e);
+\draw[->, dashed, red](a)--(d);
+\draw[->, dashed, blue](f)--(a);
+\end{tikzpicture}
+\end{center}
+\caption{A hidden Markov model.}
+\label{hmm}
+\end{figure}
+In such a model, only $Y_{1:n}$ are observed and inference must be driven on the basis of $Y_{1:n}$ only. 
+In a fully dominated model, we assume that $Q(x,\rmd x')=q(x,x') \lambda(\rmd x')$ and $G(x,\rmd y)=g(x,y) \nu(\rmd y)$ where $\lambda$ and $\nu$ are $\sigma$-finite dominating measures on $(\Xset,\Xsigma)$, and $(\Yset, \Ysigma)$ respectively. In such a case, assuming that the initial distribution of $X_0$ is a Dirac mass at $x_0$, we might be interested in the law of the missing variables $X_{1:n}$ given the observations $Y_{1:n}$, so that the target density is:
+$$
+\pi(x_{1:n})=\frac{\prod_{i=1}^{n} q(x_{i-1},x_i)g(x_i,y_i)}{\int_{\Xset^n} \prod_{i=1}^{n} q(x_{i-1},x_i)g(x_i,y_i) \lambda(\rmd x_i)}.
+$$
+Once again the denominator is an unknown multiplicative factor, whereas the numerator is explicit and we are therefore in a context where MCMC methods can be applied. Nevertheless, in this example, the number of hidden variables is $n$, which can be very large and the target distribution is thus associated with a very high dimensional space, $\Xset^n$, so that we have to be very careful when applying these methods.
+\end{example}
+
+\section{Some approximation methods}
+In computational statistics, when it comes to approaching a target law in a very large space,
+classical techniques using Markov chains admitting "exactly" this target law
+for invariant distribution may suffer from a slow exploration of the state space. In a high dimensional framework, the candidate is often proposed in an uninformative region and it is likely that it is refused, leading the Markov chain to remain stuck at the same place a certain amount of time.
+
+Some other approximation techniques do not even try to construct random variables with distribution close to $\pi$. We briefly discuss in this chapter several approximation techniques: Variational Inference, Variational Auto-Encoders, Sequential Monte Carlo methods.
+
+\subsection{Variational inference}
+\index{variational inference}
+Variational Inference is a technique derived from the
+ {\em Machine Learning} community whose principle is to approach the target density through various optimization techniques. The principle consists in giving up aiming exactly at the target law, but instead, we have at hand a sufficiently rich family of laws (that can be easily simulated) and the idea is then to select a member of this family close to the target in the sense of a certain divergence through optimization procedures. Variational inference has been successfully used in many applications and seems to be faster and more efficient to explore large spaces compared to classical Monte Carlo Markov chain methods. The proximity is often measured in terms of Kullback divergence or even more recently in terms of $f$-divergence. Although these techniques are extremely powerful and popular in practice, some statistical properties of these methods are still largely unknown.
+
+%\subsubsection{$\alpha$-divergence and the ELBO}
+%\index{$\alpha$-divergence}
+Letting $f_\alpha$ be the convex function on $(0, +\infty)$ defined by $f_0(u) = -\log(u)$, $f_1(u) = u\log(u)$ and $f_\alpha(u) = [  u^\alpha -1 ]/(\alpha(\alpha-1))$ for all $\alpha \in \rset \setminus \lrcb{0,1}$, the $\alpha$-divergence for all $\alpha \in \rset$ is defined by
+\begin{align}\label{eq:gen:div}
+D_\alpha(\mathbb{P}\|\mathbb{Q}) = \int_\Xset f_\alpha\left(\frac{q(x)}{p(x)} \right)p(x) \lambda(\rmd x), 
+\end{align}
+where $\mathbb{P}(\rmd x)=p(x)\lambda(\rmd x)$ and $\mathbb{Q}(\rmd x)=q(x) \lambda(\rmd x)$. Of course, it is non-negative and null if $\mathbb{P}=\mathbb{Q}$ but there is no triangular inequality and therefore, it is not a distance.
+
+
+
+\newcommand{\argmin}{\mathrm{argmin}}
+In Variational Inference (also called VI), we want to approximate $\pi$ by selecting the best candidate among a family of densities
+$$
+\set{x\mapsto p_\theta(x)}{\theta\in\Theta}
+$$
+with respect to the $\alpha$-divergence. In other words, we want to solve
+$$
+\argmin_{\theta\in\Theta} D_\alpha(\pi \| p_\theta)= \argmin_{\theta\in\Theta} \int_{\Xset} f_\alpha\lr{\frac{p_\theta(x)}{\pi(x)}} \pi(x) \lambda(\rmd x).
+$$
+Since $\pi$ is known only up to multiplicative constant, we must check if the minimization of $\int_{\Xset} f_\alpha\lr{p_\theta(x)/\pi(x)} \pi(x) \lambda(\rmd x)$ can be equivalent to the minimization of another functional which will be more explicit. Write $\pi(x)=\tilde \pi(x)/C$ where $\tilde \pi(x)$ is explicit and $C=\int_\Xset \tilde \pi(x)\lambda(\rmd x)$ is an "unexplicit" constant. Choosing for example $\alpha=1$ yields
+$$
+D_1(\pi \| p_\theta)= \int_{\Xset} \log\lr{\frac{p_\theta(x)}{\pi(x)}} p_\theta(x) \lambda(\rmd x)=-\underbrace{\int_{\Xset} \log\lr{\frac{\tilde \pi(x)}{p_\theta(x)}} p_\theta(x) \lambda(\rmd x)}_{\mathcal{L}_{\theta}} + \log C.
+$$
+\index{ELBO}
+In this litterature, $\mathcal{L}_{\theta} = \int_{\Xset} \log\lr{\tilde \pi(x)/p_\theta(x)} p_\theta(x) \lambda(\rmd x)$ is called the ELBO (Evidence Lower Bound) and maximizing the ELBO with respect to $\theta$ is equivalent to minimizing $ D_1(\pi \| p_\theta)$ with respect to $\theta$. Note that
+since $D_1(\pi \| p_\theta)=-\mathcal{L}_{\theta}+ \log C$, we have
+$$
+\mathcal{L}_{\theta} \leq \log C=\log \int_\Xset \tilde \pi(x)\lambda(\rmd x),
+$$
+hence, the terminology "Evidence Lower Bound". In the case where $\alpha \neq 1$, some equivalent of the ELBO can also be found. In VI, we face  an optimisation problem (which is in general a non-convex problem) and we have to resort to all the tools linked with optimisation problems: various stochastic gradient descents and their variants, etc.
+
+\subsection{Variational auto-encoders}
+Variational Auto-Encoders (VAE) are very popular approaches to introduce approximations of a target conditional distribution in the context of latent data models. We consider a family of joint probability distributions $\{(z,x) \mapsto  p_{\theta}(z,x)\}_{\theta\in\Theta}$ on $(\mathsf{Z}\times \mathsf{X}, \mathcal{Z}\times \mathcal{X})$ where $Z$ is a latent variable and $X$ is the observation. In this setting, we often write, for all $\theta$, $x$, $z$,
+$$
+p_{\theta}(z,x) = p_{\theta}(z)p_{\theta}(x|z)
+$$
+and the conditional distribution $p_{\theta}(z|x)$ is not availbale explicitly. A variational approach can be introduced in this setting by considering a family $\{(z,x) \mapsto q_{\varphi}(z|x)\}_{\varphi\in\Phi}$. Then, we can write, for all $\varphi,\theta$, $x$, $z$,
+\begin{multline*}
+\log p_\theta(x) = \int p_\theta(x) q_{\varphi}(z|x) \rmd z = \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log p_\theta(x)\right] = \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z,x)}{p_\theta(Z|x)}\right] \\
+= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{q_{\varphi}(Z|x)}{p_\theta(Z|x)}\right]  + \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z,x)}{q_{\varphi}(Z|x)}\right] .
+\end{multline*}
+The first term of the right-hand-side is the Kullback-Leibler divergence between $q_{\varphi}(\cdot|x)$ and $p_\theta(\cdot|x)$, so that $\log p_\theta(x)\geq \mathcal{L}_x(\theta,\varphi)$, where
+$$
+\mathcal{L}_x(\theta,\varphi) = \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z,x)}{q_{\varphi}(Z|x)}\right]
+$$
+is the ELBO in this setting. In order to approximate $z\mapsto p_\theta(z|x)$, VAE propose to solve the optimization problem:
+$$
+\widehat \varphi \in \mathrm{argmin}_{\varphi\in\Phi} \mathcal{L}_x(\theta,\varphi).
+$$
+Of course, the joint optimization of $\theta$ and $\varphi$ is a complex problem both for practical and theoretical reasons and many research works have been devoted to this problem in the past few years.
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.8]{vae.png}
+\caption{An illustration of a VAE. From \cite{kingma2019introduction}.}
+\label{fig:vae}
+\end{figure}
+
+
+\subsection{Sequential Monte Carlo methods}
+\index{sequential Monte Carlo}
+In this section we briefly explain basic ideas of Sequential Monte Carlo methods.
+The rough idea of sequential Monte Carlo methods which target $\pi$ is to find intermediate target distributions $\pi_1, \ldots , \pi_T=\pi$ and to construct, sequentially, Monte Carlo approximations of each $\pi_k$, $1\leq k \leq T$.
+
+
+
+
+This core ingredient of SMC methods is importance sampling. If $\pi$ and $g$ are densities with respect to  the same dominating measure, and assuming that $g(x)=0$ implies $\pi(x)=0$, then, for any measurable function $h$, we can approximate $\pi(h)$ with $N^{-1}\sum_{k=1}^N \omega_k h(X_k)$ where $(X_k)_{k\in[1:N]} \iid g$ and $\omega_k=\pi(X_k)/g(X_k)$. Since $\pi$ is typically known only up to a multiplicative factor, the quantity $N^{-1}\sum_{k=1}^N \omega_k h(X_k)$ is not explicit due to this multiplicative factor and we typically choose instead the auto-normalized estimator:
+$$
+\pi_N(h) = \frac{N^{-1}\sum_{k=1}^N \omega_k h(X_k)}{N^{-1}\sum_{\ell=1}^n \omega_\ell}=\sum_{k=1}^N \lr{\frac{ \omega_k}{\sum_{\ell=1}^N \omega_\ell}}  h(X_k)=\sum_{k=1}^N \bar\omega_k  h(X_k)
+$$
+where  $\bar \omega_k=\omega_k/(\sum_{\ell=1}^{k} \omega_\ell)$. Now the right-hand-side can be calculated even if $\pi$ is known only up to a multiplicative factor since $\bar \omega_k$ is a ratio where $\pi$ is involved (both in the numerator and the denominator).
+
+Thus, $\pi(h)$ is approximated using a population of "particles" $\{(X_k,\omega_k)\}_{k\in[1:N]}$ (we mean by particle a "support" point $X_k$ and an associated weight $\omega_k$). Note that a weight is usually unnormalized but when considering the approximation, we use the normalized weights: $\omega_k/(\sum_{\ell=1}^{k} \omega_\ell)$.
+
+Of course, if all the $X_k$ were iid from $\pi$ directly, all the associated weights would be equal. So here, by allowing different weights, we are more flexible. Still, if the weights are too different, this is not satisfactory because only a few particles contain all the information. In that case, we prefer to resample inside the population. 
+
+\subsubsection{Resampling step}
+\index{resampling}
+Assume that $\{(X_k,\omega_k)\}_{k\in[1:N]}$ targets $\pi_0$. Define $\bar \omega_k=\omega_k/(\sum_{\ell=1}^{k} \omega_\ell)$. An example of resampling step is defined as follows. For $k\in[1:n]$, set independently $\tilde X_k = X_j$ with probability $\bar \omega_j$. 
+%$$
+%\mbox{For $k\in[1:n]$, choose independently}\quad \tilde X_k=\begin{cases}
+%X_1& \mbox{wp} \ \bar \omega_1,\\
+%\ldots&\\
+%X_N & \mbox{wp} \ \bar \omega_N.
+%\end{cases}
+%$$
+Then $\{(\tilde X_k,1)\}_{k\in[1:N]}$ still targets $\pi_0$. The target distribution is not changed but now, all the weights are equal. Informative particles (i.e. with high weights) are likely to be replicated after resampling while noninformative are likely to disappear (because they were not chosen). Support points are changed but still within the initial pool of support points.
+
+\subsubsection{Exploration step}
+\index{exploration}
+Assume that $\{(X_k,\omega_k)\}_{k\in[1:N]}$ targets $\pi_0$ and that
+\begin{equation} \label{eq:explor}
+\pi_1(y)=\int_\Xset \pi_0(\rmd x) q(x,y)\eqsp,
+\end{equation}
+where $q$ is the density of a Markov kernel. An example of exploration step is defined as follows. For $k\in[1:n]$, draw independently $\tilde X_k\sim r(X_k,\cdot)$, 
+%$$
+%\mbox{For $k\in[1:n]$, draw independently}\quad \tilde X_k\sim r(X_k,\cdot)
+%$$
+where $r(X_k,\cdot)$ is a density that can be easily simulated.
+Then, $\lrcb{(\tilde X_k,\omega_k q(X_k,\tilde X_k)/r(X_k,\tilde X_k)}_{k\in[1:N]}$ targets $\pi_1$.
+Here, support points are moved and weights are updated by a multiplicative factor (except when $r=q$, in which case, support points are moved but the associated weights do not need to be updated  since $ q(X_k,\tilde X_k)/r(X_k,\tilde X_k)=1$).
+\subsubsection{Reweighting step}
+\index{reweighting}
+Assume that $\{(X_k,\omega_k)\}_{k\in[1:N]}$ targets $\pi_0$ and that
+\begin{equation} \label{eq:resamp}
+\pi_1(x)=\frac{ \pi_0(x) g(x) }{\int_\Xset \pi_0(\rmd u) g(u) },
+\end{equation}
+where $g$ is a nonnegative function. Then,  $\lrcb{(X_k,\omega_k g(X_k) }_{k\in[1:N]}$ targets $\pi_1(h)$. Here, support points are unchanged but weights are updated.
+
+Finally, when choosing the intermediate target distributions $\pi_1\rightarrow \pi_2\rightarrow,\ldots,\rightarrow \pi_T=\pi$, we must check that each step $\pi_i \rightarrow \pi_{i+1}$ corresponds either to \eqref{eq:explor} or \eqref{eq:resamp} so that we can let evolve a population of particles through exploration, and reweighting steps. Resampling can always be performed when weights are too different and this is often measured when the Effective Sample Size (which is a real number between 1 and $N$), $\widehat{ESS}=1/\sum_{k=1}^N (\bar \omega_k)^2$, falls below a certain arbitrary threshold.
+
+
+
+\section{Approximate Bayesian computation}
+Approximate Bayesian computation (ABC) is an alternative approach when computation of the posterior is challenging, either because the size of the data or the complexity of realistic models makes the calculation computationally intractable. In this setting, the parameter $\theta$ is endowed with a prior distribution $\pi_0$ and, the conditional density of the observation $Y$ given $\theta$ is $y\mapsto p(y|\theta)$. ABC specifically provides a solution  when the likelihood $y\mapsto p(y|\theta)$ cannot be evaluated. A generic description of the original ABC algorithm requires (i) the introduction of statistics $S(y)\in\mathbb{R}^m$ where $m$ is usually sensibly smaller than the dimension of $y$ and (ii) a distance $\mathsf{d}$ on $\mathbb{R}^m\times \mathbb{R}^m$. Note that if no statistics can be widely defined $S$ can be the identity function. Then, the most direct ABC alforithm is described in Algorithm~\ref{alg:ABC}.
+
+\medskip
+
+\begin{algorithm}[H] \label{alg:ABC}
+    \KwData{Observation $Y$, threshold $\varepsilon$, $N$}
+    \KwResult{Samples approximately distributed according to $\pi(\theta) = p(\theta | Y)$.}
+    \For {$i = 1 \to N$}{
+        draw $\theta_i$ with prior distribution $\pi_0$\;
+        draw $Y_i$ with distribution  $p(\cdot |\theta_i)$\;
+}
+Return all $\theta_i$ such that $\mathsf{d}(S(Y_i),S(Y))<\varepsilon$\;
+\caption{ABC algorithm.}
+\end{algorithm}
+
+\medskip
+
+When $S$ is the identity function, the random variables sampled by this  algorithm have distribution $\pi_{\varepsilon}(\cdot |Y)$ where
+$$
+\pi_{\varepsilon}(\theta|Y)\propto \int p(y|\theta)\pi_0(\theta) \mathds{1}_{A_{\varepsilon,Y}}(y)\rmd y\eqsp,
+$$
+with $A_{\varepsilon,Y} = \{y\eqsp;\mathsf{d}(y,Y)<\varepsilon\eqsp\}$. The intuitive idea behind this algorithm is that if  $\varepsilon \to 0$, $\pi_{\varepsilon}(\theta|Y) \to \pi(\theta|Y)$ and if $\varepsilon \to \infty$, $\pi_{\varepsilon}(\theta|Y) \to \pi_0(\theta)$. This initial version of the ABC approach raises many practical  issues among which an appropriate calibration of $\varepsilon$, the choice of statistics $S$, and the widespread inefficiency of sampling candidates according to the prior distribution $\pi$. In practice, the threshold $\varepsilon$ is usually determined as a quantile of the observed distance $(\mathsf{d}(S(Y_i),S(Y)))_{1\leqslant i \leqslant N}$ which allows to introduce Algorithm~\ref{alg:ABC:quant}.
+
+\medskip
+
+\begin{algorithm}[H] \label{alg:ABC:quant}
+    \KwData{Observation $Y$, $N$, integer $M_N$}
+    \KwResult{Samples approximately distributed according to $\pi(\theta)= p(\theta | Y)$.}
+    \For {$i = 1 \to N$}{
+        draw $\theta_i$ with prior distribution $\pi_0$\;
+        draw $Y_i$ with distribution  $p(\cdot |\theta_i)$\;
+}
+Return all $\theta_i$ such that $S(Y_i)$ is in the set of $M_N$ nearest neighbors of $S(Y)$ with respect to distance $\mathsf{d}$\;
+\caption{ABC algorithm with calibrated threshold.}
+\end{algorithm}
+
+\medskip
+
+These two algorithms generate independent samples but do not build upon the accepted samples to propose new candidates in a more efficient way than using the prior distribution. This can be performed by considering  ABC within a MCMC algorithm. See the exercises for a proof that Algorithm~\ref{alg:ABC:MCMC} targets the correct posterior distribution.
+
+\medskip
+
+\begin{algorithm}[H] \label{alg:ABC:MCMC}
+\KwData{Observation $Y$, $N$, threshold $\varepsilon$,  output $(\theta_0,Y_0)$ from a "standard" ABC.}
+\KwResult{Samples approximately distributed according to $\pi(\theta) = p(\theta | Y)$.}
+\For{$i=1$ to $N$}{
+Sample $\widetilde \theta \sim q(\cdot |\theta_i)$\;
+Sample $\widetilde Y \sim p(\cdot|\widetilde \theta)$ and compute $S(\widetilde Y)$\;
+Compute $\alpha = 1\wedge \frac{\pi_0(\widetilde \theta) q(\theta_i|\widetilde \theta)}{\pi_0(\theta_i) q(\widetilde\theta| \theta_i)}\mathds{1}_{\mathsf{d}(S(\tilde Y),S(Y))<\varepsilon}$\;
+Sample $U\sim U(0,1)$\;
+\eIf{$U< \alpha$}{
+Set $\theta_{i+1} = \widetilde \theta$ and $Y_{i+1} = \widetilde Y$\;
+}{
+$\theta_{i+1} = \theta_i$ and $Y_{i+1} = Y_i$\;
+}
+}\caption{ABC within MCMC}
+\end{algorithm}
+
+
+\section{Key notions}
+\begin{center}
+\shadowbox{\begin{minipage}{0.9\textwidth}
+\begin{enumerate}[a)]
+\item Typical target distributions.
+\item Notions of some approximations methods.
+\item Basics of Sequential Monte Carlo methods (exploration, reweighting, resampling) and the associated moves of the target distribution.
+\item Basics of variational inference, variational auto-encoders.
+\item Basics of Approximate Bayesian Computation.
+\end{enumerate}
+\end{minipage}
+}
+\end{center}
+
+
+%\section*{Highlights}
+
+%\begin{subappendices}
+
+\section*{Highlights: Thomas Bayes (source: wikipedia).}
+
+\begin{wrapfigure}{L}{0.28\textwidth} \centering
+
+\includegraphics[scale=0.45]{bayes}
+
+\end{wrapfigure}
+Thomas Bayes (1701-1761) was an English statistician, philosopher and Presbyterian minister who is known for formulating a specific case of the theorem that bears his name: Bayes' theorem. Bayes never published what would become his most famous accomplishment; his notes were edited and published after his death by Richard Price.
+
+Thomas Bayes was the son of London Presbyterian minister Joshua Bayes, and was possibly born in Hertfordshire. He came from a prominent nonconformist family from Sheffield. In 1719, he enrolled at the University of Edinburgh to study logic and theology. On his return around 1722, he assisted his father at the latter's chapel in London before moving to Tunbridge Wells, Kent, around 1734. There he was minister of the Mount Sion Chapel, until 1752.
+
+He is known to have published two works in his lifetime, one theological and one mathematical:
+
+\begin{itemize}
+\item Divine Benevolence, or an Attempt to Prove That the Principal End of the Divine Providence and Government is the Happiness of His Creatures (1731)
+\end{itemize}
+
+\begin{itemize}
+\item An Introduction to the Doctrine of Fluxions, and a Defence of the Mathematicians Against the Objections of the Author of The Analyst (published anonymously in 1736), in which he defended the logical foundation of Isaac Newton's calculus ("fluxions") against the criticism of George Berkeley, author of The Analyst
+\end{itemize}
+
+It is speculated that Bayes was elected as a Fellow of the Royal Society in 1742 on the strength of the Introduction to the Doctrine of Fluxions, as he is not known to have published any other mathematical works during his lifetime.
+
+In his later years he took a deep interest in probability. Professor Stephen Stigler, historian of statistical science, thinks that Bayes became interested in the subject while reviewing a work written in 1755 by Thomas Simpson, but George Alfred Barnard thinks he learned mathematics and probability from a book by Abraham de Moivre. Others speculate he was motivated to rebut David Hume's argument against believing in miracles on the evidence of testimony in An Enquiry Concerning Human Understanding. His work and findings on probability theory were passed in manuscript form to his friend Richard Price after his death.
+
+
+Monument to members of the Bayes and Cotton families, including Thomas Bayes and his father Joshua, in Bunhill Fields burial ground
+By 1755 he was ill and by 1761 had died in Tunbridge Wells. He was buried in Bunhill Fields burial ground in Moorgate, London, where many nonconformists lie.
+%\end{subappendices}
+
 
 \chapter{Basics in Markov chains.}
 \minitoc
@@ -661,11 +1034,9 @@ surprisingly, it is not needed in this course.  Exercise~\ref{exo:strongMarkov} 
 \begin{center}
 \shadowbox{\begin{minipage}{0.9\textwidth}
 \begin{enumerate}[a)]
-\item Writing expressions of Markov kernels.
-\item Understand the different notations $\mu P$,  $Q f$...
-\item Understanding the canonical space.
-\item Understanding \eqref{eq:relation:P}.
-\item Making use of the Markov property \eqref{eq:MarkovProperty}.
+\item Expressions of Markov kernels.
+\item Different classical notations $\mu P$,  $Q f$...
+\item The Markov property \eqref{eq:MarkovProperty}.
 \end{enumerate}
 \end{minipage}
 }
@@ -780,13 +1151,11 @@ For any $A\in\Xsigma$, we have by the reversibility relation
 which finishes the proof.
 \end{svmultproof}
 
-\begin{leftbar}
 
-\textbf{What are the consequences?} If you want to check easily that
+Thereofre, if we want to check easily that
 a kernel $P$ is $\pi$-invariant, it is sufficient to check that
 it is $\pi$-reversible.
 
-\end{leftbar}
 
 Exercise~\ref{exo:gibbs} gives an example of $\pi$-reversible kernel.
 
@@ -801,10 +1170,7 @@ find a Markov kernel $P$ on $\Xset\times\Xsigma$ such that $P$
 is $\pi$-invariant. The reason for that is that an invariant probability
 measure will be a good candidate for the ``limiting'' distribution
 of $\seq{X_{k}}{k\in\nset}$ (in some sense to be defined) and this
-in turn, will allow us to provide an approximation $\pi(h)$:
-\[
-\pi(h)=\int_{\Xset}h(x)\pi(\rmd x)\approx n^{-1}\sum_{k=0}^{n-1}h(X_{i}).
-\]
+in turn, will allow us to provide an approximation of $\pi(h)=\int_{\Xset}h(x)\pi(\rmd x)$ of the form $n^{-1}\sum_{k=0}^{n-1}h(X_{i})$ for any measurable function $h$. 
 
 
 \subsubsection{Construction of the kernel\label{subsec:construc}}
@@ -819,10 +1185,9 @@ Moreover, let $Q$ be Markov kernel on $\Xset\times\Xsigma$ such
 that $Q(x,\rmd y)=q(x,y)\lambda(\rmd y)$, that is, for any $x\in\Xset$,
 $Q(x,\cdot)$ is also dominated by $\lambda$ and denoting by $q(x,\cdot)$
 this density, we assume for simplicity that $q(x,y)$ is \textbf{positive}
-for all $x,y\in\Xset$. At this stage, there is almost no link between
-$Q$ and the target distribution $\pi$.
+for all $x,y\in\Xset$. 
 
-For a given function $\alpha:\Xset^{2}\to[0,1]$, consider the following Algorithm~\ref{alg:mh}.
+For a given function $\alpha:\Xset^{2}\to[0,1]$,  Algorithm~\ref{alg:mh} describes the Metropolis algorithm.
 
 \begin{algorithm}
 \caption{\label{alg:mh}The Metropolis Algorithm}
@@ -840,30 +1205,24 @@ $\bullet$ Set $X_{t+1}=\begin{cases} Y_{t+1} & \mbox{if }U_{t+1}\leq\alpha(X_{t}
 }
 \end{algorithm}
  In words, $Q$ allows to propose a candidate for the next value of
-the Markov chain $(X_{k})$ and this candidate will be accepted or
+the Markov chain $(X_{k})_{k\in\nset}$ and this candidate is accepted or
 refused according to a probability that depends on the function $\alpha$.
 
-We will now choose conveniently $\alpha$ in such a way that $(X_{k})$
-is a Markov chain with invariant probability measure $\pi$. The concept
-of $\pi$-reversibility will help us. To do so, let us assume that
+We now choose conveniently $\alpha$ in such a way that $(X_{k})_{k\in\nset}$
+is a Markov chain with invariant probability measure $\pi$. To do so, let us assume that
 for all $x,y\in\Xset$,
-
 \begin{equation}
 \pi(x)\alpha(x,y)q(x,y)=\pi(y)\alpha(y,x)q(y,x),\label{eq:balance}
 \end{equation}
 and let us show that it implies that the Markov kernel P associated
-to $(X_{k})$ is $\pi$-reversible.
+with $(X_{k})_{k\in\nset}$ is $\pi$-reversible.
 
-First, we write down the Markov kernel associated to $(X_{k})$: in
-passing, this is an excellent opportunity to check if we are able
-to express explicitly a Markov kernel by analyzing conveniently the
-update transition. Denote $\mcf_{t}=\sigma(X_{0},U_{1:t},Y_{1:t})$
-and note that $(X_{t})$ is adapted to the filtration $(\mcf_{t})$
+First, we write down the Markov kernel associated with $(X_{k})_{k\in\nset}$. Write $\mcf_{t}=\sigma(X_{0},U_{1:t},Y_{1:t})$
+and note that $(X_{t})_{t\in\nset}$ is adapted to the filtration $(\mcf_{t})$
 (which is equivalent to $\sigma(X_{0,t})\subset\mcf_{t}$). Then,
 setting $\bar{\alpha}(x)=1-\int_{\Xset}Q(x,\rmd y)\alpha(x,y)$, we
 have for any bounded or non-negative measurable function $h$ on $\Xset$
 and any $t\in\nset$,
-
 \begin{align*}
 \PE\lrb{h(X_{t+1})|\mcf_{t}} & =\PE\lrb{\indiacc{U_{t+1}<\alpha(X_{t},Y_{t+1})}h(Y_{t+1})|\mcf_{t}}+\PE\lrb{\indiacc{U_{t+1}\geq\alpha(X_{t},Y_{t+1})}|\mcf_{t}}h(X_{t})\\
  & =\int_{\Xset}Q(X_{t},\rmd y)\alpha(X_{t},y)h(y)+\bar{\alpha}(X_{t})h(X_{t})\\
@@ -891,12 +1250,10 @@ First, note that
 \pi(\rmd x)\bar{\alpha}(x)\delta_{x}(\rmd y)=\pi(\rmd y)\bar{\alpha}(y)\delta_{y}(\rmd x).\label{eq:balance:dirac}
 \end{equation}
 Indeed, for any measurable function $h$ on $\Xset^{2}$, we have
-
 \begin{align*}
 \iint_{\Xset^{2}}h(x,y)\pi(\rmd x)\bar{\alpha}(x)\delta_{x}\lr{\rmd y} & =\int_{\Xset}h(x,x)\pi(\rmd x)\bar{\alpha}(x)\\
  & =\int_{\Xset}h(y,y)\pi(\rmd y)\bar{\alpha}(y)=\iint_{\Xset^{2}}h(x,y)\pi(\rmd y)\bar{\alpha}(y)\delta_{y}(\rmd x).
 \end{align*}
-
 Combining \Eqref{def:mh} with \Eqref{balance:dirac}, we obtain that
 $\mh{\pi,Q}$ is $\pi$-reversible if and only if the detailed balance
 condition \Eqref{balance:detaillee} is satisfied. This completes
@@ -907,13 +1264,18 @@ the proof.
 \subsubsection{Acceptance probability}
 \index{Acceptance probability}
 We now make use of \Lemref{reversible} in order to find an explicit
-expression of the acceptance probability $\alpha$. We have the following
-lemma.
+expression of the acceptance probability $\alpha$.
 
 \bfr
 \begin{lemma}
-\label{lem:acceptance} Denote $\alpha^{MH}(x,y)=\min\lr{\frac{\pi(y)q(y,x)}{\pi(x)q(x,y)},1}$
-and $\alpha^{b}(x,y)=\frac{\pi(y)q(y,x)}{\pi(x)q(x,y)+\pi(y)q(y,x)}$.
+\label{lem:acceptance} Define 
+$$
+\alpha^{MH}(x,y)=\min\lr{\frac{\pi(y)q(y,x)}{\pi(x)q(x,y)},1}
+$$
+and 
+$$
+\alpha^{b}(x,y)=\frac{\pi(y)q(y,x)}{\pi(x)q(x,y)+\pi(y)q(y,x)}.
+$$
 Then, any $\alpha\in\left\{ \alpha^{MH},\alpha^{b}\right\} $ satisfies
 the detailed balance condition \eqref{eq:balance:detaillee}. Moreover, any other $\alpha\in[0,1]$
 that satisfies the detailed balance condition is dominated by $\alpha^{MH}$in
@@ -927,8 +1289,8 @@ the sense that: for $\lambda^{\otimes2}$-almost all $x,y\in\Xset$,
 \begin{svmultproof}
 The fact that any $\alpha\in\left\{ \alpha^{MH},\alpha^{b}\right\} $
 satisfies $\pi(x)q(x,y)\alpha(x,y)=\pi(y)q(y,x)\alpha(y,x)$ for $\lambda^{\otimes2}$-almost
-all $x,y\in\Xset$, is immediate, by replacing $\alpha$ by its expression.
-It remains to check \Eqref{accept:max} . Assume now that for $\lambda^{\otimes2}$-almost
+all $x,y\in\Xset$, is immediate, by plugging the value of $\alpha$ in the equation.
+It remains to check \Eqref{accept:max}. Assume now that for $\lambda^{\otimes2}$-almost
 all $x,y\in\Xset$,
 \[
 \pi(x)q(x,y)\alpha(x,y)=\pi(y)q(y,x)\alpha(y,x).
@@ -948,7 +1310,7 @@ is widely used in practice (in the sense that we expect that a Markov
 kernel that accepts often, explores the space more rapidly and therefore
 is preferable to another one with less acceptance probability). In
 what follows, unless otherwise stated, \textbf{\emph{we implicitly
-assume that the Markov kernel $\mh{\pi,Q}$ is associated to the acceptance
+assume that the Markov kernel $\mh{\pi,Q}$ is associated with the acceptance
 probability $\alpha^{MH}$}}\emph{.}
 
 Exercise~\ref{exo:detailed} shows other examples of possible acceptance probabilities.
@@ -956,26 +1318,29 @@ Exercise~\ref{exo:detailed} shows other examples of possible acceptance probabil
 
 \begin{example}
 \textbf{(The independence sampler)}\index{independence sampler} If the proposition kernel is $Q(x,\rmd y)=q(y)\lambda(\rmd y)$
-where $q$ is a density wrt $\lambda$ on $\Xset$, then at each time
+where $q$ is a density with respect to $\lambda$ on $\Xset$, then at each time
 step, the proposed candidate is drawn irrespective of the current
 value of the Markov chain (this is because, $Q(x,\rmd y)$ does not
 depend on $x$), that is, in the step 2(a) of \algref{mh}, we draw
-$Y_{t+1}\sim q\left(\cdot\right)$. In such case, the acceptance probability
-is $\alpha(x,y)=\min\left(\frac{\pi(y)q(x)}{\pi(x)q(y)},1\right)$
+$Y_{t+1}\sim q\left(\cdot\right)$. In such  a case, the acceptance probability
+is 
+$$
+\alpha(x,y)=\min\left(\frac{\pi(y)q(x)}{\pi(x)q(y)},1\right)
+$$
 and the Metropolis-Hastings algorithm is called the \emph{Independence
 Sampler. }
 \end{example}
-Another important example is the following.
+
 \begin{example}
 \textbf{(The random walk MH sampler)} \index{random walk MH sampler} If $\Xset=\rset^{p}$ and if
 the proposition kernel is $Q(x,\rmd y)=q(y-x)\lambda(\rmd y)$ where
-$q$ is a symmetric density wrt $\lambda$ on $\Xset$, (by symmetric,
+$q$ is a symmetric density with respect to $\lambda$ on $\Xset$, (by symmetric,
 we mean that $q(u)=q(-u)$ for all $u\in\Xset$) then at each time
 step in \algref{mh}, we draw a candidate $Y_{t+1}\sim q\left(y\ -X_{k}\right)\lambda(\rmd y)$.
-In such case, the acceptance probability is $\alpha(x,y)=\min\left(\frac{\pi(y)}{\pi(x)},1\right)$
+In such a case, the acceptance probability is $\alpha(x,y)=\min\left(\pi(y)/\pi(x),1\right)$
 and the associated algorithm is called the \emph{(symmetric)} \emph{Random
 Walk Metropolis-Hasting.}\textbf{ }Another way of writing the proposition
-update is $Y_{t+1}=X_{k}+\eta_{k}$ where $\eta_{k}\sim q(\cdot)$.\textbf{ }
+update is $Y_{k+1}=X_{k}+\eta_{k}$ where $\eta_{k}\sim q(\cdot)$.\textbf{ }
 \end{example}
 
 \section{Invariant probability measure: uniqueness}
@@ -992,9 +1357,8 @@ such that there exists $A\in\Xsigma$ such that $\pi_{0}(A)=\pi_{1}(A^{c})=0$.
 \begin{svmultproof}
 Let $\zeta_{0},\zeta_{1}$ be two distinct invariant probability measures
 for $P$. Both have densities with respect to some common dominating
-measure (for example, taking $\zeta=\zeta_{1}+\zeta_{2}$, we have
-that $\zeta$ dominates both $\zeta_{0}$ and $\zeta_{1}$, which
-can be seen from the implication $\zeta(A)=0\Rightarrow(\zeta_{1}(A)=0\mbox{ and }\zeta_{2}(A)=0)$
+measure (for example, choosing $\zeta=\zeta_{1}+\zeta_{2}$, we have
+that $\zeta$ dominates both $\zeta_{0}$ and $\zeta_{1}$, since $\zeta(A)=0\Rightarrow(\zeta_{1}(A)=0\mbox{ and }\zeta_{2}(A)=0)$
 for any $A\in\Xsigma$ and according to the Radon Nikodym \index{Radon Nikodym}theorem,
 if a measure dominates another one, the latter has a density with
 respect to the former). Write then $\zeta_{0}(\rmd x)=f_{0}(x)\zeta(\rmd x)$
@@ -1020,9 +1384,9 @@ non-negative and we have
 [(\zeta_{1}-\zeta_{0})^{+}P-(\zeta_{1}-\zeta_{0})^{+}](\Xset)=\int_{\Xset}(\zeta_{1}-\zeta_{0})^{+}(\rmd x)\underbrace{P(x,\Xset)}_{1}-(\zeta_{1}-\zeta_{0})^{+}(\Xset)=0.
 \]
 Finally, $(\zeta_{1}-\zeta_{0})^{+}=(\zeta_{1}-\zeta_{0})^{+}P$.
-The probability measure $\pi_{0}=\frac{(\zeta_{1}-\zeta_{0})^{+}}{(\zeta_{1}-\zeta_{0})^{+}(\Xset)}$
+The probability measure $\pi_{0}=(\zeta_{1}-\zeta_{0})^{+}/(\zeta_{1}-\zeta_{0})^{+}(\Xset)$
 is thus an invariant probability measure for $P$. Replacing $(\zeta_{1}-\zeta_{0})^{+}$
-by $(\zeta_{1}-\zeta_{0})^{-}$, we obtain in the same way that $\pi_{1}=\frac{(\zeta_{1}-\zeta_{0})^{-}}{(\zeta_{1}-\zeta_{0})^{-}(\Xset)}$
+by $(\zeta_{1}-\zeta_{0})^{-}$, we obtain in the same way that $\pi_{1}=(\zeta_{1}-\zeta_{0})^{-}/(\zeta_{1}-\zeta_{0})^{-}(\Xset)$
 is an invariant probability measure. We can easily check that taking
 $A=\left\{ f_{0}\geq f_{1}\right\} $, we have $\pi_{0}(A)=\pi_{1}(A^{c})=0$,
 showing that these probability measures are mutually singular.
@@ -1031,7 +1395,7 @@ showing that these probability measures are mutually singular.
 To be rigorous, in the course of the proof, we actually need some
 results on the positive and negative part of a signed-measure. The
 interested reader may work on the following exercise to fully understand
-the previous proof: \blb
+the previous proof. \blb
 \begin{exercise}
 Define $\meas s(\Xset)$ the set of signed-measures. Let $\mu\in\meas s(\Xset)$
 and assume that $\mu\preceq\zeta$ where $\zeta\in\meas +(\Xset)$
@@ -1040,7 +1404,7 @@ $\zeta(A)=0$, then $\mu(A)=0$). According to the Radon-Nikodym theorem,
 there exists a measurable function $h$ such that $\mu(\rmd x)=h(x)\zeta(\rmd x)$.
 Define $\mu^{+}(\rmd x)=|h(x)|\zeta(\rmd x)$.
 \begin{enumerate}
-\item Show that the measure $\mu^{+}$is well-defined (in the sense that
+\item Show that the measure $\mu^{+}$ is well-defined (in the sense that
 the measure $|h(x)|\zeta(\rmd x)$ does not depend on the measure
 $\zeta$, provided that the $\zeta$ dominates $\mu$.)
 \item Show that for $\zeta$-almost all $x\in\Xset$, $|h(x)|\leq1$.
@@ -1066,18 +1430,18 @@ Then, $P$ admits at most one invariant probability measure.
 is \textbf{$\mu$-irreducible}\index{irreducibility} and in such case, $\mu$ is called
 an \textbf{irreducibility measure} for $P$.
 \begin{svmultproof}
-The proof is by contradiction. Assume that there exists two distinct
+The proof is by contradiction. Assume that there exist two distinct
 invariant probability measures. According to \Lemref{invariant:singular},
 we can consider two invariant probability measures $\pi_{1}$ and
-$\pi_{2}$ that are mutually singular. Under the assumptions of the
-Proposition, let $A\in\Xsigma$ such that $\mu(A)>0$. Then, for any
+$\pi_{2}$ that are mutually singular. Under the assumptions of 
+Proposition~\ref{prop:unique}, let $A\in\Xsigma$ such that $\mu(A)>0$. Then, for any
 $i\in\left\{ 1,2\right\} ,$we have
 \[
 0<\int_{\Xset}\pi_{i}(\rmd x)\underbrace{\sum_{n=0}^{\infty}P^{n}(x,A)}_{>0}=\sum_{n=0}^{\infty}\pi_{i}P^{n}(A)=\sum_{n=0}^{\infty}\pi_{i}(A),
 \]
 which in turn implies that $\pi_{i}(A)>0$. The contraposed implication
 gives that if for some $i\in\left\{ 1,2\right\} $, $\pi_{i}(A)=0$,
-then $\mu(A)=0$. Now, since $\seq{\pi_{i}}{i\in\left\{ 1,2\right\} }$
+then $\mu(A)=0$. Now, since $\pi_1$ and $\pi_2$ 
 are mutually singular, there exists $A\in\Xsigma$ such that $\pi_{1}(A)=\pi_{2}(A^{c})=0$
 and this shows that $\mu(A)=\mu(A^{c})=0$ which is impossible.
 \end{svmultproof}
@@ -1087,7 +1451,7 @@ Exercise~\ref{exo:arp} gives an example where \Propref{unique} applies.
 
 We have already seen that $\mh{\pi,Q}$is $\pi$-invariant and we
 have assumed that $Q(x,\rmd y)=q(x,y)\lambda(\rmd y)$ and $\pi(\rmd y)=\pi(y)\lambda(\rmd y)$
-and for simplicity, we said that for all $x,y\in\Xset$, $q(x,y)>0$
+and for simplicity, that for all $x,y\in\Xset$, $q(x,y)>0$
 and $\pi(y)>0$. This in turn implies that $\alpha(x,y)=\alpha^{MH}(x,y)>0$
 and therefore if $\lambda(A)>0$, then for all $x\in\Xset$,
 \[
@@ -1096,16 +1460,15 @@ P(x,A)\geq\int_{A}\underbrace{q(x,y)\alpha(x,y)}_{>0}\lambda(\rmd y)>0.
 This shows that $P$ is $\lambda$-irreducible and therefore \textbf{$\pi$
 is the unique invariant probability measure for $P$.}
 
-\section{After studying this chapter...}
+\section{Key notions}
 \begin{center}
 \shadowbox{\begin{minipage}{0.9\textwidth}
 \begin{enumerate}[a)]
-\item I can understand the link between reversibility and invariant measure.
-\item If asked, I can check that MH chains are reversible.
-\item I understand the form of the acceptance probability.
-\item Independence sampling and random walk MH have no secrets for me and I am able to implement them.
-\item If asked, I can show that an invariant measure is unique by using \Propref{unique}
-\item I find that Metropolis-Hasting algorithms are magical.
+\item Understanding the link between reversibility and invariant measure.
+\item Checking that MH chains are reversible.
+\item Understanding the expression of the acceptance probability.
+\item Implementing the Independence sampler and the random walk MH.
+\item Showing that an invariant measure is unique by using \Propref{unique}.
 \end{enumerate}
 \end{minipage}
 }
@@ -1501,13 +1864,13 @@ $$
 $$
 \end{svmultproof}
 
-\section{After studying this chapter...}
+\section{Key notions of this chapter}
 \begin{center}
 \shadowbox{\begin{minipage}{0.9\textwidth}
 \begin{enumerate}[a)]
-\item I understand that I can use the LLN (Law of Large Numbers) for any MH algorithm starting from anywhere...
-\item If I want to check a LLN, I first check if there is a unique invariant measure (\autoref{ergodic})
-\item I understand the proof of \autoref{ergodic}, which is hard but so beautiful...
+\item Law of Large Numbers for any MH algorithm starting from anywhere.
+\item In order to check a LLN, check if there is a unique invariant measure (\autoref{ergodic}).
+\item Proof of \autoref{ergodic}.
 \end{enumerate}
 \end{minipage}
 }
@@ -2206,16 +2569,16 @@ $\hat h\leq \gamma V^{1/2}$. This implies that $\pi(\hat h^2) \leq \gamma \pi(V)
 \end{svmultproof}
 
 Under the assumptions of \autoref{thm:clrHairer}, the CLT holds under $\PP_\pi$. We can actually extend this result to all $\PP_\nu$ where $\nu$ is any probability measure in $\meas 1(\Xset)$.
-\section{After studying this chapter...}
+\section{Key notions of  this chapter}
 \begin{center}
 \shadowbox{\begin{minipage}{0.9\textwidth}
 \begin{enumerate}[a)]
-\item I understand the three expressions of the total variation norm.
-\item If asked, I can try to prove that a Markov kernel is geometrically ergodic by checking the minorizing condition and the drift condition.
-\item I understand the coupling inequality.
-\item I understand the proof of \autoref{thm:ergo:geom}, which is hard but also beautiful...
-\item I know what is a Poisson equation and I can write a solution of the Poisson equation as a series.
-\item I understand in what sense Poisson equation allows to establish links between Markov Chains and martingales.
+\item The three expressions of the total variation norm.
+\item Prove that a Markov kernel is geometrically ergodic by checking the minorizing condition and the drift condition.
+\item The coupling inequality.
+\item The proof of \autoref{thm:ergo:geom}.
+\item A Poisson equation and and its solution as a series.
+\item Links between Markov Chains and martingales using Poisson equations.
 \end{enumerate}
 \end{minipage}
 }
@@ -2886,14 +3249,14 @@ Metropolis-Hastings algorithm on each component as in the case of the DUGS algor
 is then called the Two-Stage Metropolis-within-Gibbs algorithm.
 
 
-\section{After studying this chapter...}
+\section{Key notions of this chapter}
 \begin{center}
 \shadowbox{\begin{minipage}{0.9\textwidth}
 \begin{enumerate}[a)]
-\item I can explain Pseudo marginal algorithm and I can justify why it is correct on a blackboard.
-\item I understand understand the notions of deterministic moves and the requirements linked with MH with deterministic moves (involution, volume-preserving and invariant level sets), so I understand all about Hamiltonian MC.
-\item I know and understand the Gibbs moves.
-\item I am able to implement these variants of MH, pseudo marginal algorithms, Leapfrog HMC...
+\item Pseudo marginal algorithms.
+\item Deterministic moves and the requirements linked with MH with deterministic moves (involution, volume-preserving and invariant level sets).
+\item The Gibbs moves.
+\item Implementations of these variants of MH, pseudo marginal algorithms, Leapfrog HMC...
 \end{enumerate}
 \end{minipage}
 }
@@ -2920,300 +3283,7 @@ William Rowan Hamilton's scientific career included the study of geometrical opt
 \end{subappendices}
 
 
-\chapter{Target distributions and alternative methods}
-So far, in MCMC methods, a target distribution $\pi$ is given and we have shown some generic ways of constructing a process $(X_k)_{k\in\nset}$ that targets $\pi$ in some sense to be defined: sometimes $(X_k)_{k\in\nset}$ is itself a Markov chain with invariant probatility measure $\pi$, sometimes, $(X_k)_{k\in\nset}$ is the first component process of an extended Markov chain that targets an extended distribution where the marginal distribution on the first component is $\pi$.
 
-
-\section{Target distributions}
-We first introduce two contexts where target distributions are at stake. One is linked with Bayesian inference. In such a case, the target distribution is the posterior distribution of the parameter given all the data. Another one is linked with partially observed models. In such a case, the target distribution  might be the distribution of the unobserved variables given the data.
-
-\subsection{Bayesian inference}
-\index{bayeasian inference}
-In  Bayesian inference, prior belief  is combined with
-data to obtain posterior distributions on which statistical inference is based.
-%Although we focus primarily on  likelihood based inference in this text,
-%it is also worthwhile to consider Bayesian  inference  for some problems.
-Except for some simple cases, Bayesian inference can be computationally
-intensive and may rely on  computational techniques.
-
-The basic idea in Bayesian analysis is that a parameter vector,
-say $ \theta \in \Theta$, is unknown to a researcher, so a \emph{prior} distribution,
-$\pi_0( \theta)\lambda(\rmd \theta)$, is put on the parameter vector.  The researcher also
-proposes a model or likelihood, $\dens[][]{ y_{1:n} \mid \theta}$, that describes
-how the data $Y=y_{1:n}$ depend on the parameter vector.
-Inference about $ \theta$ is then based on the \emph{posterior}
-distribution, which is obtained via Bayes's theorem,
-\begin{equation} \label{eq:target:bayes}
-\pi(\theta)=\dens[][]{\theta \bigm| Y=y_{1:n}}=\frac{\pi_0( \theta) \dens[][]{ y_{1:n} \mid \theta}}{\int \pi_0( \theta) \dens[][]{ y_{1:n} \mid \theta} \lambda(\rmd \theta)}.
-\end{equation}
-  In some simple cases, the prior  and
-the likelihood are \emph{conjugate}  distributions that may be combined easily.
-For example, in $n$ fixed repeated (iid) Bernoulli experiments with probability of success $\theta$,
-a \emph{Beta-Binomial} conjugate pair is taken.  In this case the prior is
-Beta($a,b$):
-$\pi_0(\theta) \propto \theta^{a} (1-\theta)^{b}$; the values $a,b > -1$  are called
-hyperparameters. The likelihood in this example is
-Binomial$(n,\theta)$:
-$\dens[][]{ y \mid \theta} \propto \theta^y (1-\theta)^{n-y}$, from which
-we easily deduce that the
-posterior is also Beta,
-$\pi ( \theta \bigm| Y ) \propto \theta^{y+a}(1-\theta)^{n+b-y }
-$, and from which inference may easily be achieved.
-In more complex experiments, the posterior distribution is often difficult to obtain by direct calculation,
-so MCMC techniques are employed (note that in \eqref{eq:target:bayes}, the numerator is usually known and explicit while, due to the integral, the denominator is a multiplicative unknown constant).  The main idea is that we may not be able to
-explicitly display the posterior, but we may be able to simulate from
-the posterior.
-
-%Nevertheless, even when $\theta$ is in a small dimension space, the numerical calculation of $p(y_{1:n}|\theta)$ may be hard to obtain  precisely due to the fact that $n$ is large. For example, in the case of iid random variables, $p(y_{1:n}|\theta)$ is
-%a large product
-%$\prod_{i=1}^n p(y_i|\theta)$  (since $n$ is the number of the observations).
-
-\subsection{Models with Latent variables}
-In some situations, observations are partial and unfortunately, do not contain some variables of interest. In such a case, given a modelization of the process generating the data, one might be interested into reconstructing the distribution of the missing variables given the data. This will be our target distribution. Let us be more specific with the example of Hidden Markov Models (HMM).
-\index{hidden Markov models} \index{latent variables}
-
-Such a model is defined by a bivariate Markov chain $(Z_k)_{k\in\nset}=(X_k,Y_k)_{k\in\nset}$ on $\Xset\times\Yset$ where $(\Xset,\Xsigma)$ and $(\Yset,\Ysigma)$ are two measurable spaces, and where the transition is given by:
-\begin{align*}
-X_k|_{Z_{0:k-1}} \sim Q(X_{k-1},\cdot)\\
-Y_k|_{X_k,Z_{0:k-1}} \sim G(X_k,\cdot)
-\end{align*}
-Here, $Q$ denotes a Markov kernel on $\Xset \times \Xsigma$ while $G$ is a Markov kernel on $\Xset \times \Ysigma$.
-
-
-\begin{figure}[!h]
-\begin{center}
-\begin{tikzpicture}[node  distance=1.5cm]
-\node(a){$X_{k-1}$};
-\node(b)[right of =a]{$X_{k}$};
-\node(c)[below of =b]{$Y_{k}$};
-\node(d)[left of =c]{$Y_{k-1}$};
-\node(e)[right of =b]{};
-\node(f)[left of =a]{};
-
-\draw[->, blue,thick](a)--(b)node[pos=0.5, below]{$Q$};
-\draw[->, red,thick](b)--(c)node[pos=0.5, right]{$G$};
-\draw[->, dashed, blue](b)--(e);
-\draw[->, dashed, red](a)--(d);
-\draw[->, dashed, blue](f)--(a);
-\end{tikzpicture}
-\end{center}
-
-\caption{A hidden Markov model}
-\label{hmm}
-\end{figure}
-In such a model, only the $Y$'s component is observed and inference must be driven on the basis of $(Y_{1:n})$ only.
-In a fully dominated model, we assume that $Q(x,\rmd x')=q(x,x') \lambda(\rmd x')$ and $G(x,\rmd y)=g(x,y) \nu(\rmd y)$ where $\lambda$ and $\nu$ are $\sigma$-finite dominating measures on $(\Xset,\Xsigma)$, and $(\Yset, \Ysigma)$ respectively. In such a case, assuming that $X_0=x_0$ is given, one might be interested in the law of the missing variables $X_{1:n}$ given the observations $Y_{1:n}$, so that the target density will be:
-$$
-\pi(x_{1:n})=\frac{\prod_{i=1}^{n} q(x_{i-1},x_i)g(x_i,y_i)}{\idotsint_{\Xset^n} \prod_{i=1}^{n} q(x_{i-1},x_i)g(x_i,y_i) \lambda(\rmd x_i)}
-$$
-Once again the denominator is, due to the integral, an unknown multiplicative factor, whereas the numerator is explicit and we are therefore in a context where MCMC methods can be applied. Nevertheless, in this example, the number of hidden variables is $n$, which can be very large and the target distribution is thus associated to a very high dimensional space, $\Xset^n$, so that we have to be very careful when applying these methods.
-\section{Other approximation methods}
-In computational statistics, when it comes to approaching a target law in a very large space,
-classical techniques using Markov chains admitting "exactly" this target law
-for invariant distribution may suffer from a slow exploration of the state space. In a high dimensional framework, the candidate is often proposed in an uninformative region and it is likely that it is refused, leading the Markov chain to remain stuck at the same place a certain amount of time.
-
-Some other approximation techniques do not even try to construct random variables with distribution close to $\pi$. We will briefly introduce two approximation techniques: sequential Monte Carlo methods and Variational Inference.
-
-\subsection{Sequential Monte Carlo methods}
-\index{sequential Monte Carlo}
-We briefly explain basic ideas of Sequential Monte Carlo methods, without proving anything.
-The rough idea of sequential Monte Carlo methods for targetting $\pi$ is to find intermediate target distributions $\pi_1\rightarrow \pi_2\rightarrow,\ldots,\rightarrow \pi_T=\pi$ and to construct, sequentially, Monte Carlo approximations of $\pi_i$.
-
-
-
-
-This is actually based on importance sampling and we first recall it here. If $\pi$ and $g$ are densities wrt to the same dominating measure, and assuming that $g(x)=0$ implies $\pi(x)=0$, then we can approximate $\pi(h)$ with $N^{-1}\sum_{k=1}^N \frac{\pi(X_k)}{g(X_k)} h(X_k)$ where $(X_k)_{k\in[1:N]} \iid g$. Since $\pi$ is typically known only up to a multiplicative factor, the quantity $n^{-1}\sum_{k=1}^N \frac{\pi(X_k)}{g(X_k)} h(X_k)$ is not explicit due to this multiplicative factor and we typically choose instead:
-$$
-\pi(h) =\frac{\pi(h)}{\pi(1)}\approx \frac{n^{-1}\sum_{k=1}^N \frac{\pi(X_k)}{g(X_k)} h(X_k)}{N^{-1}\sum_{\ell=1}^n \frac{\pi(X_\ell)}{g(X_\ell)}}=\sum_{k=1}^N \lr{\frac{ \omega^k}{\sum_{\ell=1}^N \omega^\ell}}  h(X_k)=\sum_{k=1}^N \bar\omega^k  h(X_k)
-$$
-where $\omega^k=\pi(X_k)/g(X_k)$ and $\bar \omega^k=\omega^k/(\sum_{\ell=1}^{k} \omega^\ell)$. Now the rhs can be calculated even if $\pi$ is known only up to a multiplicative factor since $\bar \omega^k$ is a ratio where $\pi$ is involved (both in the numerator and the denominator).
-
-Thus, $\pi(h)$ is approximated using a population of "particles" $\{(X_k,\omega^k)\}_{k\in[1:N]}$ (we mean by particle a "support" point $X_k$ and an associated weight $\omega^k$). Note that a weight is usually unnormalized but when considering the approximation, we use the normalized weights: $\omega^k/(\sum_{\ell=1}^{k} \omega^\ell)$.
-
-Of course, if all the $X_k$ were iid from $\pi$ directly, all the associated weights would be equal. So here, by allowing different weights, we are more flexible. Still if the weights are too different, this is not satisfactory because only a few particles contain all the information. In that case, we prefer to resample inside the population. Let us be more specific.
-
-\subsubsection{Resampling step}
-\index{resampling}
-Assume that $\{(X_k,\omega^k)\}_{k\in[1:N]}$ targets $\pi_0(h)$. Define $\bar \omega^k=\omega^k/(\sum_{\ell=1}^{k} \omega^\ell)$.
-
-An example of resampling step is
-$$
-\mbox{For $k\in[1:n]$, choose independently}\quad \tilde X_k=\begin{cases}
-X_1& \mbox{wp} \ \bar \omega^1\\
-\ldots&\\
-X_N & \mbox{wp} \ \bar \omega^N
-\end{cases}
-$$
-Then $\{(\tilde X_k,1)\}_{k\in[1:N]}$ still targets $\pi_0(h)$. The target distribution is not changed but now, all the weights are equal. Informative particles (ie with high weights) are likely to be replicated after resampling while noninformative are likely to disappear (because they were not chosen). Support points are changed but still within the initial pool of support points.
-
-\subsubsection{Exploration step}
-\index{exploration}
-Assume that $\{(X_k,\omega^k)\}_{k\in[1:N]}$ targets $\pi_0(h)$ and that
-\begin{equation} \label{eq:explor}
-\pi_1(y)=\int_\Xset \pi_0(\rmd x) q(x,y)\eqsp,
-\end{equation}
-where $q$ is a kernel density. An example of exploration step is
-$$
-\mbox{For $k\in[1:n]$, draw independently}\quad \tilde X_k\sim r(X_k,\cdot)
-$$
-where $r$ is a kernel density (that can be easily simulated).
-Then, $\lrcb{(\tilde X_k,\omega^k \times \frac{q(X_k,\tilde X_k)}{r(X_k,\tilde X_k)}}_{k\in[1:N]}$ targets $\pi_1(h)$.
-Here, support points are moved and weights are updated by a multiplicative factor (except when $r=q$, in which case, support points are moved but the associated weights do not need to be updated  since $ \frac{q(X_k,\tilde X_k)}{r(X_k,\tilde X_k)}=1$).
-\subsubsection{Reweighting step}
-\index{reweighting}
-Assume that $\{(X_k,\omega^k)\}_{k\in[1:N]}$ targets $\pi_0(h)$ and that
-\begin{equation} \label{eq:resamp}
-\pi_1(x)=\frac{ \pi_0(x) g(x) }{\int_\Xset \pi_0(\rmd u) g(u) }
-\end{equation}
-where $g$ is a nonnegative function. Then,  $\lrcb{(X_k,\omega^k g(X_k) }_{k\in[1:N]}$ targets $\pi_1(h)$. Here, support points are unchanged but weights are updated.
-
-Finally, when choosing the intermediate target distributions $\pi_1\rightarrow \pi_2\rightarrow,\ldots,\rightarrow \pi_T=\pi$, we must check that each step $\pi_i \rightarrow \pi_{i+1}$ corresponds either to \eqref{eq:explor} or \eqref{eq:resamp} so that we can let evolve a population of particles through exploration, and reweighting steps. Resampling can always be performed when weights are too different and this is often measured when the Effective Sample Size (which is a real number between 1 and $N$), $\widehat{ESS}=\frac{1}{\sum_{k=1}^N (\bar \omega^k)^2}$, falls below a certain arbitrary threshold.
-\subsection{Variational inference}
-\index{variational inference}
-Variational Inference is a technique derived from the
- {\em Machine Learning} community whose principle is to approach the target density through various optimization techniques. The principle consists in giving up aiming exactly at the target law, but instead, we have at hand a sufficiently rich family of laws (that can be easily simulated) and the idea is then to select a member of this family close to the target in the sense of a certain divergence through optimization procedures. Variational inference has been successfully used in many applications and seems to be faster and more efficient to explore large spaces compared to classical Monte Carlo Markov chain methods. The proximity is often measured in terms of Kullback divergence or even more recently in terms of $f$-divergence. Although these techniques are extremely powerful and popular in practice, some statistical properties of these methods are still largely unknown.
-
-\subsubsection{$\alpha$-divergence and the ELBO}
-\index{$\alpha$-divergence}
-Letting $f_\alpha$ be the convex function on $(0, +\infty)$ defined by $f_0(u) = -\log(u)$, $f_1(u) = u\log(u)$ and $f_\alpha(u) = \frac{1}{\alpha(\alpha-1)} \left[  u^\alpha -1 \right]$ for all $\alpha \in \rset \setminus \lrcb{0,1}$, the $\alpha$-divergence for all $\alpha \in \rset$ is defined by
-\begin{align}\label{eq:gen:div}
-D_\alpha(\mathbb{P}\|\mathbb{Q}) = \int_\Xset f_\alpha\left(\frac{q(x)}{p(x)} \right)p(x) \lambda(\rmd x) \eqsp,
-\end{align}
-where $\mathbb{P}(\rmd x)=p(x)\lambda(\rmd x)$ and $\mathbb{Q}(\rmd x)=q(x) \lambda(\rmd x)$. Of course, it is non-negative and null if $\mathbb{P}=\mathbb{Q}$ but there is no triangular inequality and therefore, it is not a distance.
-
-
-
-\newcommand{\argmin}{\mathrm{argmin}}
-In Variational Inference (also called VI), we want to approximate $\pi$ by selecting the best candidate among a family of densities
-$$
-\set{x\mapsto p_\theta(x)}{\theta\in\Theta}
-$$
-with respect to the $\alpha$-divergence. In other words, we want to solve
-$$
-\argmin_{\theta\in\Theta} D_\alpha(\pi \| p_\theta)= \argmin_{\theta\in\Theta} \int_{\Xset} f_\alpha\lr{\frac{p_\theta(x)}{\pi(x)}} \pi(x) \lambda(\rmd x)
-$$
-Recalling that $\pi$ is known only up to multiplicative constant, we must check if the minimization of $\int_{\Xset} f_\alpha\lr{\frac{p_\theta(x)}{\pi(x)}} \pi(x) \lambda(\rmd x)$ can be equivalent to the minimization of another functional which will be more explicit. Write $\pi(x)=\tilde \pi(x)/C$ where $\tilde \pi(x)$ is explicit and $C=\int_\Xset \tilde \pi(x)\lambda(\rmd x)$ is an "unexplicit" constant. Take for example: $\alpha=1$. Then,
-$$
-D_1(\pi \| p_\theta)= \int_{\Xset} \log\lr{\frac{p_\theta(x)}{\pi(x)}} p_\theta(x) \lambda(\rmd x)=-\underbrace{\int_{\Xset} \log\lr{\frac{\tilde \pi(x)}{p_\theta(x)}} p_\theta(x) \lambda(\rmd x)}_{ELBO} + \log C
-$$
-\index{ELBO}
-In this litterature, $\int_{\Xset} \log\lr{\frac{\tilde \pi(x)}{p_\theta(x)}} p_\theta(x) \lambda(\rmd x)$ is called the ELBO (Evidence Lower Bound) and maximizing the ELBO wrt $\theta$ is equivalent to minimizing $ D_1(\pi \| p_\theta)$ wrt $\theta$. Note that
-since $D_1(\pi \| p_\theta)=-ELBO+ \log C$, we have
-$$
-ELBO \leq \log C=\log \int_\Xset \tilde \pi(x)\lambda(\rmd x)
-$$
-(Hence, the terminology "Evidence Lower Bound"). In the case where $\alpha \neq 1$, some equivalent of the ELBO can also be found. In VI, we are face to an optimisation problem (which is in general a non-convex problem) and we have to resort to all the tools linked with optimisation problems: various stochastic gradient descents and their variants...
-
-
-
-\section{Approximate Bayesian computation}
-Approximate Bayesian computation (ABC) is an alternative approach when computation of the posterior is challenging, either because the size of the data or the complexity of realistic models makes the calculation computationally intractable. ABC specifically provides a solution  when the likelihood $y\mapsto p(y|\theta)$ cannot be evaluated. A generic description of the original ABC algorithm requires (i) the introduction of statistics $S(y)\in\mathbb{R}^m$ where $m$ is usually sensibly smaller than the dimension of $y$ and (ii) a distance $\mathsf{d}$ on $\mathbb{R}^m\times \mathbb{R}^m$. Note that if no statistics can be widely defined $S$ can be the identity function. Then, the most direct ABC alforithm is described in Algorithm~\ref{alg:ABC}.
-
-\medskip
-
-\begin{algorithm}[H] \label{alg:ABC}
-    \KwData{Observation $Y$, threshold $\varepsilon$, $N$}
-    \KwResult{Samples approximately distributed according to $p(\cdot | Y)$.}
-    \For {$i = 1 \to N$}{
-        draw $\theta_i$ with prior distribution $\pi$\;
-        draw $Y_i$ with distribution  $p(\cdot |\theta_i)$\;
-}
-Return all $\theta_i$ such that $\mathsf{d}(S(Y_i),S(Y))<\varepsilon$\;
-\caption{ABC algorithm.}
-\end{algorithm}
-
-\medskip
-
-When $S$ is the identity function, the random variables sampled by this  algorithm have distribution $\pi_{\varepsilon}(\cdot |Y)$ where
-$$
-\pi_{\varepsilon}(\theta|Y)\propto \int p(y|\theta)\pi(\theta) \mathds{1}_{A_{\varepsilon,Y}}(y)\rmd y\eqsp,
-$$
-with $A_{\varepsilon,Y} = \{y\eqsp;\mathsf{d}(y,Y)<\varepsilon\eqsp\}$. The intuitive idea behind this algorithm is that if  $\varepsilon \to 0$, $\pi_{\varepsilon}(\theta|Y) \to \pi(\theta|Y)$ and if $\varepsilon \to \infty$, $\pi_{\varepsilon}(\theta|Y) \to \pi(\theta)$. This initial version of the ABC approach raises many practical  issues among which an appropriate calibration of $\varepsilon$, the choice of statistics $S$, and the widespread inefficiency of sampling candidates according to the prior distribution $\pi$. In practice, the threshold $\varepsilon$ is usually determined as a quantile of the observed distance $(\mathsf{d}(S(Y_i),S(Y)))_{1\leqslant i \leqslant N}$ which allows to introduce Algorithm~\ref{alg:ABC:quant}.
-
-\medskip
-
-\begin{algorithm}[H] \label{alg:ABC:quant}
-    \KwData{Observation $Y$, $N$, integer $M_N$}
-    \KwResult{Samples approximately distributed according to $p(\cdot | Y)$.}
-    \For {$i = 1 \to N$}{
-        draw $\theta_i$ with prior distribution $\pi$\;
-        draw $Y_i$ with distribution  $p(\cdot |\theta_i)$\;
-}
-Return all $\theta_i$ such that $S(Y_i)$ is in the set of $M_N$ nearest neighbors of $S(Y)$ with respect to distance $\mathsf{d}$\;
-\caption{ABC algorithm with calibrated threshold.}
-\end{algorithm}
-
-\medskip
-
-These two algorithms generate independent samples but do not build upon the accepted samples to propose new candidates in a more efficient way than using the prior distribution. This can be performed by considering  ABC within a MCMC algorithm. See the exercises for a proof that Algorithm~\ref{alg:ABC:MCMC} targets the correct posterior distribution.
-
-\medskip
-
-\begin{algorithm}[H] \label{alg:ABC:MCMC}
-\KwData{Observation $Y$, $N$, threshold $\varepsilon$,  output $(\theta_0,Y_0)$ from a "standard" ABC.}
-\KwResult{Samples approximately distributed according to $p(\cdot | Y)$.}
-\For{$i=1$ to $N$}{
-Sample $\widetilde \theta \sim q(\cdot |\theta_i)$\;
-Sample $\widetilde Y \sim p(\cdot|\widetilde \theta)$ and compute $S(\widetilde Y)$\;
-Compute $\alpha = 1\wedge \frac{\pi(\widetilde \theta) q(\theta_i|\widetilde \theta)}{\pi(\theta_i) q(\widetilde\theta| \theta_i)}\mathds{1}_{\mathsf{d}(S(\tilde Y),S(Y))<\varepsilon}$\;
-Sample $U\sim U(0,1)$\;
-\eIf{$U< \alpha$}{
-Set $\theta_{i+1} = \widetilde \theta$ and $Y_{i+1} = \widetilde Y$\;
-}{
-$\theta_{i+1} = \theta_i$ and $Y_{i+1} = Y_i$\;
-}
-}\caption{ABC within MCMC}
-\end{algorithm}
-
-
-\section{After studying this chapter...}
-\begin{center}
-\shadowbox{\begin{minipage}{0.9\textwidth}
-\begin{enumerate}[a)]
-\item I understand what are the typical target distributions and that they can be of high dimensions.
-\item I have notions other approximations methods.
-\item I understand the basic ways of letting evolve a population of particles (exploration, reweighting, resampling) and the associated moves of the target distribution.
-\item I understand the basics of variational inference.
-\item I am ready (and eager) to work in practise on various MH algorithms or approximation methods.
-\end{enumerate}
-\end{minipage}
-}
-\end{center}
-
-
-\section*{Highlights}
-
-\begin{subappendices}
-
-\section{Thomas Bayes (source: wikipedia).}
-
-\begin{wrapfigure}{L}{0.28\textwidth} \centering
-
-\includegraphics[scale=0.45]{bayes}
-
-\end{wrapfigure}
-Thomas Bayes (1701-1761) was an English statistician, philosopher and Presbyterian minister who is known for formulating a specific case of the theorem that bears his name: Bayes' theorem. Bayes never published what would become his most famous accomplishment; his notes were edited and published after his death by Richard Price.
-
-Thomas Bayes was the son of London Presbyterian minister Joshua Bayes, and was possibly born in Hertfordshire. He came from a prominent nonconformist family from Sheffield. In 1719, he enrolled at the University of Edinburgh to study logic and theology. On his return around 1722, he assisted his father at the latter's chapel in London before moving to Tunbridge Wells, Kent, around 1734. There he was minister of the Mount Sion Chapel, until 1752.
-
-He is known to have published two works in his lifetime, one theological and one mathematical:
-
-\begin{itemize}
-\item Divine Benevolence, or an Attempt to Prove That the Principal End of the Divine Providence and Government is the Happiness of His Creatures (1731)
-\end{itemize}
-
-\begin{itemize}
-\item An Introduction to the Doctrine of Fluxions, and a Defence of the Mathematicians Against the Objections of the Author of The Analyst (published anonymously in 1736), in which he defended the logical foundation of Isaac Newton's calculus ("fluxions") against the criticism of George Berkeley, author of The Analyst
-\end{itemize}
-
-It is speculated that Bayes was elected as a Fellow of the Royal Society in 1742 on the strength of the Introduction to the Doctrine of Fluxions, as he is not known to have published any other mathematical works during his lifetime.
-
-In his later years he took a deep interest in probability. Professor Stephen Stigler, historian of statistical science, thinks that Bayes became interested in the subject while reviewing a work written in 1755 by Thomas Simpson, but George Alfred Barnard thinks he learned mathematics and probability from a book by Abraham de Moivre. Others speculate he was motivated to rebut David Hume's argument against believing in miracles on the evidence of testimony in An Enquiry Concerning Human Understanding. His work and findings on probability theory were passed in manuscript form to his friend Richard Price after his death.
-
-
-Monument to members of the Bayes and Cotton families, including Thomas Bayes and his father Joshua, in Bunhill Fields burial ground
-By 1755 he was ill and by 1761 had died in Tunbridge Wells. He was buried in Bunhill Fields burial ground in Moorgate, London, where many nonconformists lie.
-\end{subappendices}
 
 \chapter{Illustrations, exercises, extensions}
 
@@ -3459,6 +3529,9 @@ q^{k+1}&=q^k+h p^{k+1} \label{eq:leap:update}
 \end{exercise}
 
 %\chapter*{Index }
+
+\bibliographystyle{apalike}
+\bibliography{biblio}
 
 \printindex
 \end{document}

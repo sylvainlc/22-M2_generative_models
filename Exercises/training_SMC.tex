@@ -1,0 +1,122 @@
+\documentclass[a4paper,10pt,fleqn]{article}
+
+\usepackage{a4wide,amsmath,amsthm,amssymb,bbm,fancyhdr}
+\usepackage{ifthen,color,enumerate,comment,dsfont,pdfsync,framed,todonotes,enumitem}
+
+\newcommand{\titre}[1]{\textbf{\textsc{#1}}}
+
+\RequirePackage[T1]{fontenc}
+
+\usepackage[latin1]{inputenc}
+\usepackage{graphicx}
+\usepackage{dsfont}
+\usepackage{enumitem}
+\newcommand{\eqsp}{\,}
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\calF}{\mathcal{F}}
+\newcommand{\rmd}{\mathrm{d}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\rset}{\ensuremath{\mathbb{R}}}
+\renewcommand{\P}{\ensuremath{\operatorname{P}}}
+\newcommand{\bP}{\mathbb{P}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\rme}{\ensuremath{\mathrm{e}}}
+\newcommand{\calH}{\ensuremath{\mathcal{H}}}
+\newcommand{\xset}{\ensuremath{\mathsf{X}}}
+\newcommand{\V}{\ensuremath{\mathbb{V}}}
+\newcommand{\Sb}{\ensuremath{\mathbb{S}}}
+\newcommand{\gaus}{\ensuremath{\mathcal{N}}}
+\newcommand{\HH}{\ensuremath{\mathcal{H}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\W}{\ensuremath{\mathcal{W}}}
+\newcommand{\X}{\ensuremath{\mathcal{X}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\dlim}{\ensuremath{\stackrel{\mathcal{L}}{\longrightarrow}}}
+\newcommand{\plim}{\ensuremath{\stackrel{\mathrm{P}}{\longrightarrow}}}
+\newcommand{\PP}{\ensuremath{\mathbb{P}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\bE}{\mathbb{E}}
+\newcommand{\pa}[1]{\left(#1\right)}
+\newcommand{\hatk}{\widehat K}
+\newcommand{\f}{\varphi}
+\newcommand{\Id}{\textsf{Id}}
+\newcommand{\bfU}{\mathbf{U}}
+\newcommand{\bfX}{\mathbf{X}}
+\newcommand{\bfs}{\mathbf{\Sigma}}
+\newcommand{\bfA}{\mathbf{A}}
+\newcommand{\bfV}{\mathbf{V}}
+\newcommand{\bfB}{\mathbf{B}}
+\newcommand{\bfI}{\mathbf{I}}
+\newcommand{\bfD}{\mathbf{D}}
+\newcommand{\bfK}{\mathbf{K}}
+\newcommand{\argmin}{\mathop{\textrm{argmin}}}
+\newcommand{\argmax}{\mathop{\textrm{argmax}}}
+\newcommand{\crit}{\mathop{\textrm{crit}}}
+\newcommand{\C}{\mathcal{C}}
+\newcommand{\pc}{\pi_{\mathcal{C}}}
+
+
+% Style
+%\pagestyle{fancyplain}
+\renewcommand{\sectionmark}[1]{\markright{#1}}
+\renewcommand{\subsectionmark}[1]{}
+%\lhead[\fancyplain{}{\thepage}]{\fancyplain{}{\footnotesize {\sf
+%MAP569 Machine Learning II, \thisyear %/ \rightmark
+%}}}
+%\rhead[\fancyplain{}{\footnotesize {\sf MAT4506 Introduction to machine learning, \thisyear %/ \rightmark
+%}}]{\fancyplain{}{\thepage}}
+
+
+\begin{document}
+
+\noindent Generative models \hfill Sorbonne Universit\'e 
+
+\noindent\hrulefill
+
+\begin{center}
+\textsc{Importance sampling and Sequential Monte Carlo}
+\end{center}
+\hrulefill
+
+\section*{Exercise 1: Choice of proposal distribution}
+Let $X$ be a random variable with probability density $g$ with respect to the Lebesgue measure on $\rset$. Let $\kappa_X:t\mapsto \log(\mathbb{E}[\mathrm{e}^{tX}])$. We want to estimate $\mathbb{P}(X\geq x)$ for $x\in\rset$ using the proposal distribution $h_t:x\mapsto \mathrm{e}^{xt-\kappa_X(t)}g(x)$ for $t\in\rset$.
+\begin{enumerate}
+\item Propose a naive Monte Carlo estimator of $\mathbb{P}(X\geq x)$ for $x\in\rset$.
+\item Show that 
+$$
+\mathbb{E}\left[\mathds{1}_{Y\geq x}\mathrm{e}^{-2Yt +2\kappa_X(t)}\right] \geq \exp(-xt+\kappa_X(t))\,.
+$$
+where $Y$ has density $h_t$ for $t\geq 0$.
+\item Propose a choice $t_x$ to select the proposal distribution $h_t$.
+\item Apply this result when $X\sim\mathcal{N}(\mu,\sigma^2)$.
+\item Apply this result when $X\sim\mathcal{P}(\lambda)$.
+\end{enumerate}
+
+
+\section*{Exercise 2: Optimal kernel}
+We consider a linear ang Gaussian hidden Markov model given for $k\geq 0$ by
+\begin{align*}
+X_{k+1} &= \phi X_k + \sigma U_k\,,\\
+Y_k &= X_k + \eta V_k\,,
+\end{align*}
+where $(U_k)_{k\geq 0}$ and $(V_k)_{k\geq 0}$ are independent standard Gaussian random variables independent of $X_0$. The distribution $\nu$ of $X_0$ is the stationnary distribution of the Markov Chain. 
+\begin{enumerate}
+\item Write the joint probability density function of $(X_{0:n},Y_{0:n})$.
+\item Write the recursion defining the filtering distributions, i.e. the distributions of  $X_{n}$ given $Y_{0:n}$ for $n\geq 0$.
+\item Propose a sequential Monte Carlo method to estimate the filtering distribution at time $n+1$ using weighted samples $\{(\xi_n^i,\omega_n^i)\}_{i=1}^N$ targetting the filtering distribution at time $n$. New particles are proposed using the prior kernel, i.e. the distribution of $X_{n+1}$ given $X_n$.	
+\item The {\em optimal kernel} to propose new particles is defined as the distribution of $X_{n+1}$ given $(X_n,Y_{n+1})$. Compute the optimal kernel and the weights $(\omega_{n+1}^i)_{i=1}^N$.
+\item In other settings than linear and Gaussian HMM, the optimal kernel is usually not tractable. Propose an accept-reject mechanism to sample from the optimal kernel for general HMM.
+\end{enumerate}
+
+
+\section*{Exercise 3: Smoothing distribution}
+Let $\{(X_k,Y_k)\}_{k\geq 0}$ be a HMM where $(X_k)_{k\geq 0}$ is a Markov chain with initial distribution $\nu$ and Markov transition density $m$. For all $k\geq 0$, the conditional distribution of $Y_k$ given $X_{0:n}$ depends on $X_k$ only and its probability density function is written $g(X_k,\cdot)$.
+\begin{enumerate}
+\item Prove that for all $0\leq k\leq n-1$, the conditional distribution of $X_k$ given $X_{k+1}$ and $Y_{0:k}$ is proportional to $\phi_k(\cdot)m(\cdot,X_{k+1})$ where $\phi_k$ is the filtering distribution at time $k$. We write $b_k(X_{k+1},\cdot)$ this distribution.
+\item Prove that the joint density of $X_{0:n}$ given $Y_{0:n}$ can be written $x_{0:n}\mapsto \phi_n(x_n)\prod_{k=0}^{n-1}b_k(x_{k+1},x_k)$.
+\item Assume that at each time $k$, $\{(\xi_k^i,\omega_k^i)\}_{i=1}^N$ is a particle-based approximation of $\phi_k$. Propose a particle-based approximation of $b_k(X_{k+1},\cdot)$.
+\item Deduce from the previous questions an algorithm to approximately sample from the joint distribution $X_{0:n}$ given $Y_{0:n}$.
+\end{enumerate}
+
+\end{document}
