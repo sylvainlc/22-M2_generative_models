@@ -1,17 +1,15 @@
-# Introduction to computational statistics course
+# Simulation methods for generative models
 ## Table of contents
 
-The course covers the basics of computational statistics.
+This course propose an overview of classical methods to solve sampling-related problems in generative models.
+Exercises and notebooks in Python are proposed to understand the practical challenges in most widespread settings.
 
+### [Lecture notes](https://github.com/sylvainlc/22-M2_generative_models/blob/main/Lecture/poly.pdf) 
 
 ### Labs
-- [1 - Maximum likelihood (Gamma distribution, Newton-Raphson update)](https://github.com/sylvainlc/22_ComputationalStat/blob/main/Lab/1_Gamma_distribution.ipynb)
-- [2 - Mixture models](https://github.com/sylvainlc/22_ComputationalStat/blob/main/Lab/2-mixtures.ipynb)
-- [3 - Variational inference](https://github.com/sylvainlc/22_ComputationalStat/blob/main/Lab/3_VI_basics.ipynb)
-- [4 - Expectation Maximization](https://github.com/sylvainlc/22_ComputationalStat/blob/main/Lab/4_ExpectationMaximization.ipynb)
+- [Random walk Metropolis Hastings algorithm](https://github.com/sylvainlc/22-M2_generative_models/blob/main/Lab/mcmc_mh.ipynb)
+- [MALA and Hamiltonian Monte Carlo](https://github.com/sylvainlc/22-M2_generative_models/blob/main/Lab/mh_mala_hmc.ipynb)
+
 
 ### Exercises
-- [1 - Maximum likelihood (Gamma distribution, Newton-Raphson update)](https://github.com/sylvainlc/22_ComputationalStat/blob/main/Exercises/6_stats_correction.pdf)
-- [2 - Mixture models](https://github.com/sylvainlc/22_ComputationalStat/blob/main/Exercises/7_mixtures_correction.pdf)
-- [3 - Variational inference](https://github.com/sylvainlc/22_ComputationalStat/blob/main/Exercises/8_VI_correction.pdf)
-- [5 - Gibbs sampling](https://github.com/sylvainlc/22_ComputationalStat/blob/main/Exercises/10_EM_Gibbs_correction.pdf)
+- [Importance sampling and sequential Monte Carlo](https://github.com/sylvainlc/22-M2_generative_models/blob/main/Exercises/training_SMC.pdf)
