@@ -1,8 +1,8 @@
 # Simulation methods for generative models
 ## Table of contents
 
-This course propose an overview of classical methods to solve sampling-related problems in generative models.
-Exercises and notebooks in Python are proposed to understand the practical challenges in most widespread settings.
+This course proposes an overview of classical methods to solve sampling-related problems for generative models.
+Exercises and notebooks in Python are provided to understand the practical challenges in classical settings.
 
 ### [Lecture notes](https://github.com/sylvainlc/22-M2_generative_models/blob/main/Lecture/poly.pdf) 
 
