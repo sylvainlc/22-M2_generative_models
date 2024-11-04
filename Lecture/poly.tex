@@ -19,7 +19,14 @@
 \usepackage{calc}
 \usepackage{framed}
 \usepackage{enumitem}
-\usepackage{algorithm2e}
+
+
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+
+
+%\usepackage{algorithm2e}
 \usepackage{amsfonts, dsfont}
 \usepackage{amsmath}
 \let\proof\relax\let\endproof\relax
@@ -183,6 +190,8 @@
 \newcommand{\plim}[1]{\stackrel{#1-prob}{\longrightarrow}}
 \newcommand{\gauss}{\mathcal{N}}
 \newcommand{\eqsp}{}
+\newcommand{\diag}{\mathrm{diag}}
+
 
 \makeatother
 
@@ -194,6 +203,10 @@
 \providecommand{\proofname}{Proof}
 \providecommand{\propositionname}{Proposition}
 \providecommand{\theoremname}{Theorem}
+
+%\usepackage{algorithm}
+%\usepackage{algorithmicx}
+%\usepackage{algpseudocode}
 
 \begin{document}
 \global\long\def\1{\mathbf{1}}%
@@ -223,7 +236,13 @@
 \global\long\def\Xset{\mathsf{X}}%
 \global\long\def\Xsigma{\mathcal{X}}%
 
-
+\newcounter{hypH}
+\newenvironment{hypH}{
+    \refstepcounter{hypH}
+    \begin{itemize}
+    \item[{\bf H\arabic{hypH}}]
+    }
+{\end{itemize}}
 
 
 \title{Sampling for generative models\\ {\em Theory and practical applications}}
@@ -242,7 +261,7 @@
 \date{}
 
 \maketitle
-\chapter*{Introduction}
+%\chapter*{Introduction}
 %This document contains the lecture notes for the course given at the  MSc. Data Science (2nd year),  Institut Polytechnique de Paris.\footnote{\url{https://www.ip-paris.fr/education/masters/mention-mathematiques-appliquees-statistiques/master-year-2-data-science}} The schedule is roughly the following:
 %\begin{enumerate}[$\blacktriangleright$]
 %\item Chapter 1-2. Lecture, 1.5H. Tutorial: 2H.
@@ -252,21 +271,21 @@
 %\item Chapter 5-6. Lecture, 1.5H. Tutorial: 2H.
 %\item Chapter 6. Lecture, 1.5H. Tutorial: 2H.
 %\end{enumerate}
-Numerical illustrations of these notes are obtained with Jupyter Notebooks given during the course. % and the source can be run directly in a {\em colaboratory google site} \href{https://colab.research.google.com/drive/1Ey5TNx-_74gPH0FG-rhXSuGGok0T10wS\#}{by following this link}.
+%Numerical illustrations of these notes are obtained with Jupyter Notebooks given during the course. % and the source can be run directly in a {\em colaboratory google site} \href{https://colab.research.google.com/drive/1Ey5TNx-_74gPH0FG-rhXSuGGok0T10wS\#}{by following this link}.
 %\textcolor{red}{Add github repository with notebooks: independent MH, MALA, HMC.} 
-The most curious readers can consult one of these books.
-\begin{itemize}
-\item {\em Markov Chains and Stochastic Stability} S. Meyn and R. Tweedie. Springer, 2005 (2nd edition).
-\item {\em Markov Chains} by R. Douc, E. Moulines, P. Priouret and P. Soulier. Springer, jan. 2019.
-\end{itemize}
-Interested readers on Monte Carlo techniques can find some inspiration in
-\begin{itemize}
-\item {\em Monte Carlo Statistical Methods} by G. Casella and C. Robert. Springer, 2004.
-\end{itemize}
-This course is an adapted and extended version of a former course given at Institut Polytechnique de Paris with Randal Douc and that benefited from insightful comments by Kamelia Daudel.
-
-\clearpage
-\newpage
+%The most curious readers can consult one of these books.
+%\begin{itemize}
+%\item {\em Markov Chains and Stochastic Stability} S. Meyn and R. Tweedie. Springer, 2005 (2nd edition).
+%\item {\em Markov Chains} by R. Douc, E. Moulines, P. Priouret and P. Soulier. Springer, jan. 2019.
+%\end{itemize}
+%Interested readers on Monte Carlo techniques can find some inspiration in
+%\begin{itemize}
+%\item {\em Monte Carlo Statistical Methods} by G. Casella and C. Robert. Springer, 2004.
+%\end{itemize}
+%This course is an adapted and extended version of a former course given at Institut Polytechnique de Paris with Randal Douc and that benefited from insightful comments by Kamelia Daudel.
+%
+%\clearpage
+%\newpage
 
 \subsection*{Notation}
 The following notations are used throughout these lecture notes.
@@ -319,8 +338,9 @@ The following properties are used many times in these lecture notes.
 \dominitoc
 \tableofcontents
 
-\chapter{Target distributions and first approaches}
-In a general framework, generative modeling aims at designing algorithms to obtain samples from a complex distribution $\pi$ defined on a measurable space $(\mathsf{X},\mathcal{X})$. Such algorithms can be applied in many situations, we describe in this chapter some examples from recent applications. The target distribution $\pi$ can take several forms depending on the different contexts.
+
+\chapter{Target distributions and examples}
+In a general framework, generative modeling aims at designing algorithms to obtain samples from a complex distribution $\pi$ defined on a measurable space $(\mathsf{X},\mathcal{X})$. Such algorithms can be applied in many situations, we describe in this chapter some examples from recent applications. The target distribution $\pi$ may have several forms depending on the different contexts.
  For instance, in \cite{ng2001discriminative}, the authors discuss generative classifiers and propose to learn a model of a joint probability function of the inputs $X$ and the outputs $Y$ so that predictions can be made by using Bayes rule to compute the distribution of $Y$ given $X$. Without being restricted to classification problems, we focus in these notes on generative models where the data distribution depends on other variables or parameters, and we propose to model the joint distribution of all random variables. In such a setting, we assume that the random variables $(X,Y)$ have an unknown distribution and we usually propose a parametric family of joint probability distributions $(x,y)\mapsto p_\theta(x,y)$, $\theta\in\Theta$, with respect to a dominating measure $\lambda$, in order to approximate this unknown distribution. 
 
 In machine/statistical learning most of the problems we aim to solve require then to sample random variables from a complex distribution. Depending on the context, this distribution can be given for instance by a marginal density $p_\theta(y) = \int p_\theta(x,y) \lambda(\rmd x)$ or by a conditional/posterior distribution $p_\theta(x|y) = p_\theta(x)p_\theta(y|x)/\int p_\theta(x,y) \lambda(\rmd x)$.
@@ -405,6 +425,7 @@ The first term can be evaluated easily as $\mathrm{E}_\theta(x)$ is known. For t
 \nabla_\theta \log Z_\theta = Z_\theta^{-1} \int \nabla_\theta\exp\left(-\mathrm{E}_\theta(u)\right)\rmd u \\=  \int \left\{-\nabla_\theta \mathrm{E}_\theta(u)\right\}Z_\theta^{-1}\exp\left(-\mathrm{E}_\theta(u)\right)\rmd u = \int \left\{-\nabla_\theta \mathrm{E}_\theta(u)\right\}\pi_\theta(u)\rmd u .
 \end{multline*}
 Therefore $\nabla_\theta \log Z_\theta = \mathbb{E}_{\pi_\theta}[-\nabla_\theta \mathrm{E}_\theta(X)]$ where $\mathbb{E}_{\mu}[f(X)]$ denotes the expectation of $f(X)$ when $X\sim \mu$. Therefore, it is possible to train an EBM by providing a Monte Carlo estimate of $\nabla_\theta \log Z_\theta$ which requires to obtain samples from $\pi_\theta$. However, this is not straightforward as $\pi_\theta$ is known only up to a multiplicative normalizing constant (as in the Bayesian setting).
+
 %
 %\subsection{Variational auto-encoders}
 %\index{vae}
@@ -500,31 +521,29 @@ $$
 hence, the terminology "Evidence Lower Bound". In the case where $\alpha \neq 1$, some equivalent of the ELBO can also be found. In VI, we face  an optimisation problem (which is in general a non-convex problem) and we have to resort to all the tools linked with optimisation problems: various stochastic gradient descents and their variants, etc.
 
 \subsection{Variational auto-encoders}
-Variational Auto-Encoders (VAE) are very popular approaches to introduce approximations of a target conditional distribution in the context of latent data models. We consider a family of joint probability distributions $\{(z,x) \mapsto  p_{\theta}(z,x)\}_{\theta\in\Theta}$ on $(\mathsf{Z}\times \mathsf{X}, \mathcal{Z}\times \mathcal{X})$ where $Z$ is a latent variable and $X$ is the observation. In this setting, we often write, for all $\theta$, $x$, $z$,
+Variational Auto-Encoders (VAEs) are very popular approaches to introduce approximations of a target distribution using latent variables. We consider a family of joint probability distributions $\{(z,x) \mapsto  p_{\theta}(z,x)\}_{\theta\in\Theta}$ on $(\mathsf{Z}\times \mathsf{X}, \mathcal{Z}\times \mathcal{X})$ where $Z$ is a latent variable and $X$ is the observation. In this setting, we often write, for all $\theta\in\Theta$, $x\in \mathsf{X}$, $z\in \mathsf{Z}$,
 $$
-p_{\theta}(z,x) = p_{\theta}(z)p_{\theta}(x|z)
+p_{\theta}(z,x) = p_{\theta}(z)p_{\theta}(x|z)\eqsp.
 $$
-and the conditional distribution $p_{\theta}(z|x)$ is not availbale explicitly. A variational approach can be introduced in this setting by considering a family $\{(z,x) \mapsto q_{\varphi}(z|x)\}_{\varphi\in\Phi}$. Then, we can write, for all $\varphi,\theta$, $x$, $z$,
+The target distribution is then estimated by
+$$
+p_\theta(x) = \int p_{\theta}(z)p_{\theta}(x|z)\rmd z\eqsp.
+$$
+Since the integral cannot be computed explicitly, $p_\theta(x)$ is not tractable and therefore the conditional distribution $p_{\theta}(z|x)$ is not availbale explicitly. A variational approach can be introduced in this setting by considering a family $\{(z,x) \mapsto q_{\varphi}(z|x)\}_{\varphi\in\Phi}$. Then, we can write, for all $\varphi\in\Phi,\theta\in\Theta$, $x\in\mathsf{X}$, $z\in\mathsf{Z}$,
 \begin{multline*}
 \log p_\theta(x) = \int p_\theta(x) q_{\varphi}(z|x) \rmd z = \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log p_\theta(x)\right] = \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z,x)}{p_\theta(Z|x)}\right] \\
 = \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{q_{\varphi}(Z|x)}{p_\theta(Z|x)}\right]  + \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z,x)}{q_{\varphi}(Z|x)}\right] .
 \end{multline*}
-The first term of the right-hand-side is the Kullback-Leibler divergence between $q_{\varphi}(\cdot|x)$ and $p_\theta(\cdot|x)$, so that $\log p_\theta(x)\geq \mathcal{L}_x(\theta,\varphi)$, where
+The first term of the right-hand-side is the Kullback-Leibler divergence between $q_{\varphi}(\cdot|x)$ and $p_\theta(\cdot|x)$, so that $\log p_\theta(x)\geq \mathcal{L}(\theta,\varphi,x)$, where
 $$
-\mathcal{L}_x(\theta,\varphi) = \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z,x)}{q_{\varphi}(Z|x)}\right]
+\mathcal{L}(\theta,\varphi,x) = \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z,x)}{q_{\varphi}(Z|x)}\right]
 $$
 is the ELBO in this setting. In order to approximate $z\mapsto p_\theta(z|x)$, VAE propose to solve the optimization problem:
 $$
-\widehat \varphi \in \mathrm{argmin}_{\varphi\in\Phi} \mathcal{L}_x(\theta,\varphi).
+\widehat \varphi \in \mathrm{argmax}_{\varphi\in\Phi}\left\{ \frac{1}{n}\sum_{i=1}^n \mathcal{L}(\theta,\varphi,X_i)\right\}\eqsp.
 $$
 Of course, the joint optimization of $\theta$ and $\varphi$ is a complex problem both for practical and theoretical reasons and many research works have been devoted to this problem in the past few years.
 
-\begin{figure}
-\centering
-\includegraphics[scale=0.8]{vae.png}
-\caption{An illustration of a VAE. From \cite{kingma2019introduction}.}
-\label{fig:vae}
-\end{figure}
 
 
 \subsection{Sequential Monte Carlo methods}
@@ -587,16 +606,30 @@ Approximate Bayesian computation (ABC) is an alternative approach when computati
 
 \medskip
 
-\begin{algorithm}[H] \label{alg:ABC}
-    \KwData{Observation $Y$, threshold $\varepsilon$, $N$}
-    \KwResult{Samples approximately distributed according to $\pi(\theta) = p(\theta | Y)$.}
-    \For {$i = 1 \to N$}{
-        draw $\theta_i$ with prior distribution $\pi_0$\;
-        draw $Y_i$ with distribution  $p(\cdot |\theta_i)$\;
-}
-Return all $\theta_i$ such that $\mathsf{d}(S(Y_i),S(Y))<\varepsilon$\;
+\begin{algorithm}
+\centering
+\begin{algorithmic}
+\State {\bf Input}: Observation $Y$, threshold $\varepsilon$, $N$.
+\State {\bf Output}: Samples approximately distributed according to $\pi(\theta) = p(\theta | Y)$.
+\For {$i = 1 \to N$}
+\State Draw $\theta_i$ with prior distribution $\pi_0$.
+\State Draw $Y_i$ with distribution  $p(\cdot |\theta_i)$.
+\EndFor
+\State Return all $\theta_i$ such that $\mathsf{d}(S(Y_i),S(Y))<\varepsilon$.
+\end{algorithmic}
+\label{alg:ABC}
 \caption{ABC algorithm.}
 \end{algorithm}
+%\begin{algorithm}[H] \label{alg:ABC}
+%    \KwData{Observation $Y$, threshold $\varepsilon$, $N$}
+%    \KwResult{Samples approximately distributed according to $\pi(\theta) = p(\theta | Y)$.}
+%    \For {$i = 1 \to N$}{
+%        draw $\theta_i$ with prior distribution $\pi_0$\;
+%        draw $Y_i$ with distribution  $p(\cdot |\theta_i)$\;
+%}
+%Return all $\theta_i$ such that $\mathsf{d}(S(Y_i),S(Y))<\varepsilon$\;
+%\caption{ABC algorithm.}
+%\end{algorithm}
 
 \medskip
 
@@ -608,16 +641,32 @@ with $A_{\varepsilon,Y} = \{y\eqsp;\mathsf{d}(y,Y)<\varepsilon\eqsp\}$. The intu
 
 \medskip
 
-\begin{algorithm}[H] \label{alg:ABC:quant}
-    \KwData{Observation $Y$, $N$, integer $M_N$}
-    \KwResult{Samples approximately distributed according to $\pi(\theta)= p(\theta | Y)$.}
-    \For {$i = 1 \to N$}{
-        draw $\theta_i$ with prior distribution $\pi_0$\;
-        draw $Y_i$ with distribution  $p(\cdot |\theta_i)$\;
-}
-Return all $\theta_i$ such that $S(Y_i)$ is in the set of $M_N$ nearest neighbors of $S(Y)$ with respect to distance $\mathsf{d}$\;
+\begin{algorithm}
+\centering
+\begin{algorithmic}
+\State {\bf Input}: Observation $Y$, $N$, integer $M_N$.
+\State {\bf Output}: Samples approximately distributed according to $\pi(\theta)= p(\theta | Y)$.
+\For {$i = 1 \to N$}
+\State Draw $\theta_i$ with prior distribution $\pi_0$.
+\State Draw $Y_i$ with distribution  $p(\cdot |\theta_i)$.
+\EndFor
+\State Return all $\theta_i$ such that $S(Y_i)$ is in the set of $M_N$ nearest neighbors of $S(Y)$ with respect to distance $\mathsf{d}$.
+\end{algorithmic}
+\label{alg:ABC:quant}
 \caption{ABC algorithm with calibrated threshold.}
 \end{algorithm}
+%
+%
+%\begin{algorithm}[H] \label{alg:ABC:quant}
+%    \KwData{Observation $Y$, $N$, integer $M_N$}
+%    \KwResult{Samples approximately distributed according to $\pi(\theta)= p(\theta | Y)$.}
+%    \For {$i = 1 \to N$}{
+%        draw $\theta_i$ with prior distribution $\pi_0$\;
+%        draw $Y_i$ with distribution  $p(\cdot |\theta_i)$\;
+%}
+%Return all $\theta_i$ such that $S(Y_i)$ is in the set of $M_N$ nearest neighbors of $S(Y)$ with respect to distance $\mathsf{d}$\;
+%\caption{ABC algorithm with calibrated threshold.}
+%\end{algorithm}
 
 \medskip
 
@@ -625,78 +674,390 @@ These two algorithms generate independent samples but do not build upon the acce
 
 \medskip
 
-\begin{algorithm}[H] \label{alg:ABC:MCMC}
-\KwData{Observation $Y$, $N$, threshold $\varepsilon$,  output $(\theta_0,Y_0)$ from a "standard" ABC.}
-\KwResult{Samples approximately distributed according to $\pi(\theta) = p(\theta | Y)$.}
-\For{$i=1$ to $N$}{
-Sample $\widetilde \theta \sim q(\cdot |\theta_i)$\;
-Sample $\widetilde Y \sim p(\cdot|\widetilde \theta)$ and compute $S(\widetilde Y)$\;
-Compute $\alpha = 1\wedge \frac{\pi_0(\widetilde \theta) q(\theta_i|\widetilde \theta)}{\pi_0(\theta_i) q(\widetilde\theta| \theta_i)}\mathds{1}_{\mathsf{d}(S(\tilde Y),S(Y))<\varepsilon}$\;
-Sample $U\sim U(0,1)$\;
-\eIf{$U< \alpha$}{
-Set $\theta_{i+1} = \widetilde \theta$ and $Y_{i+1} = \widetilde Y$\;
-}{
-$\theta_{i+1} = \theta_i$ and $Y_{i+1} = Y_i$\;
-}
-}\caption{ABC within MCMC}
+\begin{algorithm}
+\centering
+\begin{algorithmic}
+\State {\bf Input}: Observation $Y$, $N$, threshold $\varepsilon$,  output $(\theta_0,Y_0)$ from a "standard" ABC.
+\State {\bf Output}: Samples approximately distributed according to $\pi(\theta)= p(\theta | Y)$.
+\For {$i = 1 \to N$}
+\State Sample $\widetilde \theta \sim q(\cdot |\theta_i)$.
+\State Sample $\widetilde Y \sim p(\cdot|\widetilde \theta)$ and compute $S(\widetilde Y)$.
+\State Compute $\alpha = 1\wedge \frac{\pi_0(\widetilde \theta) q(\theta_i|\widetilde \theta)}{\pi_0(\theta_i) q(\widetilde\theta| \theta_i)}\mathds{1}_{\mathsf{d}(S(\tilde Y),S(Y))<\varepsilon}$.
+\State Sample $U\sim U(0,1)$.
+\If{$U< \alpha$}
+\State Set $\theta_{i+1} = \widetilde \theta$ and $Y_{i+1} = \widetilde Y$.
+\EndIf
+\EndFor
+\State Return all $\theta_i$ such that $S(Y_i)$ is in the set of $M_N$ nearest neighbors of $S(Y)$ with respect to distance $\mathsf{d}$.
+\end{algorithmic}
+\label{alg:ABC:MCMC}
+\caption{ABC within MCMC.}
 \end{algorithm}
 
+%\begin{algorithm}[H] \label{alg:ABC:MCMC}
+%\KwData{Observation $Y$, $N$, threshold $\varepsilon$,  output $(\theta_0,Y_0)$ from a "standard" ABC.}
+%\KwResult{Samples approximately distributed according to $\pi(\theta) = p(\theta | Y)$.}
+%\For{$i=1$ to $N$}{
+%Sample $\widetilde \theta \sim q(\cdot |\theta_i)$\;
+%Sample $\widetilde Y \sim p(\cdot|\widetilde \theta)$ and compute $S(\widetilde Y)$\;
+%Compute $\alpha = 1\wedge \frac{\pi_0(\widetilde \theta) q(\theta_i|\widetilde \theta)}{\pi_0(\theta_i) q(\widetilde\theta| \theta_i)}\mathds{1}_{\mathsf{d}(S(\tilde Y),S(Y))<\varepsilon}$\;
+%Sample $U\sim U(0,1)$\;
+%\eIf{$U< \alpha$}{
+%Set $\theta_{i+1} = \widetilde \theta$ and $Y_{i+1} = \widetilde Y$\;
+%}{
+%$\theta_{i+1} = \theta_i$ and $Y_{i+1} = Y_i$\;
+%}
+%}\caption{ABC within MCMC}
+%\end{algorithm}
 
-\section{Key notions}
-\begin{center}
-\shadowbox{\begin{minipage}{0.9\textwidth}
-\begin{enumerate}[a)]
-\item Typical target distributions.
-\item Notions of some approximations methods.
-\item Basics of Sequential Monte Carlo methods (exploration, reweighting, resampling) and the associated moves of the target distribution.
-\item Basics of variational inference, variational auto-encoders.
-\item Basics of Approximate Bayesian Computation.
-\end{enumerate}
-\end{minipage}
-}
-\end{center}
+
+%\section{Key notions}
+%\begin{center}
+%\shadowbox{\begin{minipage}{0.9\textwidth}
+%\begin{enumerate}[a)]
+%\item Typical target distributions.
+%\item Notions of some approximations methods.
+%\item Basics of Sequential Monte Carlo methods (exploration, reweighting, resampling) and the associated moves of the target distribution.
+%\item Basics of variational inference, variational auto-encoders.
+%\item Basics of Approximate Bayesian Computation.
+%\end{enumerate}
+%\end{minipage}
+%}
+%\end{center}
 
 
 %\section*{Highlights}
 
 %\begin{subappendices}
 
-\section*{Highlights: Thomas Bayes (source: wikipedia).}
-
-\begin{wrapfigure}{L}{0.28\textwidth} \centering
-
-\includegraphics[scale=0.45]{bayes}
-
-\end{wrapfigure}
-Thomas Bayes (1701-1761) was an English statistician, philosopher and Presbyterian minister who is known for formulating a specific case of the theorem that bears his name: Bayes' theorem. Bayes never published what would become his most famous accomplishment; his notes were edited and published after his death by Richard Price.
-
-Thomas Bayes was the son of London Presbyterian minister Joshua Bayes, and was possibly born in Hertfordshire. He came from a prominent nonconformist family from Sheffield. In 1719, he enrolled at the University of Edinburgh to study logic and theology. On his return around 1722, he assisted his father at the latter's chapel in London before moving to Tunbridge Wells, Kent, around 1734. There he was minister of the Mount Sion Chapel, until 1752.
-
-He is known to have published two works in his lifetime, one theological and one mathematical:
-
-\begin{itemize}
-\item Divine Benevolence, or an Attempt to Prove That the Principal End of the Divine Providence and Government is the Happiness of His Creatures (1731)
-\end{itemize}
-
-\begin{itemize}
-\item An Introduction to the Doctrine of Fluxions, and a Defence of the Mathematicians Against the Objections of the Author of The Analyst (published anonymously in 1736), in which he defended the logical foundation of Isaac Newton's calculus ("fluxions") against the criticism of George Berkeley, author of The Analyst
-\end{itemize}
-
-It is speculated that Bayes was elected as a Fellow of the Royal Society in 1742 on the strength of the Introduction to the Doctrine of Fluxions, as he is not known to have published any other mathematical works during his lifetime.
-
-In his later years he took a deep interest in probability. Professor Stephen Stigler, historian of statistical science, thinks that Bayes became interested in the subject while reviewing a work written in 1755 by Thomas Simpson, but George Alfred Barnard thinks he learned mathematics and probability from a book by Abraham de Moivre. Others speculate he was motivated to rebut David Hume's argument against believing in miracles on the evidence of testimony in An Enquiry Concerning Human Understanding. His work and findings on probability theory were passed in manuscript form to his friend Richard Price after his death.
-
-
-Monument to members of the Bayes and Cotton families, including Thomas Bayes and his father Joshua, in Bunhill Fields burial ground
-By 1755 he was ill and by 1761 had died in Tunbridge Wells. He was buried in Bunhill Fields burial ground in Moorgate, London, where many nonconformists lie.
+%\section*{Highlights: Thomas Bayes (source: wikipedia).}
+%
+%\begin{wrapfigure}{L}{0.28\textwidth} \centering
+%
+%\includegraphics[scale=0.45]{bayes}
+%
+%\end{wrapfigure}
+%Thomas Bayes (1701-1761) was an English statistician, philosopher and Presbyterian minister who is known for formulating a specific case of the theorem that bears his name: Bayes' theorem. Bayes never published what would become his most famous accomplishment; his notes were edited and published after his death by Richard Price.
+%
+%Thomas Bayes was the son of London Presbyterian minister Joshua Bayes, and was possibly born in Hertfordshire. He came from a prominent nonconformist family from Sheffield. In 1719, he enrolled at the University of Edinburgh to study logic and theology. On his return around 1722, he assisted his father at the latter's chapel in London before moving to Tunbridge Wells, Kent, around 1734. There he was minister of the Mount Sion Chapel, until 1752.
+%
+%He is known to have published two works in his lifetime, one theological and one mathematical:
+%
+%\begin{itemize}
+%\item Divine Benevolence, or an Attempt to Prove That the Principal End of the Divine Providence and Government is the Happiness of His Creatures (1731)
+%\end{itemize}
+%
+%\begin{itemize}
+%\item An Introduction to the Doctrine of Fluxions, and a Defence of the Mathematicians Against the Objections of the Author of The Analyst (published anonymously in 1736), in which he defended the logical foundation of Isaac Newton's calculus ("fluxions") against the criticism of George Berkeley, author of The Analyst
+%\end{itemize}
+%
+%It is speculated that Bayes was elected as a Fellow of the Royal Society in 1742 on the strength of the Introduction to the Doctrine of Fluxions, as he is not known to have published any other mathematical works during his lifetime.
+%
+%In his later years he took a deep interest in probability. Professor Stephen Stigler, historian of statistical science, thinks that Bayes became interested in the subject while reviewing a work written in 1755 by Thomas Simpson, but George Alfred Barnard thinks he learned mathematics and probability from a book by Abraham de Moivre. Others speculate he was motivated to rebut David Hume's argument against believing in miracles on the evidence of testimony in An Enquiry Concerning Human Understanding. His work and findings on probability theory were passed in manuscript form to his friend Richard Price after his death.
+%
+%
+%Monument to members of the Bayes and Cotton families, including Thomas Bayes and his father Joshua, in Bunhill Fields burial ground
+%By 1755 he was ill and by 1761 had died in Tunbridge Wells. He was buried in Bunhill Fields burial ground in Moorgate, London, where many nonconformists lie.
 %\end{subappendices}
 
 
-\chapter{Basics in Markov chains.}
+\chapter{Variational autoencoders}
 \minitoc
-\begin{keywords}
-Markov chains, Markov property, Metropolis Hastings, canonical space.
-\end{keywords}
+%\begin{keywords}
+%Variational estimation, conditional distribution, latent space.
+%\end{keywords}
+\section{Introduction}
+Variational Auto-Encoders (VAE) are very popular approaches to introduce approximations of a target conditional distribution in the context of latent data models. Assume that $\{X_i\}_{1\leqslant i\leqslant n}$ are i.i.d. random variables in $\mathsf{X}$ with unknown probability distribution function $\pi_{\mathrm{data}}$. We consider a family of joint probability distributions $\{(z,x) \mapsto  p_{\theta}(z,x)\}_{\theta\in\Theta}$ on $(\mathsf{Z}\times \mathsf{X}, \mathcal{Z}\times \mathcal{X})$ where $Z$ is a latent variable and $X$ is the observation. In this setting, we often write, for all $\theta\in\Theta$, $x\in\mathsf{X}$, $z\in\mathsf{Z}$,
+$$
+p_{\theta}(z,x) = p_{\theta}(z)p_{\theta}(x|z)
+$$
+and the conditional distribution $p_{\theta}(z|x)$ is not availbale explicitly. The normalized loglikelihood is therefore given by
+$$
+\ell_n(\theta) = \frac{1}{n}\sum_{i=1}^n \log p_{\theta}(X_i) = \frac{1}{n}\sum_{i=1}^n \log \int p_{\theta}(z)p_{\theta}(X_i|z)\rmd z\eqsp.
+$$
+Since a maximum likelihood estimator cannot be computed simply, VAEs introduce a variational approach wich aims at simultaneously providing a parameter estimate  and an approximation of the conditional distribution of the latent variable given the observation.  Consider a family of probability density function $\{(z,x) \mapsto q_{\varphi}(z|x)\}_{\varphi\in\Phi}$. Then, we can write, for all $\varphi\in\Phi,\theta\in\Theta$, $x\in\mathsf{X}$, $z\in\mathsf{Z}$,
+\begin{align*}
+\log p_\theta(x) = \int p_\theta(x) q_{\varphi}(z|x) \rmd z &= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log p_\theta(x)\right] \\
+&= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z,x)}{p_\theta(Z|x)}\right] \\
+&= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{q_{\varphi}(Z|x)}{p_\theta(Z|x)}\right]  + \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z,x)}{q_{\varphi}(Z|x)}\right] .
+\end{align*}
+The first term of the right-hand-side is the Kullback-Leibler divergence between $q_{\varphi}(\cdot|x)$ and $p_\theta(\cdot|x)$, so that $\log p_\theta(x)\geq \mathcal{L}(\theta,\varphi,x)$, where
+$$
+\mathcal{L}(\theta,\varphi,x) = \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z,x)}{q_{\varphi}(Z|x)}\right]
+$$
+is the ELBO in this setting. 
+%In order to approximate $z\mapsto p_\theta(z|x)$, VAE propose to solve the optimization problem:
+%$$
+%\widehat \varphi \in \mathrm{argmin}_{\varphi\in\Phi} \mathcal{L}(\theta,\varphi,x)\eqsp.
+%$$
+This motivates the introduction of the following loss function:
+$$
+\mathcal{L}(\theta,\varphi) = \mathbb{E}_{\pi_{\mathrm{data}}}[-\mathcal{L}(\theta,\varphi,X)] = \mathbb{E}_{\pi_{\mathrm{data}}}\left[\mathbb{E}_{q_{\varphi}(\cdot|X)}\left[\log \frac{q_{\varphi}(Z|X)}{p_\theta(Z,X)}\right]\right]\eqsp.
+$$
+The empirical loss is then given by
+$$
+\mathcal{L}_n(\theta,\varphi) = \frac{1}{n}\sum_{i=1}^n\mathbb{E}_{q_{\varphi}(\cdot|X_i)}\left[\log \frac{q_{\varphi}(Z|X_i)}{p_\theta(Z,X_i)}\right]\eqsp,
+$$
+where $(X_1,\ldots,X_n)$ are i.i.d. with distribution $\pi_{\mathrm{data}}$, and we aim at solving the optimization problem:
+\begin{equation}
+\label{eq:optim:ELBO}
+(\widehat \theta_n,\widehat \varphi_n) \in \mathrm{Argmax}_{\theta\in\Theta,\varphi\in\Phi}\eqsp \mathcal{L}_n(\theta,\varphi) \eqsp.
+\end{equation}
+The joint optimization of $\theta$ and $\varphi$ is a complex problem both for practical and theoretical reasons and many research works have been devoted to this problem in the past few years. In most cases, $\mathcal{L}_n(\theta,\varphi)$ cannot be computed explicitly since expectations under the variational distribution are not explicit. Therefore, $\mathcal{L}_n(\theta,\varphi) $ is replaced by a Monte Carlo estimate $\widehat{\mathcal{L}}_n(\theta,\varphi)$:
+$$
+\widehat{\mathcal{L}}_n(\theta,\varphi) =  \frac{1}{n}\sum_{i=1}^n\frac{1}{M}\sum_{j=1}^M\log \frac{q_{\varphi}(Z_{i,j}|X_i)}{p_\theta(Z_{i,j},X_i)}\eqsp,
+$$ 
+where for all $1\leqslant i \leqslant n$, $\{Z_{i,j}\}_{1\leqslant j\leqslant M}$ are i.i.d. with distribution $q_{\varphi}(\cdot|X_i)$.
+
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.8]{vae.png}
+\caption{An illustration of a VAE. From \cite{kingma2019introduction}.}
+\label{fig:vae}
+\end{figure}
+
+\section{Gradient-based optimization}
+In order to solve \eqref{eq:optim:ELBO}, we need to compute the gradient of the loss function. Under classical regularity assumptions:
+$$
+\nabla_{\theta} \mathcal{L}(\theta, \varphi) = -\mathbb{E}_{\pi_{\mathrm{data}}} \left[\mathbb{E}_{q_{\varphi}(\cdot|X)}\left[ \nabla_{\theta} \log p_{\theta}(X, Z)\right]\right]\eqsp.
+$$
+This gradient can be estimated using samples from $\pi_{\mathrm{data}}$. Given a batch of i.i.d. observations $\{X_i\}_{i=1}^B$ with distribution $\pi_{\mathrm{data}}$, an estimator of $\nabla_{\theta} \mathcal{L}(\theta, \varphi)$  can be computed as follows:
+$$
+S_{\theta}(\theta, \varphi;\{X_i\}_{i=1}^B) = -\frac{1}{B}\sum_{i=1}^B\frac{1}{M}\sum_{j=1}^M \nabla_\theta \log p_\theta(Z_{i,j},X_i)\eqsp,
+$$
+where for all $1\leqslant i \leqslant B$, $\{Z_{i,j}\}_{1\leqslant j\leqslant M}$ are i.i.d. with distribution $q_{\varphi}(\cdot|X_i)$.
+Computing the gradient with respect to the variational parameter $\varphi$ is more challenging since the inner expectation depends on  $q_{\varphi}$. There are two common methods for computing this gradient. 
+
+\subsection{Pathwise Gradient}
+The reparametrization trick involves expressing variational distribution using a deterministic transform $ g(\varepsilon, \varphi)$, where $\varepsilon$ is an auxiliary independent random variable drawn from a known probability density function $p_\varepsilon$.
+Using this trick, the ELBO can be expressed as:
+$$ \mathcal{L}(\theta, \varphi, x) = \mathbb{E}_{p_\varepsilon}\left[ \log w_{\theta, \varphi}(x, g(\varepsilon,\varphi)) \right]\eqsp,$$
+where $w_{\theta, \varphi}(x,z) = p_{\theta}(x, z)/q_{\varphi}(z|x)$ the unnormalized importance weights and $\mathbb{E}_{p_\varepsilon}$ is the expectation under the law of $\varepsilon$ when $\varepsilon \sim p_\varepsilon$. The pathwise gradient \cite{kingma2013auto, rezende2014stochastic} of the ELBO is given by:
+\begin{equation*}
+\nabla^{}_{\varphi} \mathcal{L}(\theta, \varphi; x) =  \mathbb{E}_{p_\varepsilon}\left[ \nabla_z \log w_{\theta, \varphi}(x,z) \nabla_{\varphi} g(\varepsilon, \varphi) \right]  - \mathbb{E}_{p_\varepsilon}\left[\nabla_{\varphi} \log q_{\varphi}(g(\varepsilon, \varphi) | x) \right]\eqsp.
+\end{equation*}
+The gradient estimator with respect to $\varphi$ of the ELBO can be estimated using samples from the dataset. Let  $\{X_i\}_{i=1}^B$ be i.i.d. with distribution $\pi_{\mathrm{data}}$. Then, an estimator of $\nabla_{\varphi} \mathcal{L}(\theta, \varphi)$  can be computed as follows:
+\begin{multline} \label{eq:grad_estimator_phi}
+S_{\varphi}(\theta, \varphi; \{X_i\}_{i=1}^B) \\= -\frac{1}{B} \sum_{i=1}^{B} \frac{1}{M} \sum_{j=1}^{M} \left\{\nabla_z \log \frac{p_{\theta}(X_i, g(\varepsilon_{i,j}, \varphi))}{q_{\varphi}(g(\varepsilon_{i,j}, \varphi) | x_i)} \nabla_{\varphi} g(\varepsilon_{i,j}, \varphi) - \nabla_{\varphi} \log q_{\varphi}(g(\varepsilon_{i,j}, \varphi) | X_i)\right\}\eqsp,
+\end{multline}
+%where $K$ denotes the number of samples drawn from the latent space.
+%\begin{align} \label{eq:grad_estimator_PW}
+%\tilde{g}^{}_{i,\ell} = \left( \nabla_{\theta} \log \frac{p_{\theta}(x_i, g(\varepsilon_i^{(\ell)}, \varphi))}{q_{\varphi}(g(\varepsilon_i^{(\ell)}, \varphi) | x_i)}, \nabla_z \log \frac{p_{\theta}(x_i, g(\varepsilon_i^{(\ell)}, \varphi))}{q_{\varphi}(g(\varepsilon_i^{(\ell)}, \varphi) | x_i)} \nabla_{\varphi} g(\varepsilon_i^{(\ell)}, \varphi) - \nabla_{\phi} \log q_{\varphi}(g(\varepsilon_i^{(\ell)}, \varphi) | x_i)\right)^\top\eqsp,
+%\end{align}
+where, for all $1 \leq i \leq B$ and $1 \leq j \leq M$, $\varepsilon_{i,j}$ are independent samples from $p_{\varepsilon}$.
+
+\begin{example}
+In a context of deep Gaussian models, $q_{\varphi}(\cdot|x)$ is a Gaussian probability density function with mean $\mu_{\varphi}(x)\in\rset^d$ and variance $\diag(\sigma_{\varphi}^2(x))\in\rset^{d\times d}$ where $(\mu_{\varphi}(x),\sigma_{\varphi}^2(x))$ is the output of a neural network with input $x$. Then, if $z = \mu_{\varphi}(x) + \diag(\sigma_{\varphi}(x))\varepsilon$ with $\varepsilon \sim \mathcal{N}(0,\Id_d)$, $z\sim q_{\varphi}(\cdot|x)$. Writing $g(\varepsilon, \varphi) = \mu_{\varphi}(x) + \sigma_{\varphi}(x)\varepsilon$, the Jacobian of $g$ with respect to $\varepsilon$ is
+$$
+J_\varepsilon[g](\varepsilon, \varphi) = \diag(\sigma_{\varphi}(x))\eqsp.
+$$
+Therefore, by standard change of variables, with $z=g(\varepsilon, \varphi)$,
+$$
+\log q_{\varphi}(g(\varepsilon, \varphi) | x) = \log p_\varepsilon(\varepsilon) - \sum_{i=1}^{d}\log \sigma_{\varphi,i}(x)\eqsp.
+$$  
+\end{example}
+
+\subsection{Score Function Gradient}
+Alternatively, the score function gradient, also known as the Reinforce gradient \cite{glynn1990likelihood, williams1992simple,paisley2012variational}, can be used. Unlike the reparameterization trick, this method does not necessitate reparameterization and is applicable to a wider range of variational distributions. 
+\begin{proposition}\label{prop:score_estimator}
+For all $\theta \in \Theta$, $\varphi \in \Phi$, we have:
+$$
+\nabla^{}_{\varphi} \mathcal{L}(\theta, \varphi) = -\mathbb{E}_{\pi_{\mathrm{data}}}\left[ \mathbb{E}_{q_{\varphi}(\cdot|X)}\left[ \log \frac{p_{\theta}(X, Z)}{q_{\varphi}(Z | X)} \nabla_{\varphi} \log q_{\varphi}(Z | X) \right] \right]\eqsp.
+$$
+\end{proposition}
+
+%\subsection*{Proof of Proposition \ref{prop:score_estimator}}
+
+\begin{proof}
+For a given observation $x \in \Xset$, the score function gradient of the ELBO with respect to $\varphi$ is given by:
+\begin{align*}
+\nabla_{\varphi} \mathcal{L}(\theta, \varphi; x) &= \nabla_{\varphi} \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[ \log p_{\theta}(x, Z) - \log q_{\varphi}(Z|x)\right] \\
+&= \nabla_{\varphi} \int (\log p_{\theta}(x, z) - \log q_{\varphi}(z|x)) q_{\varphi}(z|x) \, \rmd z  \\
+&= \int \nabla_{\varphi}\left[(\log p_{\theta}(x, z) - \log q_{\varphi}(z|x)) q_{\varphi}(z|x)\right] \, \rmd z  \\
+%&= \int \nabla_{\phi} q_{\phi}(z|x) (\log p_{\theta}(x, z) - \log q_{\phi}(z|x)) + q_{\phi}(z|x) \nabla_{\phi} (\log p_{\theta}(x, z) - \log q_{\phi}(z|x)) \, dz \quad  \\
+&= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[ \nabla_{\varphi} \log q_{\varphi}(Z|x) (\log p_{\theta}(x, Z) - \log q_{\varphi}(Z|x)) \right] - \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\nabla_{\varphi} \log q_{\varphi}(Z|x)\right]\eqsp.
+\end{align*}
+Using the fact that $\mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\nabla_{\varphi} \log q_{\varphi}(Z|x)\right]=0$ due to the regularity conditions on $q_{\varphi}(z|x)$ yields
+\begin{align*}
+\nabla_{\varphi} \mathcal{L}(\theta, \phi; x) &= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[ \nabla_{\varphi} \log q_{\varphi}(Z|x) (\log p_{\theta}(x, Z) - \log q_{\varphi}(Z|x)) \right] \\
+&= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[ \log \frac{p_{\theta}(x, Z)}{q_{\varphi}(Z|x)} \nabla_{\varphi} \log q_{\varphi}(Z|x) \right]\eqsp.
+\end{align*}
+\end{proof}
+%\subsection{Score Function and Pathwise Gradient Estimator}
+The gradient estimator with respect to $\varphi$ of the ELBO can be estimated using samples from the dataset. Let  $\{X_i\}_{i=1}^B$ be i.i.d. with distribution $\pi_{\mathrm{data}}$. Then, an estimator of $\nabla_{\varphi} \mathcal{L}(\theta, \varphi)$  can be computed as follows:
+\begin{align} \label{eq:grad_estimator_score_phi}
+S_{\varphi}(\theta, \varphi; \{X_i\}_{i=1}^B) = -\frac{1}{B} \sum_{i=1}^{B} \frac{1}{M} \sum_{\ell=1}^{M} \log \frac{p_{\theta}(X_i, Z_{i,j})}{q_{\varphi}(Z_{i,j} | X_i)} \nabla_{\varphi} \log \frac{p_{\theta}(X_i, Z_{i,j})}{q_{\varphi}(Z_{i,j} | X_i)}\eqsp,
+\end{align}
+where, for all $1 \leq i \leq B$ and $1 \leq j \leq M$, $Z_{i,j}$ are independent samples from $q_{\varphi}(\cdot|X_i)$.
+
+%For the score function gradient estimator, the expression is given by:
+%\begin{align} \label{eq:grad_estimator_SF}
+%\tilde{g}^{}_{i,\ell} = \left( \nabla_{\theta} \log \frac{p_{\theta}(x_i, z_i^{(\ell)})}{q_{\varphi}(z_i^{(\ell)} | x_i)}, \log \frac{p_{\theta}(x_i, z_i^{(\ell)})}{q_{\varphi}(z_i^{(\ell)} | x_i)} \nabla_{\varphi} \log \frac{p_{\theta}(x_i, z_i^{(\ell)})}{q_{\varphi}(z_i^{(\ell)} | x_i)}\right)^\top\eqsp,
+%\end{align}
+%where, for all $1 \leq i \leq B$ and $1 \leq \ell \leq K$, $z_i^{(\ell)}$ are independent samples from $q_{\varphi}(\cdot|x_i)$.
+%The pathwise gradient estimator is given by:
+%\begin{align} \label{eq:grad_estimator_PW}
+%\tilde{g}^{}_{i,\ell} = \left( \nabla_{\theta} \log \frac{p_{\theta}(x_i, g(\varepsilon_i^{(\ell)}, \varphi))}{q_{\varphi}(g(\varepsilon_i^{(\ell)}, \varphi) | x_i)}, \nabla_z \log \frac{p_{\theta}(x_i, g(\varepsilon_i^{(\ell)}, \varphi))}{q_{\varphi}(g(\varepsilon_i^{(\ell)}, \varphi) | x_i)} \nabla_{\varphi} g(\varepsilon_i^{(\ell)}, \varphi) - \nabla_{\phi} \log q_{\varphi}(g(\varepsilon_i^{(\ell)}, \varphi) | x_i)\right)^\top\eqsp,
+%\end{align}
+%where, for all $1 \leq i \leq B$ and $1 \leq \ell \leq K$, $\varepsilon_i^{(\ell)}$ are independent samples from $p_{\varepsilon}$.
+
+%\begin{algorithm}[H] \label{alg:adam}
+%    \KwData{Initial estimates $\theta_{0}, \phi_{0}$, maximum number of iterations $n$, step sizes $\{\gamma_{k}\}_{k \geq 1}$, momentum parameters $\beta_{1}, \beta_{2} \in [0,1)$, regularization parameter $\delta \geq 0$ and batch size $B$}
+%Set $m_{0} = 0$ and $v_{0} = 0$.\\
+%\For{$t\leftarrow 0$ \KwTo $n-1$}
+%{
+%Sample a mini-batch $\{x_{i}\}_{i=1}^B$.\\
+%Compute the stochastic gradient $g_{k+1} = \widehat{\nabla}_{\theta, \phi} \mathcal{L}(\theta_{k}, \phi_{k}; \{x_i\}_{i=1}^B)$ using \eqref{eq:grad_estimator}.\\
+%Set $m_{k+1} = \beta_{1}m_{k} + (1-\beta_{1})g_{k+1}$\\
+%Set $v_{k+1} = \beta_{2}v_{k} + (1-\beta_{2}) g_{k+1} \odot g_{k+1}$.\\
+% Set $(\theta_{k+1}, \phi_{k+1}) = (\theta_{k}, \phi_{k}) -\gamma_{k+1}\big[\delta \mathit{I}_d + v_{k} \big]^{-1/2} m_{k}$.
+%}
+%\caption{Adam Algorithm for ELBO Maximization}
+%\end{algorithm}
+
+\begin{algorithm}
+\centering
+\begin{algorithmic}
+\State {\bf Input}: Initial estimates $\theta_{0}, \varphi_{0}$, maximum number of iterations $n$, step sizes $\{\gamma_{k}\}_{k \geq 1}$, momentum parameters $\beta_{1}, \beta_{2} \in [0,1)$, regularization parameter $\delta \geq 0$ and batch size $B$.
+\State Set $m_{0} = 0$ and $v_{0} = 0$.
+\For{$k = 0$ to $k = n-1$}
+\State Sample a mini-batch $\{X_{i}\}_{i=1}^B$.
+\State Compute the stochastic gradient $g_{k+1} = (S_{\theta}(\theta_k, \varphi_k; \{X_i\}_{i=1}^B),S_{\varphi}(\theta_k, \varphi_k; \{X_i\}_{i=1}^B))^\top$. 
+\State Set $m_{k+1} = \beta_{1}m_{k} + (1-\beta_{1})g_{k+1}$.
+\State Set $v_{k+1} = \beta_{2}v_{k} + (1-\beta_{2}) g_{k+1} \odot g_{k+1}$.
+\State Set $(\theta_{k+1}, \varphi_{k+1}) = (\theta_{k}, \varphi_{k}) -\gamma_{k+1}\big[\delta \mathit{I}_d + v_{k} \big]^{-1/2} m_{k}$.
+\EndFor
+\end{algorithmic}
+\caption{Adam Algorithm for ELBO Maximization}
+\label{alg:adam:elbo}
+\end{algorithm}
+
+The pathwise gradient estimator often yields lower-variance estimates than the score function estimator \cite{miller2017reducing, buchholz2018quasi}, but its variance can sometimes exceed that of the score function estimator, especially when the score function correlates with other components of the pathwise estimator.
+Several methods have been proposed to further reduce variance, such as the Rao-Blackwellization estimator \cite{ranganath2014black}, Control Variates \cite{lievin2020optimal}, Stop Gradient estimator \cite{roeder2017sticking}, Quasi-Monte Carlo VAE \cite{buchholz2018quasi}, and Multi-Level Monte Carlo estimator \cite{fujisawa2021multilevel, he2022unbiased}. While our analysis focuses on the convergence rate of score function and pathwise gradient estimators, our convergence results also apply to most of these other methods.
+
+\section{Marginal likelihood and sampling approaches}
+\noindent {\bf Marginal likelihood. } For all parameters $(\theta,\varphi)$, we can estimate the marginal loglikelihood using  importance sampling approaches. Note that
+$$
+\log p_\theta(x) = \log \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\frac{p_\theta(Z,x)}{q_{\varphi}(Z|x)}\right]\eqsp.
+$$
+Therefore, if $\{Z_i\}_{1\leqslant i \leqslant M}$ are i.i.d. with distribution $q_{\varphi}(\cdot|x)$, $\log p_\theta(x) $ may be estimated by
+$$
+\ell_{\theta,M}(x) = \log\left(\frac{1}{M}\sum_{i=1}^M\frac{p_\theta(Z_i,x)}{q_{\varphi}(Z_i|x)}\right)\eqsp.
+$$
+
+\noindent {\bf Choice of the prior. } A common way to sample data using a VAE is to use the fact that 
+$$
+p_\theta(x) = \int p_\theta(z)p_\theta(x|z)\rmd z\eqsp,
+$$
+and therefore, sampling $x$ from $p_\theta$ amounts to sampling $z\sim p_\theta(z)$ and sampling $x\sim p_\theta(x|z)$.  However, the prior density $p_\theta(z)$ is often chosen to be very simple, e.g. a Gaussian distribution, which often leads to poor sampling performance. An alternative suggested in \cite{tomczak2018vae} is to choose  a prior that optimizes the ELBO which is given by 
+$$
+p_\theta(z) = \frac{1}{n}\sum_{i=1}^nq_{\varphi}(z|X_i)\eqsp.
+$$
+This prior is referred to as the Variational Mixture of Posteriors prior. Sampling from this prior amounts to choose an observation $X_i$ uniformly at random and sampling $z\sim  q_{\varphi}(z|X_i)$.
+%\begin{algorithm}
+%   \caption{Adam Algorithm for ELBO Maximization}
+%   \label{alg:adam}
+%\begin{algorithmic}[1]
+%   \State \textbf{Input:} Initial points $\theta_{0}, \phi_{0}$, maximum number of iterations $n$, step sizes $\{\gamma_{k}\}_{k \geq 1}$, momentum parameters $\beta_{1}, \beta_{2} \in [0,1)$, regularization parameter $\delta \geq 0$ and batch size $B$
+%   \State Set $m_{0} = 0$ and $v_{0} = 0$. %and $\hat{v}_{0} = 0$
+%   \For{$k=0$ to $n-1$}
+%   %\State Sample a mini-batch $\{X_{k+1}^{(i)}\}_{i=1}^B$
+%   %\State Compute the stochastic gradient $g_k =  \sum_{i=1}^B \widehat{\nabla}_{\theta, \phi} \mathcal{L}(\theta_{k}, \phi_{k}; X_{k+1}^{(i)})/B$
+%   \State Sample a mini-batch $\{x_{i}\}_{i=1}^B$.
+%   \State Compute the stochastic gradient $g_{k+1} = \widehat{\nabla}_{\theta, \phi} \mathcal{L}(\theta_{k}, \phi_{k}; \{x_i\}_{i=1}^B)$ using \eqref{eq:grad_estimator}.
+%   \State $m_{k+1} = \beta_{1}m_{k} + (1-\beta_{1})g_{k+1}$
+%   \State $v_{k+1} = \beta_{2}v_{k} + (1-\beta_{2}) g_{k+1} \odot g_{k+1} $
+%   %\State $\hat{v}_k = \max \big(\hat{v}_{k-1}, v_{k} \big)$
+%   %\State $A_{k} = \big[\delta \mathit{I}_d + v_{k} \big]^{-1/2} $
+%   %\State $(\theta_{k+1}, \phi_{k+1}) = (\theta_{k}, \phi_{k}) -\gamma_{k+1} A_k m_{k}$
+%   \State $(\theta_{k+1}, \phi_{k+1}) = (\theta_{k}, \phi_{k}) + \gamma_{k+1} \big[ v_{k+1} + \delta \big]^{-1/2} m_{k+1}$
+%   \EndFor
+%   \State \textbf{Output:} $\left(\theta_{k}, \phi_{k}\right)_{0 \leq k \leq n}$
+%\end{algorithmic}
+%\end{algorithm}
+
+
+%Proposition~\ref{prop:score_estimator} provides the form of the score function gradient with respect to $\phi$:
+%$$\nabla^{}_{\phi} \mathcal{L}(\theta, \phi) = \mathbb{E}_{\pi, \phi}\left[ \log \frac{p_{\theta}(X, Z)}{q_{\phi}(Z | X)} \nabla_{\phi} \log q_{\phi}(Z | X) \right]\eqsp.$$
+%The gradient estimator of the ELBO for a given batch of observations $\{x_i\}_{i=1}^B$, where $B$ is the batch size, with respect to $\theta$ and $\phi$ can then be computed using Monte Carlo sampling as follows:
+%\begin{align*} \label{eq:grad_estimator}
+%\widehat{\nabla}_{\theta, \phi} \mathcal{L}(\theta, \phi; \{x_i\}_{i=1}^B) = \frac{1}{B} \sum_{i=1}^{B} \frac{1}{K} \sum_{\ell=1}^{K} \tilde{g}_{i,\ell}\eqsp,
+%\end{align*}
+%where $\tilde{g}_{i,\ell}$ is either the gradient estimator via the score function $\tilde{g}^{}_{i,\ell}$ as defined in \eqref{eq:grad_estimator_SF} or the pathwise gradient estimator $\tilde{g}^{}_{i,\ell}$ as described in \eqref{eq:grad_estimator_PW}.
+
+
+
+\section{Empirical Excess Risk}
+Despite the empirical success of VAE, general theoretical results on the statistical properties of VAEs are very recent although this is crucial to guide hyperparameters choice and the design of the prior, encoder and decoder distributions. In this section, we present some results provided in \cite{pmlr-v134-tang21a} to analyze the excess risk for learning densities using VAEs.  The key insight of \cite{pmlr-v134-tang21a} is to describe the VAE estimator as a M-estimator:
+$$
+(\widehat\theta,\widehat\varphi) \in\mathrm{Argmin}_{\theta\in\Theta,\varphi\in\Phi} \frac{1}{n}\sum_{i=1}^n m(\theta,\varphi,X_i)\eqsp,
+$$
+where, assuming that the data distribution has a density $\pi_{\mathrm{data}}$, 
+$$
+m(\theta,\varphi,X_i) = \log \frac{\pi_{\mathrm{data}}(x)}{p_\theta(x)} + \mathrm{KL}\left(q_\varphi(\cdot|x)\middle\|p_\theta(\cdot|x)\right)\eqsp,
+$$
+with $p_\theta(z|x) \propto p_\theta(z)p_\theta(x|z)$ is the distribution of the latent variable given the observation. Let $\alpha>0$ and $\psi_\alpha: x\mapsto \rme^{x^\alpha}-1$ anf for all random variable $X$ define the Orlicz norm of $X$ by
+$$
+\left\|X\right\|_{\psi_{\alpha}} = \mathrm{inf}\left\{\lambda >0\;;\; \mathbb{E}\left[\psi_\alpha\left(\frac{|X|}{\lambda}\right)\right]\leqslant 1\right\}\eqsp.
+$$
+Note that this norm is related to the tail of the distribution as for all $t>0$,
+$$
+\mathbb{P}\left(|X|\geqslant t\right)\leqslant 2\mathrm{exp}\left\{-\left(\frac{t}{\|X\|_{\psi_{\alpha}}}\right)^\alpha\right\}\eqsp.
+$$ 
+Assumption H\ref{assum:vae:orlicz} is a tail condition on the loss function. It is shown in \cite{pmlr-v134-tang21a} that it can be proved for Deep Gaussian architectures.
+\begin{hypH}
+\label{assum:vae:orlicz}
+For a random variable $X$  with distribution $\pi_{\mathrm{data}}$ there exist $\alpha,D >0$ such that
+$$
+\left\|\underset{\theta\in\Theta,\varphi\in\Phi}{\mathrm{sup}} \left\{\left|\log \frac{\pi_{\mathrm{data}}(X)}{p_\theta(X)}\right| + \mathrm{KL}\left(q_\varphi(\cdot|X)\middle\|p_\theta(\cdot|X)\right)\right\}\right\|_{\psi_\alpha} \leqslant D\eqsp.
+$$
+\end{hypH}
+
+\begin{hypH}
+\label{assum:vae:lip}
+Assume that there exist $a_0, a_1 >0$ and a real-valued function $b$ such that for all $x\in\mathsf{X}$, $\theta,\theta'\in\Theta$, $\varphi,\varphi'\in\Phi$,
+$$
+\|\theta\|_\infty + \|\varphi\|_\infty \leqslant a_0
+$$
+and
+$$
+\left|m(\theta,\varphi,x) - m(\theta',\varphi',x) \right| \leqslant b(x) \|(\theta,\varphi)-(\theta',\varphi')\|_2\eqsp,
+$$
+with $\mathbb{E}_{\pi_{\mathrm{data}}}[b(X)]\leqslant a_1$.
+\end{hypH}
+
+\begin{theorem}
+\label{th:vae:excess:risk}
+Assume that H\ref{assum:vae:orlicz}-\ref{assum:vae:lip} hold. Then, there exist $c_0,c_1,c_2,d>0$ such that with probability at least $1- c_0 \mathrm{exp}\{-c_1(d\log n)^{1\wedge \alpha}\}$,
+$$
+\mathbb{E}_{\pi_{\mathrm{data}}}\left[m(\widehat \theta,\widehat\varphi,X)\right]\leqslant \underset{\gamma>0}{\mathrm{inf}}\left\{(1+\gamma) \underset{\theta\in\Theta,\varphi\in\Phi}{\mathrm{min}}\mathbb{E}_{\pi_{\mathrm{data}}}[m(\theta,\varphi,X)] + c_2(1+\gamma^{-1})\frac{dD}{n}\log(nd)\log^{1/\alpha}n\right\}\eqsp.
+$$
+\end{theorem}
+The oracle inequality given in Theorem~\ref{th:vae:excess:risk} can be used to control the total variation distance between the target distribution and the generative model  using a Variational Mixture of Posteriors prior.
+\begin{proposition}
+\label{prop:vaemixtprior}
+Assume that H\ref{assum:vae:orlicz}-\ref{assum:vae:lip} hold. Assume also that for all $x$, the support $\mathcal{Z}$ of $q_\varphi(\cdot|x)$ is bounded and that there exists $a_3>0$ such that for all $x$, all $z,z'\in \mathcal{Z}$, $\varphi,\varphi'\in\Phi$,
+$$
+\left|q_\varphi(z|x) - q_{\varphi'}(z'|x)\right| \leqslant a_3 \left( \|\varphi-\varphi'\|_2 + \|z-z'\|_2\right)\eqsp.
+$$
+Then, there exist $c_0,c_1,c_2,d>0$ such that with probability at least $1- c_0 \mathrm{exp}\{-c_1(d\log n)^{1\wedge \alpha}\}$,
+\begin{multline*}
+D_{\mathrm{tv}}^2\left(\pi_{\mathrm{data}},\int \left(\frac{1}{n}\sum_{i=1}^n q_{\widehat \varphi}(z|X_i)\right)p_{\widehat \theta}(\cdot|z)\rmd z\right)\\
+\leqslant c_2 \underset{\theta\in\Theta,\varphi\in\Phi}{\mathrm{min}}\mathbb{E}_{\pi_{\mathrm{data}}}[m(\theta,\varphi,X)] + c_3\frac{dD}{n}\log(nd)\log^{1/\alpha}n\eqsp.
+\end{multline*}
+\end{proposition}
+
+\chapter{Score-based diffusion models}
+\minitoc
+
+
+
+\chapter{Basics in Markov chains}
+\minitoc
+%\begin{keywords}
+%Markov chains, Markov property, Metropolis Hastings, canonical space.
+%\end{keywords}
 
 %These short lecture notes introduce very basic tools in
 %the Markov Chain Monte Carlo (MCMC) theory. We only focus on the
@@ -1152,7 +1513,7 @@ which finishes the proof.
 \end{svmultproof}
 
 
-Thereofre, if we want to check easily that
+Therefore, if we want to check easily that
 a kernel $P$ is $\pi$-invariant, it is sufficient to check that
 it is $\pi$-reversible.
 
@@ -1189,21 +1550,36 @@ for all $x,y\in\Xset$.
 
 For a given function $\alpha:\Xset^{2}\to[0,1]$,  Algorithm~\ref{alg:mh} describes the Metropolis algorithm.
 
-\begin{algorithm}
-\caption{\label{alg:mh}The Metropolis Algorithm}
+%\begin{algorithm}
+%\caption{\label{alg:mh}The Metropolis Algorithm}
+%
+%%\SetAlgoLined
+%\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+%\Input{n}
+%\Output{$X_0,\ldots,X_n$}
+%\BlankLine
+%At $t=0$, draw $X_{0}$ according to some arbitrary distribution\\
+%\For{$t\leftarrow 0$ \KwTo $n-1$}
+%{
+%$\bullet$ Draw independently $Y_{t+1}\sim Q(X_{t},\cdot)$ and $U_{t+1}\sim\mathrm{Unif}(0,1)$\\
+%$\bullet$ Set $X_{t+1}=\begin{cases} Y_{t+1} & \mbox{if }U_{t+1}\leq\alpha(X_{t},Y_{t+1})\\ X_{t} & \mbox{otherwise} \end{cases}$
+%}
+%\end{algorithm}
 
-%\SetAlgoLined
-\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
-\Input{n}
-\Output{$X_0,\ldots,X_n$}
-\BlankLine
-At $t=0$, draw $X_{0}$ according to some arbitrary distribution\\
-\For{$t\leftarrow 0$ \KwTo $n-1$}
-{
-$\bullet$ Draw independently $Y_{t+1}\sim Q(X_{t},\cdot)$ and $U_{t+1}\sim\mathrm{Unif}(0,1)$\\
-$\bullet$ Set $X_{t+1}=\begin{cases} Y_{t+1} & \mbox{if }U_{t+1}\leq\alpha(X_{t},Y_{t+1})\\ X_{t} & \mbox{otherwise} \end{cases}$
-}
+\begin{algorithm}
+\centering
+\begin{algorithmic}
+\State At $t=0$, draw $X_{0}$ according to some arbitrary distribution.
+\State Set $m_{0} = 0$ and $v_{0} = 0$.
+\For{$t = 0$ to $t = n-1$}
+\State Draw independently $Y_{t+1}\sim Q(X_{t},\cdot)$ and $U_{t+1}\sim\mathrm{Unif}(0,1)$.
+\State Set $X_{t+1}=\begin{cases} Y_{t+1} & \mbox{if }U_{t+1}\leq\alpha(X_{t},Y_{t+1})\\ X_{t} & \mbox{otherwise} \end{cases}$. 
+\EndFor
+\end{algorithmic}
+\caption{The Metropolis Algorithm.}
+\label{alg:ùh}
 \end{algorithm}
+
  In words, $Q$ allows to propose a candidate for the next value of
 the Markov chain $(X_{k})_{k\in\nset}$ and this candidate is accepted or
 refused according to a probability that depends on the function $\alpha$.
@@ -2670,20 +3046,32 @@ Assume that $\pi$ and $Q$ are dominated by a common dominating measure $\lambda$
 
 The pseudo marginal algorithm works as described in Algorithm~\ref{alg:pseudo:mh}\ below.
 \begin{algorithm}
-\caption{\label{alg:pseudo:mh} The Pseudo-Marginal MH Algorithm}
-
-%\SetAlgoLined
-\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
-\Input{n}
-\Output{$X_0,\ldots,X_n$}
-\BlankLine
-At $t=0$, draw $X_{0}$ according to some arbitrary distribution and draw $W_0\sim R(X_0,\cdot)$\\
-\For{$t\leftarrow 0$ \KwTo $n-1$}
-{
-$\bullet$ Draw $\tilde X_{t+1}\sim Q(X_{t},\cdot)$ and then $ \tilde W_{t+1}\sim R(\tilde X_{t+1},\cdot)$\\
-$\bullet$ Set $(X_{t+1},W_{t+1})=\begin{cases} (\tilde X_{t+1},\tilde W_{t+1}) & \mbox{with prob.}\ \frac{\tilde W_{t+1} q(\tilde X_{t+1},X_t)}{W_t q(X_t,\tilde X_{t+1})}\wedge 1\\ (X_{t},W_t)& \mbox{with prob.}\ 1-\frac{\tilde W_{t+1} q(\tilde X_{t+1},X_t)}{W_t q(X_t,\tilde X_{t+1})}\wedge 1\end{cases}$
-}
+\centering
+\begin{algorithmic}
+\State At $t=0$, draw $X_{0}$ according to some arbitrary distribution and draw $W_0\sim R(X_0,\cdot)$.
+\For {$t = 0 \to n-1$}
+\State Draw $\tilde X_{t+1}\sim Q(X_{t},\cdot)$ and then $ \tilde W_{t+1}\sim R(\tilde X_{t+1},\cdot)$.
+\State Set $(X_{t+1},W_{t+1})=\begin{cases} (\tilde X_{t+1},\tilde W_{t+1}) & \mbox{with prob.}\ \frac{\tilde W_{t+1} q(\tilde X_{t+1},X_t)}{W_t q(X_t,\tilde X_{t+1})}\wedge 1\\ (X_{t},W_t)& \mbox{with prob.}\ 1-\frac{\tilde W_{t+1} q(\tilde X_{t+1},X_t)}{W_t q(X_t,\tilde X_{t+1})}\wedge 1\end{cases}$
+\EndFor
+\end{algorithmic}
+\label{alg:pseudo:mh}
+\caption{The Pseudo-Marginal MH Algorithm.}
 \end{algorithm}
+%\begin{algorithm}
+%\caption{\label{alg:pseudo:mh} The Pseudo-Marginal MH Algorithm}
+%
+%%\SetAlgoLined
+%\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+%\Input{n}
+%\Output{$X_0,\ldots,X_n$}
+%\BlankLine
+%At $t=0$, draw $X_{0}$ according to some arbitrary distribution and draw $W_0\sim R(X_0,\cdot)$\\
+%\For{$t\leftarrow 0$ \KwTo $n-1$}
+%{
+%$\bullet$ Draw $\tilde X_{t+1}\sim Q(X_{t},\cdot)$ and then $ \tilde W_{t+1}\sim R(\tilde X_{t+1},\cdot)$\\
+%$\bullet$ Set $(X_{t+1},W_{t+1})=\begin{cases} (\tilde X_{t+1},\tilde W_{t+1}) & \mbox{with prob.}\ \frac{\tilde W_{t+1} q(\tilde X_{t+1},X_t)}{W_t q(X_t,\tilde X_{t+1})}\wedge 1\\ (X_{t},W_t)& \mbox{with prob.}\ 1-\frac{\tilde W_{t+1} q(\tilde X_{t+1},X_t)}{W_t q(X_t,\tilde X_{t+1})}\wedge 1\end{cases}$
+%}
+%\end{algorithm}
 Finally, this algorithm is very close to the classical MH except that we replace $\pi(x)$ by its unbiased estimator.
 
 
@@ -2728,30 +3116,52 @@ In what follows, we make use of the following terminology (that comes from physi
 \item $H(q,p)=U(q)+K(p)$ is called the {\em Hamiltonian}.
 \end{itemize}
 \index{potential energy} \index{kinetic energy} \index{Hamiltonian}
-Several versions of HMC exist. We consider in this course the Leapfrog HMC which produces a Markov chain $(X_t)_{t\in\nset}=(q_t,p_t)_{t\in\nset}$    as described in Algorithm~\ref{alg:leapfrog:mh}:
-\begin{algorithm}
-\caption{\label{alg:leapfrog:mh} The Leapfrog HMC}
+Several versions of HMC exist. We consider in this course the Leapfrog HMC which produces a Markov chain $(X_t)_{t\in\nset}=(q_t,p_t)_{t\in\nset}$    as described in Algorithm~\ref{alg:leapfrog:mh}.
 
-%\SetAlgoLined
-\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
-\Input{n,h,L}
-\Output{$X_0,\ldots,X_n$}
-\BlankLine
-At $t=0$, draw $X_{0}$ according to some arbitrary distribution\\
-\For{$t\leftarrow 0$ \KwTo $n-1$}
-{
-$\bullet$ Set $q_{t+1}^0=q_{t}$ and draw $p_{t+1}^0\sim \gauss(0,I_d)$ \\
-    \For{$k\leftarrow 0$ \KwTo $L-1$}
-    {
-    $p_{t+1}^{k+1/2}=p_{t+1}^k-(h/2) \nabla U(q_{t+1}^k)$\\
-    $q_{t+1}^{k+1}=q_{t+1}^k-h p_{t+1}^{k+1/2}$\\
-    $p_{t+1}^{k+1}=p_{t+1}^{k+1/2}-(h/2) \nabla U (q_{t+1}^{k+1})$
-    }
-$\bullet$ With prob. $\frac{\Pi(q_{t+1}^L,p_{t+1}^L)}{\Pi(q_{t+1}^0,p_{t+1}^0)}\wedge 1$, set $(q_{t+1},p_{t+1})=(q_{t+1}^L,p_{t+1}^L)$.\\
- $\bullet$ Otherwise set $(q_{t+1},p_{t+1})=(q_{t+1}^0,p_{t+1}^0)$
-}
+
+\begin{algorithm}
+\centering
+\begin{algorithmic}
+\State At $t=0$, draw $X_{0}$ according to some arbitrary distribution.
+\For {$t = 0 \to n-1$}
+\State Set $q_{t+1}^0=q_{t}$ and draw $p_{t+1}^0\sim \gauss(0,I_d)$.
+\For{$k=0$ to $k=L-1$}
+\State $p_{t+1}^{k+1/2}=p_{t+1}^k-(h/2) \nabla U(q_{t+1}^k)$.
+\State  $q_{t+1}^{k+1}=q_{t+1}^k-h p_{t+1}^{k+1/2}$.
+\State $p_{t+1}^{k+1}=p_{t+1}^{k+1/2}-(h/2) \nabla U (q_{t+1}^{k+1})$.
+\EndFor
+\State  With probability $\frac{\Pi(q_{t+1}^L,p_{t+1}^L)}{\Pi(q_{t+1}^0,p_{t+1}^0)}\wedge 1$, set $(q_{t+1},p_{t+1})=(q_{t+1}^L,p_{t+1}^L)$.
+\State  Otherwise set $(q_{t+1},p_{t+1})=(q_{t+1}^0,p_{t+1}^0)$.
+\EndFor
+\end{algorithmic}
+\label{alg:leapfrog:mh}
+\caption{The Leapfrog HMC.}
 \end{algorithm}
 
+
+%\begin{algorithm}
+%\caption{\label{alg:leapfrog:mh} The Leapfrog HMC}
+%
+%%\SetAlgoLined
+%\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+%\Input{n,h,L}
+%\Output{$X_0,\ldots,X_n$}
+%\BlankLine
+%At $t=0$, draw $X_{0}$ according to some arbitrary distribution\\
+%\For{$t\leftarrow 0$ \KwTo $n-1$}
+%{
+%$\bullet$ Set $q_{t+1}^0=q_{t}$ and draw $p_{t+1}^0\sim \gauss(0,I_d)$ \\
+%    \For{$k\leftarrow 0$ \KwTo $L-1$}
+%    {
+%    $p_{t+1}^{k+1/2}=p_{t+1}^k-(h/2) \nabla U(q_{t+1}^k)$\\
+%    $q_{t+1}^{k+1}=q_{t+1}^k-h p_{t+1}^{k+1/2}$\\
+%    $p_{t+1}^{k+1}=p_{t+1}^{k+1/2}-(h/2) \nabla U (q_{t+1}^{k+1})$
+%    }
+%$\bullet$ With prob. $\frac{\Pi(q_{t+1}^L,p_{t+1}^L)}{\Pi(q_{t+1}^0,p_{t+1}^0)}\wedge 1$, set $(q_{t+1},p_{t+1})=(q_{t+1}^L,p_{t+1}^L)$.\\
+% $\bullet$ Otherwise set $(q_{t+1},p_{t+1})=(q_{t+1}^0,p_{t+1}^0)$
+%}
+%\end{algorithm}
+%
 \index{Leapfrog algorithm}
 A transition of this algorithm can be decomposed into two different (sub-)transitions:
 \begin{itemize}
@@ -2862,21 +3272,36 @@ Denote by $s(q,p)=(q,-p)$ the flip operator on the second component. The flip is
 Finally, the process $(\tilde q^t,\tilde p^t)$ follows the Hamiltonian dynamics so that $f^T(\tilde q^0,\tilde p^0)=(\tilde q^T,-\tilde p^T)$ and by definition this quantity is equal to $(q^0,p^0)$. We finally obtain that $f^T$ is an involution.
 
 The ideal HMC can be described as follows (Algorithm~\ref{alg:ideal:mh}~). We see in this ideal algorithm that the candidate is always accepted and that we don't even need to apply the flip operator (since it does not change at all the algorithm).
+
 \begin{algorithm}
-\caption{\label{alg:ideal:mh} The ideal HMC.}
-%\SetAlgoLined
-\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
-\Input{n,T}
-\Output{$X_0,\ldots,X_n$}
-\BlankLine
-At $t=0$, draw $X_{0}$ according to some arbitrary distribution\\
-\For{$t\leftarrow 0$ \KwTo $n-1$}
-{
-$\bullet$ Set $q_{t+1}^0=q_{t}$ and draw $p_{t+1}^0\sim \gauss(0,I_d)$ \\
-$\bullet$ Set  $(q_{t+1}^L,p_{t+1}^L)=\phi^T(q_{t+1}^0,p_{t+1}^0)$ \\
-$\bullet$ Set $(q_{t+1},p_{t+1})=(q_{t+1}^L,p_{t+1}^L)$.
-}
+\centering
+\begin{algorithmic}
+\State At $t=0$, draw $X_{0}$ according to some arbitrary distribution.
+\For {$t = 0 \to n-1$}
+\State Set $q_{t+1}^0=q_{t}$ and draw $p_{t+1}^0\sim \gauss(0,I_d)$.
+\State Set  $(q_{t+1}^L,p_{t+1}^L)=\phi^T(q_{t+1}^0,p_{t+1}^0)$.
+\State Set $(q_{t+1},p_{t+1})=(q_{t+1}^L,p_{t+1}^L)$.
+\EndFor
+\end{algorithmic}
+\label{alg:ideal:mh}
+\caption{The ideal HMC.}
 \end{algorithm}
+
+%\begin{algorithm}
+%\caption{\label{alg:ideal:mh} The ideal HMC.}
+%%\SetAlgoLined
+%\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+%\Input{n,T}
+%\Output{$X_0,\ldots,X_n$}
+%\BlankLine
+%At $t=0$, draw $X_{0}$ according to some arbitrary distribution\\
+%\For{$t\leftarrow 0$ \KwTo $n-1$}
+%{
+%$\bullet$ Set $q_{t+1}^0=q_{t}$ and draw $p_{t+1}^0\sim \gauss(0,I_d)$ \\
+%$\bullet$ Set  $(q_{t+1}^L,p_{t+1}^L)=\phi^T(q_{t+1}^0,p_{t+1}^0)$ \\
+%$\bullet$ Set $(q_{t+1},p_{t+1})=(q_{t+1}^L,p_{t+1}^L)$.
+%}
+%\end{algorithm}
 
 This is just an ideal algorithm since we don't know how to solve exactly Hamiltonian dynamics. The leapfrog is based on an approximation of these dynamics.
 
