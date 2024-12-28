@@ -287,50 +287,45 @@
 %\clearpage
 %\newpage
 
-\subsection*{Notation}
-The following notations are used throughout these lecture notes.
-\begin{itemize}
-\item i.i.d.:  independent and identically distributed.
-\item r.v.:  random variables.
-\item For $r,s \in \nset$ such that $r\leq s$, we write $[r:s]=\{r,r+1,\ldots,s\}$.
-\item $X\indep Y$ means that $X$ and $Y$ are independent random variables.
-\item $X \eqLaw Y$ means that $X$ and $Y$ have the same law.
-\item $\liminf_n a_n=\lim_{n \to\infty} \lr{\inf_{k \geq n} a_k}$ and similarly, $\limsup_n a_n=\lim_{n \to\infty} \lr{\sup_{k \geq n} a_k}$. Moreover, $\lim_n a_n$ exists if and only if $\liminf_n a_n=\limsup_n a_n$.
-\item For any $a\in \rset$, $a^+=\max(a,0)$ and $a^-=\max(-a,0)=-\min(a,0)$ and we have $|a|=a^++a^-$ and $a=a^+-a^-$.
-\end{itemize}
-We also consider the following notions for convergence for random variables.
-\begin{enumerate}[$\blacktriangleright$]
-\item \fbox{$X_n \weaklim X$} means {\em convergence in distribution} (or "convergence en loi" in French). It is equivalent to any of the following statements.
+\subsection*{Notations and useful definitions}
+The following notations are used throughout these lecture notes. For $r,s \in \nset$ such that $r\leq s$, we write $[r:s]=\{r,r+1,\ldots,s\}$. For all real-valued sequences $\{a_k\}_{k\geq 0}$, we write $\liminf_n a_n=\lim_{n \to\infty} \lr{\inf_{k \geq n} a_k}$ and similarly, $\limsup_n a_n=\lim_{n \to\infty} \lr{\sup_{k \geq n} a_k}$. Moreover, $\lim_n a_n$ exists if and only if $\liminf_n a_n=\limsup_n a_n$. For all $a\in \rset$, $a^+=\max(a,0)$ and $a^-=\max(-a,0)=-\min(a,0)$ and we have $|a|=a^++a^-$ and $a=a^+-a^-$. For all set $A$, $\partial A$ is the frontier of $A$, i.e. the set of points $x$ such that in all neighborhoods of $x$, there are infinitely many points in $A$ and infinitely many points in $A^c$.
+%\begin{itemize}
+%\item i.i.d.:  independent and identically distributed.
+%\item r.v.:  random variables.
+%\item 
+%\item $X\indep Y$ means that $X$ and $Y$ are independent random variables.
+%\item $X \eqLaw Y$ means that $X$ and $Y$ have the same law.
+%\item 
+%\item 
+%\end{itemize}
+%We also consider the following notions for convergence for random variables.
+%\begin{enumerate}[$\blacktriangleright$]
+For all sequences of real-valued random variables on $(\Omega,\mathcal{F},\mathbb{P})$, $(X_n)_{n\geq 0}$ convergences in distribution to $X$ if one of the following  equivalent statements hold.
      \begin{enumerate}[(a)]
      \item For all bounded continuous functions $h$, $\lim_{n}\PE[h(X_n)]=\PE[h(X)]$.
     \item  For all $A \in \borel(\rset)$ such that $\PP(X \in \partial A)=0$,  $\lim_n \PP(X_n \in A)=\PP(X\in A)$.
         \item For all $x\in \rset$ such that $\PP(X=x)=0$, $\lim_n \PP(X_n \leq x)=\PP(X \leq x)$.
 \item For all $u \in \rset$, $\lim_n \PE\lrb{\rme^{\rmi u X_n}}=\PE\lrb{\rme^{\rmi u X}}$.
      \end{enumerate}
-     In (b), the notation $\partial A$ means the frontier of $A$, that is, the set of points $x$ such that in any neighborhood of $x$, there are an infinite number of distinct points of $A$ and an infinite number of points in $A^c$.
-     By abuse of terminology, we may also say that \fbox{\em \bf $X_n$ weakly converges to $X$} instead of stating the distribution of $X_n$ converges weakly to the distribution of $X$.
-\item \fbox{$X_n \plim{\PP} X$} means {\em convergence in probability}: for all $\epsilon>0$,
+When there is no confusion, we say that $X_n$ weakly converges to $X$. We say that $(X_n)_{n\geq 0}$ converges in probability to $X$ if for all $\varepsilon>0$,
 $$
-\lim_{n \to \infty} \PP(|X_n -X|>\epsilon)=0.
+\lim_{n \to \infty} \PP(|X_n -X|>\varepsilon)=0\eqsp.
 $$
-\item \fbox{$X_n \aslim{\PP} X$} means {\em almost sure convergence}:
+ We say that $(X_n)_{n\geq 0}$ converges almost surely to $X$ if
 $$
 \PP(\lim_{n \to \infty}X_n=X)=1\eqsp.
 $$
-\end{enumerate}
-\fbox{Almost sure convergence implies convergence in probability}.
+Note that almost sure convergence implies convergence in probability.
 \newcommand{\var}{\mathrm{var}}
 The following properties are used many times in these lecture notes.
 \begin{enumerate}[(i)]
-\item If $X_n \weaklim X$ then for all continuous functions $f$, $f(X_n) \weaklim f(X)$. Note that this property  holds, when $f$ is continuous (and not necessarily bounded), for example $f(u)=u^2$ so that $X_n^2 \weaklim X^2$.
-\item \textbf{The Slutsky Lemma.} If $X_n \plim{\PP} c$ where $c$ is a constant and if $Y_n \weaklim Y$, then $(X_n,Y_n) \weaklim (c,Y)$ that is for all continuous functions $f$, $f(X_n,Y_n) \weaklim f(c,Y)$.
+\item If $(X_n)_{n\geq 0}$ convergences in distribution to $X$, then for all continuous functions $f$, $\{f(X_n)\}_{n\geq 0}$ convergences in distribution to $f(X)$. Note that this property  holds, when $f$ is continuous and not necessarily bounded.
+\item By the Slutsky lemma, if $(X_n)_{n\geq 0}$ converges in probability to $c$ where $c$ is a constant and if $(Y_n)_{n\geq 0}$ converges in distribution to $Y$, then $\{(X_n,Y_n)\}_{n\geq 0}$ converges in distribution to $(c,Y)$. In particular, for all continuous functions $f$, $\{f(X_n,Y_n)\}_{n\geq 0}$ converges in distribution to $f(c,Y)$.
 \item $X \sim \gauss(0,1)$ if and only if for all $u \geq 0$, $\PE[\rme^{\rmi u
     X}]=\rme^{-u^2/2}$. Moreover, $X \sim \gauss(\mu,\sigma^2)$ if and only if
-  for all $u \geq 0$, $\PE[\rme^{\rmi u X}]=\rme^{-u^2 \var{X}/2+\rmi
-    u \PE[X]}$ and in that case, $\sigma^2=\var{X}$ and $\mu=\PE(X)$.
- \item Let $c$ be a constant. Then, $X_n \plim{\PP} c$ if and only if $X_n \weaklim c$ (in words, convergence
-   in probability to a {\bf constant} is equivalent to convergence in
-   distribution to this {\bf constant}).
+  for all $u \geq 0$, $\PE[\rme^{\rmi u X}]=\rme^{-u^2 \mathbb{V}[X]/2+\rmi
+    u \PE[X]}$ and in that case, $\sigma^2=\mathbb{V}[X]$ and $\mu=\PE[X]$.
+ \item If $c\in\rset$ is a constant, then $(X_n)_{n\geq 0}$ converges in probability to $c$ if and only if $(X_n)_{n\geq 0}$ converges in distribution to $c$.
 \end{enumerate}
 
 
@@ -345,7 +340,7 @@ In a general framework, generative modeling aims at designing algorithms to obta
 
 In machine/statistical learning most of the problems we aim to solve require then to sample random variables from a complex distribution. Depending on the context, this distribution can be given for instance by a marginal density $p_\theta(y) = \int p_\theta(x,y) \lambda(\rmd x)$ or by a conditional/posterior distribution $p_\theta(x|y) = p_\theta(x)p_\theta(y|x)/\int p_\theta(x,y) \lambda(\rmd x)$.
 
- In this course, we introduce different algorithms, depending on the framework, to solve machine learning tasks based on sampling random variables.  In particular, we detail Markov Chain Monte Carlo (MCMC) methods, which allow to construct a process $(X_k)_{k\in\nset}$ that targets an unknown distribution $\pi$. Sometimes $(X_k)_{k\in\nset}$ is itself a Markov chain with invariant probatility measure $\pi$, sometimes, $(X_k)_{k\in\nset}$ is the first component process of an extended Markov chain that targets an extended distribution where the marginal distribution on the first component is $\pi$.
+% In this course, we introduce different algorithms, depending on the framework, to solve machine learning tasks based on sampling random variables.  In particular, we detail Markov Chain Monte Carlo (MCMC) methods, which allow to construct a process $(X_k)_{k\in\nset}$ that targets an unknown distribution $\pi$. Sometimes $(X_k)_{k\in\nset}$ is itself a Markov chain with invariant probatility measure $\pi$, sometimes, $(X_k)_{k\in\nset}$ is the first component process of an extended Markov chain that targets an extended distribution where the marginal distribution on the first component is $\pi$.
 
 
 \section{Target distributions}
@@ -535,9 +530,10 @@ Since the integral cannot be computed explicitly, $p_\theta(x)$ is not tractable
 = \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{q_{\varphi}(Z|x)}{p_\theta(Z|x)}\right]  + \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z,x)}{q_{\varphi}(Z|x)}\right] .
 \end{multline*}
 The first term of the right-hand-side is the Kullback-Leibler divergence between $q_{\varphi}(\cdot|x)$ and $p_\theta(\cdot|x)$, so that $\log p_\theta(x)\geq \mathcal{L}(\theta,\varphi,x)$, where
-$$
+\begin{equation}
+\label{eq:elbo:main}
 \mathcal{L}(\theta,\varphi,x) = \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z,x)}{q_{\varphi}(Z|x)}\right]
-$$
+\end{equation}
 is the ELBO in this setting. In order to approximate $z\mapsto p_\theta(z|x)$, VAE propose to solve the optimization problem:
 $$
 \widehat \varphi \in \mathrm{argmax}_{\varphi\in\Phi}\left\{ \frac{1}{n}\sum_{i=1}^n \mathcal{L}(\theta,\varphi,X_i)\right\}\eqsp.
@@ -767,15 +763,16 @@ These two algorithms generate independent samples but do not build upon the acce
 %Variational estimation, conditional distribution, latent space.
 %\end{keywords}
 \section{Introduction}
-Variational Auto-Encoders (VAE) are very popular approaches to introduce approximations of a target conditional distribution in the context of latent data models. Assume that $\{X_i\}_{1\leqslant i\leqslant n}$ are i.i.d. random variables in $\mathsf{X}$ with unknown probability distribution function $\pi_{\mathrm{data}}$. We consider a family of joint probability distributions $\{(z,x) \mapsto  p_{\theta}(z,x)\}_{\theta\in\Theta}$ on $(\mathsf{Z}\times \mathsf{X}, \mathcal{Z}\times \mathcal{X})$ where $Z$ is a latent variable and $X$ is the observation. In this setting, we often write, for all $\theta\in\Theta$, $x\in\mathsf{X}$, $z\in\mathsf{Z}$,
+Variational Auto-Encoders (VAE) are very popular approaches to introduce approximations of a target conditional distribution in the context of latent data models, see \cite{rezende2014stochastic,kingma2019introduction}. Assume that $(X_1,\ldots,X_n)$ are i.i.d. random variables in $\mathsf{X}$ with unknown probability distribution function $\pi_{\mathrm{data}}$. We consider a family of joint probability distributions $\{(z,x) \mapsto  p_{\theta}(z,x)\}_{\theta\in\Theta}$ on $(\mathsf{Z}\times \mathsf{X}, \mathcal{Z}\times \mathcal{X})$ where $Z$ is a latent variable and $X$ is the observation. In this setting, we often write, for all $\theta\in\Theta$, $x\in\mathsf{X}$, $z\in\mathsf{Z}$,
 $$
-p_{\theta}(z,x) = p_{\theta}(z)p_{\theta}(x|z)
+p_{\theta}(z,x) = p_{\theta}(z)p_{\theta}(x|z)\eqsp.
 $$
-and the conditional distribution $p_{\theta}(z|x)$ is not availbale explicitly. The normalized loglikelihood is therefore given by
+The latent variable generative model defines a joint density $(z,x)\mapsto p_\theta(x, z)$  on $(\mathsf{Z}\times \mathsf{X}, \mathcal{Z}\times \mathcal{X})$  by specifying a prior $z\mapsto p_{\theta}(z)$ over the latent variable $Z$ and a conditional density $x\mapsto p_\theta(x|z)$ also referred to as the decoder.  The normalized loglikelihood is therefore given by
 $$
-\ell_n(\theta) = \frac{1}{n}\sum_{i=1}^n \log p_{\theta}(X_i) = \frac{1}{n}\sum_{i=1}^n \log \int p_{\theta}(z)p_{\theta}(X_i|z)\rmd z\eqsp.
+\ell_n(\theta) = \frac{1}{n}\sum_{i=1}^n \log p_{\theta}(X_i) = \frac{1}{n}\sum_{i=1}^n \log \int p_{\theta}(z)p_{\theta}(X_i|z)\rmd z\eqsp,
 $$
-Since a maximum likelihood estimator cannot be computed simply, VAEs introduce a variational approach wich aims at simultaneously providing a parameter estimate  and an approximation of the conditional distribution of the latent variable given the observation.  Consider a family of probability density function $\{(z,x) \mapsto q_{\varphi}(z|x)\}_{\varphi\in\Phi}$. Then, we can write, for all $\varphi\in\Phi,\theta\in\Theta$, $x\in\mathsf{X}$, $z\in\mathsf{Z}$,
+and the conditional distribution $p_{\theta}(z|x)\propto p_{\theta}(z)p_{\theta}(x|z)$. In most cases, maximizing the average
+marginal log-likelihood of the data is not possible, as the marginal likelihood functions $p_{\theta}(X_i)$, $1\leqslant i \leqslant n$, are not vailable explicitly as the integral for marginalizing the latent variable is intractable.  Since a maximum likelihood estimator cannot be computed simply, VAEs introduce a variational approach wich aims at simultaneously providing a parameter estimate  and an approximation of the conditional distribution of the latent variable given the observation.  Consider a family of probability density function $\{(z,x) \mapsto q_{\varphi}(z|x)\}_{\varphi\in\Phi}$. Then, we can write, for all $\varphi\in\Phi,\theta\in\Theta$, $x\in\mathsf{X}$, $z\in\mathsf{Z}$,
 \begin{align*}
 \log p_\theta(x) = \int p_\theta(x) q_{\varphi}(z|x) \rmd z &= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log p_\theta(x)\right] \\
 &= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z,x)}{p_\theta(Z|x)}\right] \\
@@ -785,7 +782,7 @@ The first term of the right-hand-side is the Kullback-Leibler divergence between
 $$
 \mathcal{L}(\theta,\varphi,x) = \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z,x)}{q_{\varphi}(Z|x)}\right]
 $$
-is the ELBO in this setting. 
+is the Evidence Lower BOund (ELBO). 
 %In order to approximate $z\mapsto p_\theta(z|x)$, VAE propose to solve the optimization problem:
 %$$
 %\widehat \varphi \in \mathrm{argmin}_{\varphi\in\Phi} \mathcal{L}(\theta,\varphi,x)\eqsp.
@@ -807,7 +804,7 @@ The joint optimization of $\theta$ and $\varphi$ is a complex problem both for p
 $$
 \widehat{\mathcal{L}}_n(\theta,\varphi) =  \frac{1}{n}\sum_{i=1}^n\frac{1}{M}\sum_{j=1}^M\log \frac{q_{\varphi}(Z_{i,j}|X_i)}{p_\theta(Z_{i,j},X_i)}\eqsp,
 $$ 
-where for all $1\leqslant i \leqslant n$, $\{Z_{i,j}\}_{1\leqslant j\leqslant M}$ are i.i.d. with distribution $q_{\varphi}(\cdot|X_i)$.
+where for all $1\leqslant i \leqslant n$, $(Z_{i,1},\ldots,Z_{i,M})_{1\leqslant j\leqslant M}$ are i.i.d. with distribution $q_{\varphi}(\cdot|X_i)$.
 
 
 \begin{figure}
@@ -822,11 +819,11 @@ In order to solve \eqref{eq:optim:ELBO}, we need to compute the gradient of the 
 $$
 \nabla_{\theta} \mathcal{L}(\theta, \varphi) = -\mathbb{E}_{\pi_{\mathrm{data}}} \left[\mathbb{E}_{q_{\varphi}(\cdot|X)}\left[ \nabla_{\theta} \log p_{\theta}(X, Z)\right]\right]\eqsp.
 $$
-This gradient can be estimated using samples from $\pi_{\mathrm{data}}$. Given a batch of i.i.d. observations $\{X_i\}_{i=1}^B$ with distribution $\pi_{\mathrm{data}}$, an estimator of $\nabla_{\theta} \mathcal{L}(\theta, \varphi)$  can be computed as follows:
+This gradient can be estimated using samples from $\pi_{\mathrm{data}}$. Given a batch of i.i.d. observations $(X_1,\ldots,X_n)_{1\leqslant i \leqslant B}$ with distribution $\pi_{\mathrm{data}}$, an estimator of $\nabla_{\theta} \mathcal{L}(\theta, \varphi)$  can be computed as follows:
 $$
 S_{\theta}(\theta, \varphi;\{X_i\}_{i=1}^B) = -\frac{1}{B}\sum_{i=1}^B\frac{1}{M}\sum_{j=1}^M \nabla_\theta \log p_\theta(Z_{i,j},X_i)\eqsp,
 $$
-where for all $1\leqslant i \leqslant B$, $\{Z_{i,j}\}_{1\leqslant j\leqslant M}$ are i.i.d. with distribution $q_{\varphi}(\cdot|X_i)$.
+where for all $1\leqslant i \leqslant B$, $(Z_{i,1},\ldots, Z_{i,M})_{1\leqslant j\leqslant M}$ are i.i.d. with distribution $q_{\varphi}(\cdot|X_i)$.
 Computing the gradient with respect to the variational parameter $\varphi$ is more challenging since the inner expectation depends on  $q_{\varphi}$. There are two common methods for computing this gradient. 
 
 \subsection{Pathwise Gradient}
@@ -837,7 +834,7 @@ where $w_{\theta, \varphi}(x,z) = p_{\theta}(x, z)/q_{\varphi}(z|x)$ the unnorma
 \begin{equation*}
 \nabla^{}_{\varphi} \mathcal{L}(\theta, \varphi; x) =  \mathbb{E}_{p_\varepsilon}\left[ \nabla_z \log w_{\theta, \varphi}(x,z) \nabla_{\varphi} g(\varepsilon, \varphi) \right]  - \mathbb{E}_{p_\varepsilon}\left[\nabla_{\varphi} \log q_{\varphi}(g(\varepsilon, \varphi) | x) \right]\eqsp.
 \end{equation*}
-The gradient estimator with respect to $\varphi$ of the ELBO can be estimated using samples from the dataset. Let  $\{X_i\}_{i=1}^B$ be i.i.d. with distribution $\pi_{\mathrm{data}}$. Then, an estimator of $\nabla_{\varphi} \mathcal{L}(\theta, \varphi)$  can be computed as follows:
+The gradient estimator with respect to $\varphi$ of the ELBO can be estimated using samples from the dataset. Let  $(X_1,\ldots,X_B)_{1\leqslant i \leqslant B}$ be i.i.d. with distribution $\pi_{\mathrm{data}}$. Then, an estimator of $\nabla_{\varphi} \mathcal{L}(\theta, \varphi)$  can be computed as follows:
 \begin{multline} \label{eq:grad_estimator_phi}
 S_{\varphi}(\theta, \varphi; \{X_i\}_{i=1}^B) \\= -\frac{1}{B} \sum_{i=1}^{B} \frac{1}{M} \sum_{j=1}^{M} \left\{\nabla_z \log \frac{p_{\theta}(X_i, g(\varepsilon_{i,j}, \varphi))}{q_{\varphi}(g(\varepsilon_{i,j}, \varphi) | x_i)} \nabla_{\varphi} g(\varepsilon_{i,j}, \varphi) - \nabla_{\varphi} \log q_{\varphi}(g(\varepsilon_{i,j}, \varphi) | X_i)\right\}\eqsp,
 \end{multline}
@@ -845,7 +842,7 @@ S_{\varphi}(\theta, \varphi; \{X_i\}_{i=1}^B) \\= -\frac{1}{B} \sum_{i=1}^{B} \f
 %\begin{align} \label{eq:grad_estimator_PW}
 %\tilde{g}^{}_{i,\ell} = \left( \nabla_{\theta} \log \frac{p_{\theta}(x_i, g(\varepsilon_i^{(\ell)}, \varphi))}{q_{\varphi}(g(\varepsilon_i^{(\ell)}, \varphi) | x_i)}, \nabla_z \log \frac{p_{\theta}(x_i, g(\varepsilon_i^{(\ell)}, \varphi))}{q_{\varphi}(g(\varepsilon_i^{(\ell)}, \varphi) | x_i)} \nabla_{\varphi} g(\varepsilon_i^{(\ell)}, \varphi) - \nabla_{\phi} \log q_{\varphi}(g(\varepsilon_i^{(\ell)}, \varphi) | x_i)\right)^\top\eqsp,
 %\end{align}
-where, for all $1 \leq i \leq B$ and $1 \leq j \leq M$, $\varepsilon_{i,j}$ are independent samples from $p_{\varepsilon}$.
+where, for all $1 \leq i \leq B$, $(\varepsilon_{i,1},\ldots,\varepsilon_{i,M})$ are independent samples from $p_{\varepsilon}$.
 
 \begin{example}
 In a context of deep Gaussian models, $q_{\varphi}(\cdot|x)$ is a Gaussian probability density function with mean $\mu_{\varphi}(x)\in\rset^d$ and variance $\diag(\sigma_{\varphi}^2(x))\in\rset^{d\times d}$ where $(\mu_{\varphi}(x),\sigma_{\varphi}^2(x))$ is the output of a neural network with input $x$. Then, if $z = \mu_{\varphi}(x) + \diag(\sigma_{\varphi}(x))\varepsilon$ with $\varepsilon \sim \mathcal{N}(0,\Id_d)$, $z\sim q_{\varphi}(\cdot|x)$. Writing $g(\varepsilon, \varphi) = \mu_{\varphi}(x) + \sigma_{\varphi}(x)\varepsilon$, the Jacobian of $g$ with respect to $\varepsilon$ is
@@ -870,7 +867,7 @@ $$
 %\subsection*{Proof of Proposition \ref{prop:score_estimator}}
 
 \begin{proof}
-For a given observation $x \in \Xset$, the score function gradient of the ELBO with respect to $\varphi$ is given by:
+For all $x \in \Xset$, the score function gradient of the ELBO with respect to $\varphi$ is given by:
 \begin{align*}
 \nabla_{\varphi} \mathcal{L}(\theta, \varphi; x) &= \nabla_{\varphi} \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[ \log p_{\theta}(x, Z) - \log q_{\varphi}(Z|x)\right] \\
 &= \nabla_{\varphi} \int (\log p_{\theta}(x, z) - \log q_{\varphi}(z|x)) q_{\varphi}(z|x) \, \rmd z  \\
@@ -878,18 +875,18 @@ For a given observation $x \in \Xset$, the score function gradient of the ELBO w
 %&= \int \nabla_{\phi} q_{\phi}(z|x) (\log p_{\theta}(x, z) - \log q_{\phi}(z|x)) + q_{\phi}(z|x) \nabla_{\phi} (\log p_{\theta}(x, z) - \log q_{\phi}(z|x)) \, dz \quad  \\
 &= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[ \nabla_{\varphi} \log q_{\varphi}(Z|x) (\log p_{\theta}(x, Z) - \log q_{\varphi}(Z|x)) \right] - \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\nabla_{\varphi} \log q_{\varphi}(Z|x)\right]\eqsp.
 \end{align*}
-Using the fact that $\mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\nabla_{\varphi} \log q_{\varphi}(Z|x)\right]=0$ due to the regularity conditions on $q_{\varphi}(z|x)$ yields
+Using the fact that $\mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\nabla_{\varphi} \log q_{\varphi}(Z|x)\right]=0$ under regularity conditions on $q_{\varphi}(z|x)$ yields
 \begin{align*}
 \nabla_{\varphi} \mathcal{L}(\theta, \phi; x) &= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[ \nabla_{\varphi} \log q_{\varphi}(Z|x) (\log p_{\theta}(x, Z) - \log q_{\varphi}(Z|x)) \right] \\
 &= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[ \log \frac{p_{\theta}(x, Z)}{q_{\varphi}(Z|x)} \nabla_{\varphi} \log q_{\varphi}(Z|x) \right]\eqsp.
 \end{align*}
 \end{proof}
 %\subsection{Score Function and Pathwise Gradient Estimator}
-The gradient estimator with respect to $\varphi$ of the ELBO can be estimated using samples from the dataset. Let  $\{X_i\}_{i=1}^B$ be i.i.d. with distribution $\pi_{\mathrm{data}}$. Then, an estimator of $\nabla_{\varphi} \mathcal{L}(\theta, \varphi)$  can be computed as follows:
+The gradient estimator with respect to $\varphi$ of the ELBO can be estimated using samples from the dataset. Let  $(X_1,\ldots,X_B)_{1\leqslant i \leqslant B}$ be i.i.d. with distribution $\pi_{\mathrm{data}}$. Then, an estimator of $\nabla_{\varphi} \mathcal{L}(\theta, \varphi)$  can be computed as follows:
 \begin{align} \label{eq:grad_estimator_score_phi}
-S_{\varphi}(\theta, \varphi; \{X_i\}_{i=1}^B) = -\frac{1}{B} \sum_{i=1}^{B} \frac{1}{M} \sum_{\ell=1}^{M} \log \frac{p_{\theta}(X_i, Z_{i,j})}{q_{\varphi}(Z_{i,j} | X_i)} \nabla_{\varphi} \log \frac{p_{\theta}(X_i, Z_{i,j})}{q_{\varphi}(Z_{i,j} | X_i)}\eqsp,
+S_{\varphi}(\theta, \varphi; \{X_i\}_{i=1}^B) = -\frac{1}{B} \sum_{i=1}^{B} \frac{1}{M} \sum_{j=1}^{M} \log \frac{p_{\theta}(X_i, Z_{i,j})}{q_{\varphi}(Z_{i,j} | X_i)} \nabla_{\varphi} \log \frac{p_{\theta}(X_i, Z_{i,j})}{q_{\varphi}(Z_{i,j} | X_i)}\eqsp,
 \end{align}
-where, for all $1 \leq i \leq B$ and $1 \leq j \leq M$, $Z_{i,j}$ are independent samples from $q_{\varphi}(\cdot|X_i)$.
+where, for all $1 \leq i \leq B$,  $(Z_{i,1},\ldots, Z_{i,M})$ are independent samples from $q_{\varphi}(\cdot|X_i)$.
 
 %For the score function gradient estimator, the expression is given by:
 %\begin{align} \label{eq:grad_estimator_SF}
@@ -915,7 +912,7 @@ where, for all $1 \leq i \leq B$ and $1 \leq j \leq M$, $Z_{i,j}$ are independen
 %}
 %\caption{Adam Algorithm for ELBO Maximization}
 %\end{algorithm}
-
+Algorithm~\ref{alg:adam:elbo} displays an example of stochastic gradient descent to estimate $\theta$ and $\varphi$ using Adam.
 \begin{algorithm}
 \centering
 \begin{algorithmic}
@@ -941,7 +938,7 @@ Several methods have been proposed to further reduce variance, such as the Rao-B
 $$
 \log p_\theta(x) = \log \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\frac{p_\theta(Z,x)}{q_{\varphi}(Z|x)}\right]\eqsp.
 $$
-Therefore, if $\{Z_i\}_{1\leqslant i \leqslant M}$ are i.i.d. with distribution $q_{\varphi}(\cdot|x)$, $\log p_\theta(x) $ may be estimated by
+Therefore, if $(Z_1,\ldots,Z_M)$ are i.i.d. with distribution $q_{\varphi}(\cdot|x)$, $\log p_\theta(x) $ may be estimated by
 $$
 \ell_{\theta,M}(x) = \log\left(\frac{1}{M}\sum_{i=1}^M\frac{p_\theta(Z_i,x)}{q_{\varphi}(Z_i|x)}\right)\eqsp.
 $$
@@ -989,15 +986,15 @@ This prior is referred to as the Variational Mixture of Posteriors prior. Sampli
 
 
 \section{Empirical Excess Risk}
-Despite the empirical success of VAE, general theoretical results on the statistical properties of VAEs are very recent although this is crucial to guide hyperparameters choice and the design of the prior, encoder and decoder distributions. In this section, we present some results provided in \cite{pmlr-v134-tang21a} to analyze the excess risk for learning densities using VAEs.  The key insight of \cite{pmlr-v134-tang21a} is to describe the VAE estimator as a M-estimator:
+Despite the empirical success of VAE, general theoretical results on the statistical properties of VAEs are very recent although this is crucial to guide hyperparameters choice and the design of the prior, encoder and decoder distributions. In this section, we present some results provided in \cite{pmlr-v134-tang21a} to analyze the excess risk for learning densities using VAEs and in particular to choose good prior distributions.  The key insight of \cite{pmlr-v134-tang21a} is to describe the VAE estimator as a M-estimator:
 $$
-(\widehat\theta,\widehat\varphi) \in\mathrm{Argmin}_{\theta\in\Theta,\varphi\in\Phi} \frac{1}{n}\sum_{i=1}^n m(\theta,\varphi,X_i)\eqsp,
+(\widehat\theta_n,\widehat\varphi_n) \in\mathrm{Argmin}_{\theta\in\Theta,\varphi\in\Phi} \frac{1}{n}\sum_{i=1}^n m(\theta,\varphi,X_i)\eqsp,
 $$
 where, assuming that the data distribution has a density $\pi_{\mathrm{data}}$, 
 $$
 m(\theta,\varphi,X_i) = \log \frac{\pi_{\mathrm{data}}(x)}{p_\theta(x)} + \mathrm{KL}\left(q_\varphi(\cdot|x)\middle\|p_\theta(\cdot|x)\right)\eqsp,
 $$
-with $p_\theta(z|x) \propto p_\theta(z)p_\theta(x|z)$ is the distribution of the latent variable given the observation. Let $\alpha>0$ and $\psi_\alpha: x\mapsto \rme^{x^\alpha}-1$ anf for all random variable $X$ define the Orlicz norm of $X$ by
+with $p_\theta(z|x) \propto p_\theta(z)p_\theta(x|z)$ is the distribution of the latent variable given the observation. Let $\alpha>0$ and $\psi_\alpha: x\mapsto \rme^{x^\alpha}-1$ and for all random variable $X$ define the Orlicz norm of $X$ by
 $$
 \left\|X\right\|_{\psi_{\alpha}} = \mathrm{inf}\left\{\lambda >0\;;\; \mathbb{E}\left[\psi_\alpha\left(\frac{|X|}{\lambda}\right)\right]\leqslant 1\right\}\eqsp.
 $$
@@ -1005,7 +1002,7 @@ Note that this norm is related to the tail of the distribution as for all $t>0$,
 $$
 \mathbb{P}\left(|X|\geqslant t\right)\leqslant 2\mathrm{exp}\left\{-\left(\frac{t}{\|X\|_{\psi_{\alpha}}}\right)^\alpha\right\}\eqsp.
 $$ 
-Assumption H\ref{assum:vae:orlicz} is a tail condition on the loss function. It is shown in \cite{pmlr-v134-tang21a} that it can be proved for Deep Gaussian architectures.
+Assumption H\ref{assum:vae:orlicz} is a tail condition on the loss function. It is shown in \cite{pmlr-v134-tang21a} that it can be satisfied by Deep Gaussian models.
 \begin{hypH}
 \label{assum:vae:orlicz}
 For a random variable $X$  with distribution $\pi_{\mathrm{data}}$ there exist $\alpha,D >0$ such that
@@ -1048,10 +1045,72 @@ D_{\mathrm{tv}}^2\left(\pi_{\mathrm{data}},\int \left(\frac{1}{n}\sum_{i=1}^n q_
 \end{multline*}
 \end{proposition}
 
+\section{Classical extensions of VAEs}
+
+\subsection{IWAEs}
+The Importance Weighted Autoencoder (IWAE) \cite{burda2015importance} is a variant of VAE that uses importance weighting to obtain a tighter evidence lower bound. The IWAE objective function is defined as:
+\begin{equation}
+\label{eq:def:elbo:iwae}
+\mathcal{L}^{\text{IWAE}}_K(\theta, \varphi) = \mathbb{E}_{\pi_{\mathrm{data}}} \left[ \mathbb{E}_{q^{\otimes K}_{\varphi}(\cdot|X)} \left[ \log \frac{1}{K} \sum_{\ell=1}^{K} \frac{p_{\theta}(X, Z^{(\ell)})}{q_{\varphi}(Z^{(\ell)}|X)} \right] \right]\eqsp,
+\end{equation}
+where $K\geqslant 1$ is the number of samples drawn from the variational posterior distribution. Define
+$$
+\mathcal{L}^{\text{IWAE}}_K(\theta, \varphi,x) = \mathbb{E}_{q^{\otimes K}_{\varphi}(\cdot|x)} \left[ \log \frac{1}{K} \sum_{\ell=1}^{K} \frac{p_{\theta}(x, Z^{(\ell)})}{q_{\varphi}(Z^{(\ell)}|x)} \right]\eqsp.
+$$
+The motivation of \eqref{eq:def:elbo:iwae} is given by Proposition~\ref{prop:iwae}.
+\begin{proposition}
+\label{prop:iwae}
+For all $K\geqslant 1$, $\theta \in\Theta$, $\varphi\in\Phi$, $x\in\mathsf{X}$,
+$$
+\mathcal{L}^{\text{IWAE}}_K(\theta, \varphi,x) \leqslant \mathcal{L}^{\text{IWAE}}_{K+1}(\theta, \varphi,x)\leqslant \log p_\theta(x)\eqsp.
+$$
+\end{proposition}
+\begin{proof}
+By Jensen's inequality,
+$$
+\mathcal{L}^{\text{IWAE}}_K(\theta, \varphi,x) \leqslant  \log \mathbb{E}_{q^{\otimes K}_{\varphi}(\cdot|x)} \left[ \frac{1}{K} \sum_{\ell=1}^{K} \frac{p_{\theta}(x, Z^{(\ell)})}{q_{\varphi}(Z^{(\ell)}|x)} \right] \leqslant \log p_\theta(x)\eqsp.
+$$
+By definition,
+$$
+\mathcal{L}^{\text{IWAE}}_{K+1}(\theta, \varphi,x) = \mathbb{E}_{q^{\otimes K+1}_{\varphi}(\cdot|x)} \left[ \log \frac{1}{K+1} \sum_{\ell=1}^{K+1} \frac{p_{\theta}(x, Z^{(\ell)})}{q_{\varphi}(Z^{(\ell)}|x)} \right]\eqsp.
+$$
+\end{proof}
+%Let  $(X_1,\ldots,X_B)_{1\leqslant i \leqslant B}$ be i.i.d. with distribution $\pi_{\mathrm{data}}$. Then, an estimator of the gradient of the IWAE evidence lower bound can be computed as follows:
+%$$
+%S^{\text{IWAE}}_K(\theta, \varphi; \{X_i\}_{i=1}^B) = \frac{1}{B} \sum_{i=1}^{B} \sum_{j=1}^{K} \frac{w_{\theta, \varphi}(x_i,Z_{i,j})}{\sum_{\ell=1}^{k} w_{\theta, \varphi}(x_i,Z_{i,\ell})} \nabla_{\theta, \varphi} \log w_{\theta, \varphi}(x_i,Z_{i,j})\eqsp,
+%$$
+%where $w_{\theta, \varphi}(x,z) = p_{\theta}(x, z)/q_{\varphi}(z|x)$ are the unnormalized importance weights and for all $1\leqslant i \leqslant B$, $(Z_{i,1},\ldots,Z_{i,K})$ are i.i.d. with distribution $q_{\varphi}(\cdot|X_i)$.
+
+\subsection{$\beta$-VAEs}
+$\beta$-VAEs  are state-of-the-art models used for unsupervised disentangled representation learning. They are designed to adjust the balance between the reconstruction term and latent space regularization by introducing a parameter $\beta>0$.
+Note that the ELBO defined in \eqref{eq:elbo:main} can be written
+\begin{align*}
+\mathcal{L}(\theta,\varphi,x) &= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z,x)}{q_{\varphi}(Z|x)}\right]\\
+&= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log p_\theta(x|Z)\right] + \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z)}{q_{\varphi}(Z|x)}\right]\\
+&=\mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log p_\theta(x|Z)\right] - \mathrm{KL} (q_{\varphi}(\cdot|x)\|p_\theta)\eqsp,
+\end{align*}
+where $p_\theta$ in the Kullback-Leibler divergence is the prior distribution on the latent space. The ELBO of $\beta$-VAE is then define as:
+$$
+\mathcal{L}_{\beta-\text{VAE}}(\theta, \phi, x) = \mathbb{E}_{q_\phi(\cdot|x)}\left[\log p_\theta(x|z)\right] - \beta \mathrm{KL}(q_\phi(\cdot|x)\|p_\theta)\eqsp,
+$$
+where the Lagrangian multiplier $\beta>0$ is considered as a hyperparameter.
+
+
+
+%\section{Some illustrations}
+
 \chapter{Score-based diffusion models}
 \minitoc
 
+\section{A discrete-time formulation}
 
+\section{Motivations of score-based approaches}
+
+\section{Score-based generative models}
+
+\section{Some theoretical guarantees}
+
+\section{Some illustrations}
 
 \chapter{Basics in Markov chains}
 \minitoc
@@ -1082,7 +1141,7 @@ functions on $\Xset$.
 
 %We first describe a Markov kernel, which will then be fundamental
 %for the definition of a Markov chain. 
-\bs
+%\bs
 \begin{definition}
 We\index{Markov kernel} say that $P:\Xset\times\Xsigma\to\rset^{+}$
 is a Markov kernel, if for all $(x,A)\in\Xset\times\Xsigma$,
@@ -1091,7 +1150,8 @@ is a Markov kernel, if for all $(x,A)\in\Xset\times\Xsigma$,
 \item $\Xsigma\ni B\mapsto P(x,B)$ is a probability measure on $(\Xset,\Xsigma)$.
 \end{itemize}
 \end{definition}
-\es For all $(x,A)\in\Xset\times\Xsigma$, as a function
+%\es 
+For all $(x,A)\in\Xset\times\Xsigma$, as a function
 of the first component only, $P(\cdot,A)$ is measurable and as a
 function of the second component only, $P(x,\cdot)$ is a probability
 measure. In particular, $P(x,\Xset)=1$ for all $x\in\Xset$. Since
@@ -1307,8 +1367,7 @@ for all $\omega\in\Xset^{\nset}$. We will sometimes use $X_{k:\ell}:\omega\mapst
 for $k\leq\ell$ and by extension $X_{k:\infty}:\omega\mapsto(\omega_{k},\ldots,\omega_{\ell},\omega_{\ell+1},\dots)$.
 In particular, $X_{0:\infty}(\omega)=\mathrm{Id}(\omega)=\omega$ where $\mathrm{Id}$
 is the identity function.
-
-\bs
+%\bs
 \begin{theorem}
 \label{th:canonical}
 \textbf{(The canonical space)}\index{canonical space} Let $(\Xset,\Xsigma)$ be a measurable
@@ -1319,7 +1378,8 @@ such that, under $\PP_{\nu}$, the coordinate process $\seq{X_{n}}{n\in\nset}$
 is a Markov chain with Markov kernel $P$ and initial distribution
 $\nu$.
 \end{theorem}
-\es This result is often referred to as the \emph{Ionescu-Tulcea
+%\es 
+This result is often referred to as the \emph{Ionescu-Tulcea
 theorem}. Its proof goes far beyond the scope of this course and we
 will admit it here. Some other, much simpler proofs exist and are
 based on the Kolmogorov extension theorem, but they hold at the price
@@ -1390,59 +1450,59 @@ holds on the event $\left\{ \tau<\infty\right\} $. The strong Markov
 property is extremely important in Markov Chain theory but, quite
 surprisingly, it is not needed in this course.  Exercise~\ref{exo:strongMarkov} states and proves the Strong Markov property.
 
+%
+%\section{Key notions of this chapter}
+%\begin{center}
+%\shadowbox{\begin{minipage}{0.9\textwidth}
+%\begin{enumerate}[a)]
+%\item Expressions of Markov kernels.
+%\item Different classical notations $\mu P$,  $Q f$...
+%\item The Markov property \eqref{eq:MarkovProperty}.
+%\end{enumerate}
+%\end{minipage}
+%}
+%\end{center}
 
-\section{Key notions of this chapter}
-\begin{center}
-\shadowbox{\begin{minipage}{0.9\textwidth}
-\begin{enumerate}[a)]
-\item Expressions of Markov kernels.
-\item Different classical notations $\mu P$,  $Q f$...
-\item The Markov property \eqref{eq:MarkovProperty}.
-\end{enumerate}
-\end{minipage}
-}
-\end{center}
 
 
-
-\begin{subappendices}
-\section*{Highlights}
-
-\section{Andrey Markov (source: wikipedia).}
-
-\begin{wrapfigure}{L}{0.25\textwidth} \centering
-
-\includegraphics[scale=0.1]{markov}
-
-\end{wrapfigure}Andrey Andreyevich Markov (1856--1922) was a Russian
-mathematician best known for his work on stochastic processes. A primary
-subject of his research later became known as Markov chains and Markov
-processes.
-
-Markov and his younger brother Vladimir Andreevich Markov (1871--1897)
-proved the Markov brothers' inequality. His son, another Andrei Andreyevich
-Markov (1903--1979), was also a notable mathematician, making contributions
-to constructive mathematics and recursive function theory.
-
-Andrey Markov was born on 14 June 1856 in Russia. He attended Petersburg
-Grammar, where he was seen as a rebellious student by a select few
-teachers. In his academics he performed poorly in most subjects other
-than mathematics. Later in life he attended Petersburg University;
-among his teachers were Yulian Sokhotski (differential calculus, higher
-algebra), Konstantin Posse (analytic geometry), Yegor Zolotarev (integral
-calculus), Pafnuty Chebyshev (number theory and probability theory),
-Aleksandr Korkin (ordinary and partial differential equations), Mikhail
-Okatov (mechanism theory), Osip Somov (mechanics), and Nikolai Budaev
-(descriptive and higher geometry). He completed his studies at the
-University and was later asked if he would like to stay and have a
-career as a Mathematician. He later taught at high schools and continued
-his own mathematical studies. In this time he found a practical use
-for his mathematical skills. He figured out that he could use chains
-to model the alliteration of vowels and consonants in Russian literature.
-He also contributed to many other mathematical aspects in his time.
-He died at age 66 on 20 July 1922.
-
-\end{subappendices}
+%\begin{subappendices}
+%\section*{Highlights}
+%
+%\section{Andrey Markov (source: wikipedia).}
+%
+%\begin{wrapfigure}{L}{0.25\textwidth} \centering
+%
+%\includegraphics[scale=0.1]{markov}
+%
+%\end{wrapfigure}Andrey Andreyevich Markov (1856--1922) was a Russian
+%mathematician best known for his work on stochastic processes. A primary
+%subject of his research later became known as Markov chains and Markov
+%processes.
+%
+%Markov and his younger brother Vladimir Andreevich Markov (1871--1897)
+%proved the Markov brothers' inequality. His son, another Andrei Andreyevich
+%Markov (1903--1979), was also a notable mathematician, making contributions
+%to constructive mathematics and recursive function theory.
+%
+%Andrey Markov was born on 14 June 1856 in Russia. He attended Petersburg
+%Grammar, where he was seen as a rebellious student by a select few
+%teachers. In his academics he performed poorly in most subjects other
+%than mathematics. Later in life he attended Petersburg University;
+%among his teachers were Yulian Sokhotski (differential calculus, higher
+%algebra), Konstantin Posse (analytic geometry), Yegor Zolotarev (integral
+%calculus), Pafnuty Chebyshev (number theory and probability theory),
+%Aleksandr Korkin (ordinary and partial differential equations), Mikhail
+%Okatov (mechanism theory), Osip Somov (mechanics), and Nikolai Budaev
+%(descriptive and higher geometry). He completed his studies at the
+%University and was later asked if he would like to stay and have a
+%career as a Mathematician. He later taught at high schools and continued
+%his own mathematical studies. In this time he found a practical use
+%for his mathematical skills. He figured out that he could use chains
+%to model the alliteration of vowels and consonants in Russian literature.
+%He also contributed to many other mathematical aspects in his time.
+%He died at age 66 on 20 July 1922.
+%
+%\end{subappendices}
 
 \chapter{Invariant probability measures}
 \minitoc
