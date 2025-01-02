@@ -300,14 +300,14 @@ The following notations are used throughout these lecture notes. For $r,s \in \n
 %\end{itemize}
 %We also consider the following notions for convergence for random variables.
 %\begin{enumerate}[$\blacktriangleright$]
-For all sequences of real-valued random variables on $(\Omega,\mathcal{F},\mathbb{P})$, $(X_n)_{n\geq 0}$ convergences in distribution to $X$ if one of the following  equivalent statements hold.
+For all sequences of real-valued random variables on $(\Omega,\mathcal{F},\mathbb{P})$, $(X_n)_{n\geq 0}$ converges in distribution to $X$ if one of the following  equivalent statements hold.
      \begin{enumerate}[(a)]
      \item For all bounded continuous functions $h$, $\lim_{n}\PE[h(X_n)]=\PE[h(X)]$.
     \item  For all $A \in \borel(\rset)$ such that $\PP(X \in \partial A)=0$,  $\lim_n \PP(X_n \in A)=\PP(X\in A)$.
         \item For all $x\in \rset$ such that $\PP(X=x)=0$, $\lim_n \PP(X_n \leq x)=\PP(X \leq x)$.
 \item For all $u \in \rset$, $\lim_n \PE\lrb{\rme^{\rmi u X_n}}=\PE\lrb{\rme^{\rmi u X}}$.
      \end{enumerate}
-When there is no confusion, we say that $X_n$ weakly converges to $X$. We say that $(X_n)_{n\geq 0}$ converges in probability to $X$ if for all $\varepsilon>0$,
+When there is no confusion, we say that $X_n$ converges weakly to $X$. We say that $(X_n)_{n\geq 0}$ converges in probability to $X$ if for all $\varepsilon>0$,
 $$
 \lim_{n \to \infty} \PP(|X_n -X|>\varepsilon)=0\eqsp.
 $$
@@ -335,7 +335,7 @@ The following properties are used many times in these lecture notes.
 
 
 \chapter{Target distributions and examples}
-In a general framework, generative modeling aims at designing algorithms to obtain samples from a complex distribution $\pi$ defined on a measurable space $(\mathsf{X},\mathcal{X})$. Such algorithms can be applied in many situations, we describe in this chapter some examples from recent applications. The target distribution $\pi$ may have several forms depending on the different contexts.
+In a general framework, generative modeling aims at designing algorithms to obtain samples from a complex distribution $\pi$ defined on a measurable space $(\mathsf{X},\mathcal{X})$. Such algorithms can be applied in many situations, we describe in this chapter some examples from various applications. The target distribution $\pi$ may have several forms depending on the different contexts.
  For instance, in \cite{ng2001discriminative}, the authors discuss generative classifiers and propose to learn a model of a joint probability function of the inputs $X$ and the outputs $Y$ so that predictions can be made by using Bayes rule to compute the distribution of $Y$ given $X$. Without being restricted to classification problems, we focus in these notes on generative models where the data distribution depends on other variables or parameters, and we propose to model the joint distribution of all random variables. In such a setting, we assume that the random variables $(X,Y)$ have an unknown distribution and we usually propose a parametric family of joint probability distributions $(x,y)\mapsto p_\theta(x,y)$, $\theta\in\Theta$, with respect to a dominating measure $\lambda$, in order to approximate this unknown distribution. 
 
 In machine/statistical learning most of the problems we aim to solve require then to sample random variables from a complex distribution. Depending on the context, this distribution can be given for instance by a marginal density $p_\theta(y) = \int p_\theta(x,y) \lambda(\rmd x)$ or by a conditional/posterior distribution $p_\theta(x|y) = p_\theta(x)p_\theta(y|x)/\int p_\theta(x,y) \lambda(\rmd x)$.
@@ -356,9 +356,9 @@ Except for some simple cases, Bayesian inference can be computationally
 intensive and may rely on  computational techniques.
 
 The basic idea in Bayesian analysis is that a parameter vector $ \theta \in \Theta$ is unknown, so it is endowed with a \emph{prior} distribution
-$\pi_0( \theta)\lambda(\rmd \theta)$.  We also
+$\theta\mapsto \pi_0( \theta)\lambda(\rmd \theta)$.  We also
 introduce a model or likelihood, $\dens[][]{ y_{1:n} \mid \theta}$, that is
-a probability density function for the data $Y=y_{1:n}$ which depends on the parameter vector.
+a conditional probability density function for the data $y_{1:n}$ which depends on the parameter vector.
 Inference about $ \theta$ is then based on the \emph{posterior}
 distribution, which is obtained via Bayes's theorem,
 \begin{equation} \label{eq:target:bayes}
@@ -366,7 +366,7 @@ distribution, which is obtained via Bayes's theorem,
 \end{equation}
   In some simple cases, the prior  and
 the likelihood are \emph{conjugate}  distributions that may be combined easily.
-For example, in $n$ fixed repeated (iid) Bernoulli experiments with probability of success $\theta$,
+For example, in $n$ fixed repeated (i.i.d.) Bernoulli experiments with probability of success $\theta\in(0,1)$,
 a \emph{Beta-Binomial} conjugate pair is taken.  In this case the prior is
 Beta($a,b$):
 $\pi_0(\theta) \propto \theta^{a} (1-\theta)^{b}$; the values $a,b > -1$  are called
@@ -481,8 +481,7 @@ Some other approximation techniques do not even try to construct random variable
 
 \subsection{Variational inference}
 \index{variational inference}
-Variational Inference is a technique derived from the
- {\em Machine Learning} community whose principle is to approach the target density through various optimization techniques. The principle consists in giving up aiming exactly at the target law, but instead, we have at hand a sufficiently rich family of laws (that can be easily simulated) and the idea is then to select a member of this family close to the target in the sense of a certain divergence through optimization procedures. Variational inference has been successfully used in many applications and seems to be faster and more efficient to explore large spaces compared to classical Monte Carlo Markov chain methods. The proximity is often measured in terms of Kullback divergence or even more recently in terms of $f$-divergence. Although these techniques are extremely powerful and popular in practice, some statistical properties of these methods are still largely unknown.
+Variational Inference is a technique derived from the Machine Learning community whose principle is to approach the target density through various optimization techniques. The principle consists in giving up aiming exactly at the target law, but instead, we have at hand a sufficiently rich family of laws (that can be easily simulated) and the idea is then to select a member of this family close to the target in the sense of a certain divergence through optimization procedures. Variational inference has been successfully used in many applications and seems to be faster and more efficient to explore large spaces compared to classical Monte Carlo Markov chain methods. The proximity is often measured in terms of Kullback divergence or even more recently in terms of $f$-divergence. Although these techniques are extremely powerful and popular in practice, some statistical properties of these methods are still largely unknown.
 
 %\subsubsection{$\alpha$-divergence and the ELBO}
 %\index{$\alpha$-divergence}
@@ -536,7 +535,7 @@ The first term of the right-hand-side is the Kullback-Leibler divergence between
 \end{equation}
 is the ELBO in this setting. In order to approximate $z\mapsto p_\theta(z|x)$, VAE propose to solve the optimization problem:
 $$
-\widehat \varphi \in \mathrm{argmax}_{\varphi\in\Phi}\left\{ \frac{1}{n}\sum_{i=1}^n \mathcal{L}(\theta,\varphi,X_i)\right\}\eqsp.
+(\widehat \theta ,\widehat \varphi) \in \mathrm{argmax}_{\theta\in\Theta ,\varphi\in\Phi}\left\{ \frac{1}{n}\sum_{i=1}^n \mathcal{L}(\theta,\varphi,X_i)\right\}\eqsp.
 $$
 Of course, the joint optimization of $\theta$ and $\varphi$ is a complex problem both for practical and theoretical reasons and many research works have been devoted to this problem in the past few years.
 
@@ -1102,11 +1101,130 @@ where the Lagrangian multiplier $\beta>0$ is considered as a hyperparameter.
 \chapter{Score-based diffusion models}
 \minitoc
 
-\section{A discrete-time formulation}
+%\section{A discrete-time formulation}
 
 \section{Motivations of score-based approaches}
+Assume that $(X_1,\ldots,X_n)$ are i.i.d. random variables in $\mathsf{X}$ with unknown probability distribution function $\pi_{\mathrm{data}}$. In previous chapters, we considered parametric probability density functions  $p_\theta$ to model $\pi_{\mathrm{data}}$.  Such approaches may be cumbersome as the normalizing constant ($Z_\theta$ in the case of Energy-based models for instance) that makes $p_\theta$ a probability density function is not available. Sequential or Markov chain Monte Carlo methods provide solution to sample approximately from a probability density known up to a multiplicative constant but they can face slow convergence rates and require a lot of tuning in high dimensional settings.
+
+Modeling the score function $x\mapsto\nabla_x\log\pi_{\mathrm{data}}(x) $ directly allows to overcome this difficulty. Score-based models can be trained  without considering  normalizing constants. Score-matching methods aim at estimating $x\mapsto\nabla_x\log\pi_{\mathrm{data}}(x) $ using only the samples $(X_1,\ldots,X_n)$ and stochastic optimization procedures. In the approaches proposed by \cite{hyvarinen2005estimation,vincent2011connection} the optimization procedures minimize $$
+\theta\mapsto \mathcal{L}_{\mathrm{uc}}(\theta) = \mathbb{E}_{\pi_{\mathrm{data}}}\left[\left\|s_\theta(X) - \nabla_x\log\pi_{\mathrm{data}}(X)\right\|_2^2\right]\eqsp,
+$$
+where $s_\theta$ is the parametric model for $\nabla_x\log\pi_{\mathrm{data}}$.
+
+Langevin dynamics offers a very good motivation to learn the score of the target distribution instead of $\pi_{\mathrm{data}}$ itself. Starting with $X_0$ sampled from some proposal distribution, Langevin dynamics iteratively samples $(X_k)_{k\geq 1}$ with, for all $k\geq 1$,
+$$
+X_{k} = X_{k-1} +  \gamma_k \nabla_x\log\pi_{\mathrm{data}}(X_{k-1}) + \sqrt{2\gamma_k}\varepsilon_k\eqsp,
+$$
+where $(\gamma_k)_{k\geq 1}$ is a sequence of positive step-sizes and $(\varepsilon_k)_{k\geq 1}$ are i.i.d. standard Gaussian random variables independent of $X_0$.  In \cite{durmus2017nonasymptotic}, the authors obtained nonasymptotic bounds for the convergence to the target distribution in total variation distance for both constant and decreasing step-sizes. Of course, $\nabla_x\log\pi_{\mathrm{data}}$ is not available and using Langevin dynamics with approximate score functions introduce additional errors which have to be controlled. In \cite{song2019generative}, the authors propose noise data with  multiple scales of noise $\sigma_1 < \ldots <\sigma_L$. The data distribution is then perturbed with Gaussian noise by considering, for all $1\leq i \leq L$,
+$$
+p_{\sigma_i}:x \mapsto \int \pi_{\mathrm{data}}(z)\varphi_{z,\sigma^2_i I_d}(x)\rmd z\eqsp,
+$$   
+where $\varphi_{\mu,\Sigma}$ is the Gaussian probability density function with mean $\mu$ and variance $\Sigma$. For all $1\leq i \leq L$, $p_{\sigma_i}$ is the probability density function of $X + \sigma_i Z$ where $X\sim \pi_{\mathrm{data}}$ and $Z\sim \mathcal{N}(0,I_d)$ are independent. Then, we aim at estimating the score function associated with $p_{\sigma_i}$, $1\leq i \leq L$.  The authors of \cite{song2019generative} introduced a weighted sum of mean squared errrors: 
+$$
+\theta\mapsto \mathcal{L}_{\mathrm{wuc}}(\theta) = \sum_{i=1}^L\lambda_i\mathbb{E}_{\pi_{\sigma_i}}\left[\left\|s_\theta(X,\sigma_i) - \nabla_x\log p_{\sigma_i}(X)\right\|_2^2\right]\eqsp,
+$$ 
+where $\lambda_i>0$ and $s_\theta(X,\sigma_i)$ is the parametric estimation of $\nabla_x\log p_{\sigma_i}(X)$, $1\leq i \leq L$. After training all conditional scores, samples approximately distributed according to $\pi_{\mathrm{data}}$ can be obtained with annealed Langevin dynamics. Then, for all $i = L, \ldots, 1$, $1\leq k \leq n$, write $X^{(i)}_{0}=X^{(i-1)}_{n}$,
+$$
+X^{(i)}_{k} = X^{(i)}_{k-1} +  \gamma_{i,k} s_\theta(X^{(i)}_{k-1},\sigma_i) + \sqrt{2\gamma_{i,k}}\varepsilon_{i,k}\eqsp,
+$$
+where $X_n^{(-1)}$ is sampled from an arbitrary distribution, $(\gamma_{i,k})_{1 \leq k\leq n, 1\leq i \leq L}$ is a sequence of positive step-sizes and $(\varepsilon_{i,k})_{1 \leq k\leq n, 1\leq i \leq L}$ are i.i.d. standard Gaussian random variables.
+
+Although adding noise to learn perturbed score functions and annealed Langevin dynamics are appealing to sample approximately from $\pi_{\mathrm{data}}$, this approach is computationally intensive and depends on many sensitive hyperparameters: choice of $L$ and standard deviations $\sigma_1 < \ldots <\sigma_L$, length of the Langevin dynamics $n$.  Score-based generative models based on diffusion propose to introduce a continuous-time noising dynamics to efficiently learn the generative process without having to choose predefined noise levels.
 
 \section{Score-based generative models}
+
+Generative diffusion models aim at creating synthetic instances of $\pi_{\mathrm{data}}$ when only independent samples are available. It is crucial to note that the complexity of real data prohibits a thorough depiction of the distribution $\pi_{\mathrm{data}}$ through standard non-parametric density estimation strategies.
+Score-based Generative Models (SGMs) are probabilistic models designed to address this challenge using two main phases. The first phase, the noising phase (also referred to as the forward phase), involves progressively perturbing the empirical distribution by adding noise to the training data until its distribution approximately reaches an {easy-to-sample} distribution $\pi_{\infty}$. The second phase involves learning to reverse this noising dynamics by sequentially removing the noise, which is referred to as the sampling phase (or backward phase). 
+Reversing the dynamics during the backward phase would require in principle knowledge of the score function, i.e., the gradient of the logarithm of the density at each time step of the diffusion. 
+To circumvent this issue, the score function is learned based on the evolution of the noised data samples and using a deep neural network architecture. When applying these learned reverse dynamics to samples from  $\pi_\infty$, we obtain a generative distribution that approximates  $\pi_{\rm data}$. 
+
+
+\newcommand{\sched}{\beta}
+\newcommand{\ola}{\overleftarrow}
+\newcommand{\ora}{\overrightarrow}
+\newcommand{\gausspdf}{\varphi}
+\newcommand{\param}{\theta}
+
+\subsubsection*{Forward process}
+Denote as $\sched : [0,T] \mapsto \mathbb{R}_{>0}$ the noise schedule, assumed to be continuous and non decreasing.
+Although originally developed using a finite number of noising steps \cite{dickstein2015, song2019generative, ho2020denoising,song2021score}, most recent approaches consider time-continuous noise perturbations through the use of stochastic differential equations (SDEs) \cite{song2021score}. 
+Consider, therefore, a forward process given by
+\begin{equation} \label{eq:forward-SDE:beta}
+    \rmd  \overrightarrow{X}_t = - \frac{\sched(t)}{2 \sigma^2}  \overrightarrow{X}_t \rmd t + \sqrt{ \sched(t)}  \rmd B_t, \quad \ora{X}_0 \sim \pi_{\mathrm{data}}\eqsp. 
+\end{equation} 
+We denote by $p_t$ the density of $\ora X_t$ at time $t \in (0, T]$.
+Note that, up to the time change  $t\mapsto \int_0^t\sched(s) / 2\rmd s$, this process corresponds to the standard Ornstein-Uhlenbeck (OU) process, solution to
+\begin{align*}
+    \rmd  \overrightarrow{X}_t = - \frac{1}{\sigma^2}  \overrightarrow{X}_t \rmd t + \sqrt{ 2}  \rmd B_t, \quad \ora{X}_0 \sim \pi_{\mathrm{data}}\eqsp,
+\end{align*}
+see, e.g., \cite[Chapter 3]{karatzas2012brownian}. 
+Due to the linear nature of the drift with respect to $(X_t)_t$, it is well-known that an exact simulation can be performed for this process.
+The stationary distribution $\pi_{\infty}$ of the forward process is the Gaussian distribution with mean $0$ and variance $\sigma^2 \mathrm{I}_d$.
+In the literature, when $\beta(t)$ is constant equal to $2$ (meaning that there is no time change), this diffusion process is referred  to as the Variance-Preserving SDE 
+\cite{conforti2023}, leading to the so-called  
+Denoising Diffusion Probabilistic Models \cite{ho2020denoising}.
+Understanding the effects of the general diffusion model \eqref{eq:forward-SDE:beta}, in particular when reversing the dynamic,
+remains a challenging problem, to which we devote the rest of our analysis.
+
+\subsubsection*{Backward process}
+The corresponding backward process is given by
+\begin{align*}
+\left\{
+\begin{array}{l}
+\rmd \overleftarrow{X}_t  =\eta(t,\overleftarrow{X}_t)\rmd t +   \sqrt{\bar \sched(t)} \rmd B_t, \\
+\ola X_0 \sim \pi_{\infty},
+\end{array}
+\right.
+\text{ with }
+\left\{
+\begin{array}{l}
+\bar \sched(t) \eqdef \sched(T- t) \\ 
+\eta(t,\overleftarrow{X}_t) \eqdef \frac{\bar \sched (t)}{2\sigma^2}\overleftarrow{X}_t + \bar \sched (t) \nabla \log  p_{T-t}\left( \ola{X}_t \right).
+\end{array}
+\right.
+\end{align*}
+
+
+
+We consider the marginal time distribution of the forward process divided by the density of its stationary distribution, introducing 
+\begin{align}
+\label{eq:renormalized_density}
+\forall x \in \mathbb{R}^d, \quad \tilde p_{t}(x) \eqdef {p_t(x)} / {\gausspdf_{\sigma^2}(x)}, 
+\end{align}
+where $\gausspdf_{\sigma^2}$ denote the density function of $\pi_\infty$, a Gaussian distribution with mean $0$ and variance $\sigma^2 \mathrm{I}_d$.
+Thus, the backward process can be rewritten as
+\begin{align}\label{eq:backward_SDE}
+\rmd \overleftarrow{X}_t =  \bar \eta \left(t,\overleftarrow{X}_t\right)  \rmd t  +  \sqrt{\bar \sched(t)} \rmd B_t, \quad \ola X_0 \sim \pi_{\infty},
+\end{align}
+where $\bar \eta(t,\overleftarrow{X}_t) \eqdef  - \frac{\bar \sched (t)}{2 \sigma^2} \overleftarrow{X}_t + \bar \sched (t) \nabla \log  \tilde p_{T-t}( \ola{X}_t)$. 
+The benefit of using the renormalization $\tilde{p}_t$ in our analysis results in considering the backward equation as a perturbation of an OU process. This trick is crucial to highlight the central role of the relative Fisher information in the performance of the SGM. It has already been used by \cite{conforti2023}.
+
+\subsubsection*{Score estimation}
+Simulating the backward process means knowing how to operate the score.
+However, the (modified) score function $\nabla \log \tilde p_t(x)= \nabla \log p_t(x) + x/\sigma^2$ cannot be evaluated directly, because it depends on the unknown data distribution. To work around this problem, the score function $\nabla \log p_t$ needs to be estimated. In \cite{hyvarinen2005estimation}, the authors proposed to estimate the score function associated with a distribution by minimizing the expected $\mathrm{L}^2$-squared distance between the true score function  and the proposed approximation. In the context of diffusion models, this is typically done with the use of a deep neural network architecture $s_{\param} : [0,T] \times \mathbb{R}^d \mapsto \mathbb{R}^d$ parameterized by $\theta \in \Theta$,  and trained to minimize:
+\begin{align} \label{eq:explicit_score_matching_objective}
+\mathcal{L}_{\rm explicit} (\theta) &= \mathbb{E} \left[ \left\|  s_{\theta} \left(\tau, \ora X_{\tau}\right) - \nabla \log p_{\tau} \left(\ora X_{\tau}\right)  \right\|^2 \right]\eqsp,
+\end{align}
+with $\tau \sim \mathcal{U}(0,T)$ independent of the forward process $(\ora X_t)_{t\geq 0}$. However, this estimation problem still suffers from the fact that the regression target is not explicitly known. A tractable optimization problem sharing the same optima can be defined though, through the marginalization over $\pi_{\rm data}$ of $p_{\tau}$ \cite{song2021score}: 
+\begin{align}
+\label{eq:cond_score_matching_objective}
+\mathcal{L}_{\mathrm{score}}(\param) = \mathbb{E}\left[ \left\|s_{\param} \left( \tau, \overrightarrow{X}_{\tau} \right) - \nabla \log p_\tau \left(\ora X _\tau| X _0 \right)\right\|^2\right]\eqsp,
+\end{align}
+where $\tau$ is uniformly distributed on $[0,T]$, and independent of $X_0\sim \pi_{\mathrm{data}}$ and $\ora X _\tau \sim p_\tau(\cdot| X _0)$. This loss function is appealing as it only requires to know the transition kernel of the forward process. In \eqref{eq:forward-SDE:beta}, this is a Gaussian kernel with explicit mean and variance. 
+
+\subsubsection*{Discretization} 
+Once the score function is learned, it remains that, in most cases, the backward dynamics no longer enjoys a linear drift, which makes its exact simulation challenging.  
+To address this issue, one solution is to discretize the continuous dynamics of the backward process. 
+In this way, \cite{song2021score} propose an Euler-Maruyama (EM) discretization scheme  in which both the drift and the diffusion coefficients are discretized recursively. 
+The Euler Exponential Integrator \cite{durmus2015quantitative}, as already used in \cite{conforti2023},
+only requires to discretize the part associated with the modified score function.
+Introduce $ \tilde s_{\theta} (t, x) \eqdef s_{\theta}(t, x) + x/\sigma^2$ and consider the regular time discretization $0 = t_0 \leq t_1 \leq \dots \leq t_{N}= T$. Then,  $(\ola X_t^{\param})_{t \in [0,T]}$ is such that, for $t \in  [ t_k , t_{k+1} ]$,
+\begin{align}
+\label{eq:backward_EI_main}
+\rmd \overleftarrow{X}^{\param}_t  &=  \bar \sched (t)\left( - \frac{1}{2 \sigma^2} \overleftarrow{X}^{\param}_t +  \tilde s_{\param} \left( T-{t_k}, \ola{X}_{t_k}^{\param}  \right) \right)  \rmd t  
++  \sqrt{\bar \sched(t)} \rmd B_t, \quad \overleftarrow{X}^{\param}_0 \sim \pi_{\infty} \eqsp. 
+\end{align} 
+This scheme can be seen as a refinement of the classical EM one as it handles the linear drift term by integrating it explicitly. In addition, $(\ola X_t^{\param})_{t \in \{t_0, \hdots, t_N\}}$ can be sampled exactly.
 
 \section{Some theoretical guarantees}
 
