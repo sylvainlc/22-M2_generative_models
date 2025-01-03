@@ -13,8 +13,12 @@ Exercises and notebooks in Python are provided to understand the practical chall
 - Pseudo-maginal algorithms and Hamiltonian Monte Carlo
 
 ### Labs
-- [Random walk Metropolis Hastings algorithm](https://github.com/sylvainlc/22-M2_generative_models/blob/main/Lab/mcmc_mh.ipynb)
-- [MALA and Hamiltonian Monte Carlo](https://github.com/sylvainlc/22-M2_generative_models/blob/main/Lab/mh_mala_hmc.ipynb)
+- [Score-based diffusion models](https://github.com/sylvainlc/22-M2_generative_models/blob/main/Lab/diffusionmodels_toy.ipynb)\
+Full training of a score-based diffusion model on a toy example
+- [Random walk Metropolis-Hastings algorithm](https://github.com/sylvainlc/22-M2_generative_models/blob/main/Lab/mcmc_mh.ipynb)\
+Introduction to invariant distributions and MH algorithms
+- [MALA and Hamiltonian Monte Carlo](https://github.com/sylvainlc/22-M2_generative_models/blob/main/Lab/mh_mala_hmc.ipynb)\
+More Advanced MCMC algorithms using Hamiltonian and Langevin dynamics
 
 
 ### Exercises
