@@ -335,6 +335,7 @@ The following properties are used many times in these lecture notes.
 
 
 \chapter{Target distributions and examples}
+\minitoc
 In a general framework, generative modeling aims at designing algorithms to obtain samples from a complex distribution $\pi$ defined on a measurable space $(\mathsf{X},\mathcal{X})$. Such algorithms can be applied in many situations, we describe in this chapter some examples from various applications. The target distribution $\pi$ may have several forms depending on the different contexts.
  For instance, in \cite{ng2001discriminative}, the authors discuss generative classifiers and propose to learn a model of a joint probability function of the inputs $X$ and the outputs $Y$ so that predictions can be made by using Bayes rule to compute the distribution of $Y$ given $X$. Without being restricted to classification problems, we focus in these notes on generative models where the data distribution depends on other variables or parameters, and we propose to model the joint distribution of all random variables. In such a setting, we assume that the random variables $(X,Y)$ have an unknown distribution and we usually propose a parametric family of joint probability distributions $(x,y)\mapsto p_\theta(x,y)$, $\theta\in\Theta$, with respect to a dominating measure $\lambda$, in order to approximate this unknown distribution. 
 
@@ -1104,37 +1105,42 @@ where the Lagrangian multiplier $\beta>0$ is considered as a hyperparameter.
 %\section{A discrete-time formulation}
 
 \section{Motivations of score-based approaches}
-Assume that $(X_1,\ldots,X_n)$ are i.i.d. random variables in $\mathsf{X}$ with unknown probability distribution function $\pi_{\mathrm{data}}$. In previous chapters, we considered parametric probability density functions  $p_\theta$ to model $\pi_{\mathrm{data}}$.  Such approaches may be cumbersome as the normalizing constant ($Z_\theta$ in the case of Energy-based models for instance) that makes $p_\theta$ a probability density function is not available. Sequential or Markov chain Monte Carlo methods provide solution to sample approximately from a probability density known up to a multiplicative constant but they can face slow convergence rates and require a lot of tuning in high dimensional settings.
+Assume that $(X_1,\ldots,X_n)$ are i.i.d. random variables in $\mathsf{X}$ with unknown probability distribution function $\pi_{\mathrm{data}}$. In previous chapters, we considered parametric probability density functions  $p_\theta$ to model $\pi_{\mathrm{data}}$.  Such approaches may be cumbersome as the normalizing constant ($Z_\theta$ in the case of Energy-based models for instance) that makes $p_\theta$ a probability density function is not available. Sequential or Markov chain Monte Carlo methods provide solution to sample approximately from a probability density known up to a multiplicative constant but they can face slow convergence rates and require a lot of tuning in high dimensional settings. It is also crucial to note that the complexity of real data prohibits a thorough depiction of the distribution $\pi_{\mathrm{data}}$ through standard non-parametric density estimation strategies. 
 
 Modeling the score function $x\mapsto\nabla_x\log\pi_{\mathrm{data}}(x) $ directly allows to overcome this difficulty. Score-based models can be trained  without considering  normalizing constants. Score-matching methods aim at estimating $x\mapsto\nabla_x\log\pi_{\mathrm{data}}(x) $ using only the samples $(X_1,\ldots,X_n)$ and stochastic optimization procedures. In the approaches proposed by \cite{hyvarinen2005estimation,vincent2011connection} the optimization procedures minimize $$
 \theta\mapsto \mathcal{L}_{\mathrm{uc}}(\theta) = \mathbb{E}_{\pi_{\mathrm{data}}}\left[\left\|s_\theta(X) - \nabla_x\log\pi_{\mathrm{data}}(X)\right\|_2^2\right]\eqsp,
 $$
-where $s_\theta$ is the parametric model for $\nabla_x\log\pi_{\mathrm{data}}$.
+where $s_\theta$ is the parametric model for $\nabla_x\log\pi_{\mathrm{data}}$. Of course, this loss function cannot be minimized as $ \nabla_x\log\pi_{\mathrm{data}}$ is unknown. However, \cite[Theorem~1]{hyvarinen2005estimation} established that for all $\theta$,
+$$
+\mathcal{L}_{\mathrm{uc}}(\theta) = \mathbb{E}_{\pi_{\mathrm{data}}}\left[\sum_{j=1}^d\left(\partial_j s_\theta(X) + \frac{1}{2}s_{j,\theta}(X)^2\right)\right] + C\eqsp,
+$$
+where $s_{j,\theta}(X)$ is the $j$-th component of $s_{\theta}(X)$ and $C$ is a constant that does not depend on $\theta$. Therefore, the score estimator can be trained using stochastic optimization using an empirical estimate of the expectation under $\pi_{\mathrm{data}}$ computed with the samples $(X_1,\ldots,X_n)$.
 
 Langevin dynamics offers a very good motivation to learn the score of the target distribution instead of $\pi_{\mathrm{data}}$ itself. Starting with $X_0$ sampled from some proposal distribution, Langevin dynamics iteratively samples $(X_k)_{k\geq 1}$ with, for all $k\geq 1$,
 $$
 X_{k} = X_{k-1} +  \gamma_k \nabla_x\log\pi_{\mathrm{data}}(X_{k-1}) + \sqrt{2\gamma_k}\varepsilon_k\eqsp,
 $$
-where $(\gamma_k)_{k\geq 1}$ is a sequence of positive step-sizes and $(\varepsilon_k)_{k\geq 1}$ are i.i.d. standard Gaussian random variables independent of $X_0$.  In \cite{durmus2017nonasymptotic}, the authors obtained nonasymptotic bounds for the convergence to the target distribution in total variation distance for both constant and decreasing step-sizes. Of course, $\nabla_x\log\pi_{\mathrm{data}}$ is not available and using Langevin dynamics with approximate score functions introduce additional errors which have to be controlled. In \cite{song2019generative}, the authors propose noise data with  multiple scales of noise $\sigma_1 < \ldots <\sigma_L$. The data distribution is then perturbed with Gaussian noise by considering, for all $1\leq i \leq L$,
+where $(\gamma_k)_{k\geq 1}$ is a sequence of positive step-sizes and $(\varepsilon_k)_{k\geq 1}$ are i.i.d. standard Gaussian random variables independent of $X_0$.  In \cite{durmus2017nonasymptotic}, the authors obtained nonasymptotic bounds for the convergence to the target distribution in total variation distance for both constant and decreasing step-sizes. Of course, $\nabla_x\log\pi_{\mathrm{data}}$ is not available and using Langevin dynamics with approximate score functions introduce additional errors which have to be controlled. In addition, the main limitation of this approach is that it requires to learn simultaneously the score estimate $s_\theta(X)$ and its partial derivatives $\partial_j s_\theta(X)$, $1\leq j \leq d$, which can be computationally very sensitive.
+
+In \cite{song2019generative}, the authors propose noise data with  multiple scales of noise $0<\sigma_1 < \ldots <\sigma_L$. The data distribution is then perturbed with Gaussian noise by considering, for all $1\leq i \leq L$,
 $$
 p_{\sigma_i}:x \mapsto \int \pi_{\mathrm{data}}(z)\varphi_{z,\sigma^2_i I_d}(x)\rmd z\eqsp,
 $$   
 where $\varphi_{\mu,\Sigma}$ is the Gaussian probability density function with mean $\mu$ and variance $\Sigma$. For all $1\leq i \leq L$, $p_{\sigma_i}$ is the probability density function of $X + \sigma_i Z$ where $X\sim \pi_{\mathrm{data}}$ and $Z\sim \mathcal{N}(0,I_d)$ are independent. Then, we aim at estimating the score function associated with $p_{\sigma_i}$, $1\leq i \leq L$.  The authors of \cite{song2019generative} introduced a weighted sum of mean squared errrors: 
 $$
-\theta\mapsto \mathcal{L}_{\mathrm{wuc}}(\theta) = \sum_{i=1}^L\lambda_i\mathbb{E}_{\pi_{\sigma_i}}\left[\left\|s_\theta(X,\sigma_i) - \nabla_x\log p_{\sigma_i}(X)\right\|_2^2\right]\eqsp,
+\theta\mapsto \mathcal{L}_{\mathrm{wuc}}(\theta) = \sum_{i=1}^L\lambda_i\mathbb{E}_{p_{\sigma_i}}\left[\left\|s_\theta(X,\sigma_i) - \nabla_x\log p_{\sigma_i}(X)\right\|_2^2\right]\eqsp,
 $$ 
-where $\lambda_i>0$ and $s_\theta(X,\sigma_i)$ is the parametric estimation of $\nabla_x\log p_{\sigma_i}(X)$, $1\leq i \leq L$. After training all conditional scores, samples approximately distributed according to $\pi_{\mathrm{data}}$ can be obtained with annealed Langevin dynamics. Then, for all $i = L, \ldots, 1$, $1\leq k \leq n$, write $X^{(i)}_{0}=X^{(i-1)}_{n}$,
+where $\lambda_i>0$ and $s_\theta(X,\sigma_i)$ is the parametric estimation of $\nabla_x\log p_{\sigma_i}(X)$, $1\leq i \leq L$. After training all conditional scores, samples approximately distributed according to $\pi_{\mathrm{data}}$ can be obtained with annealed Langevin dynamics. Then, for all $i = L, \ldots, 1$, $1\leq k \leq n$, write 
 $$
 X^{(i)}_{k} = X^{(i)}_{k-1} +  \gamma_{i,k} s_\theta(X^{(i)}_{k-1},\sigma_i) + \sqrt{2\gamma_{i,k}}\varepsilon_{i,k}\eqsp,
 $$
-where $X_n^{(-1)}$ is sampled from an arbitrary distribution, $(\gamma_{i,k})_{1 \leq k\leq n, 1\leq i \leq L}$ is a sequence of positive step-sizes and $(\varepsilon_{i,k})_{1 \leq k\leq n, 1\leq i \leq L}$ are i.i.d. standard Gaussian random variables.
+where $X_0^{(L)}$ is sampled from an arbitrary distribution, $X^{(i)}_{0}=X^{(i+1)}_{n}$ for $L-1\leq i \leq 1$, $(\gamma_{i,k})_{1 \leq k\leq n, 1\leq i \leq L}$ is a sequence of positive step-sizes and $(\varepsilon_{i,k})_{1 \leq k\leq n, 1\leq i \leq L}$ are i.i.d. standard Gaussian random variables.
 
-Although adding noise to learn perturbed score functions and annealed Langevin dynamics are appealing to sample approximately from $\pi_{\mathrm{data}}$, this approach is computationally intensive and depends on many sensitive hyperparameters: choice of $L$ and standard deviations $\sigma_1 < \ldots <\sigma_L$, length of the Langevin dynamics $n$.  Score-based generative models based on diffusion propose to introduce a continuous-time noising dynamics to efficiently learn the generative process without having to choose predefined noise levels.
+Although adding noise to learn perturbed score functions and annealed Langevin dynamics are appealing to sample approximately from $\pi_{\mathrm{data}}$, this approach is computationally intensive and depends on many sensitive hyperparameters: choice of $L$ and standard deviations $0<\sigma_1 < \ldots <\sigma_L$, length of the Langevin dynamics $n$.  Score-based generative models based on diffusion propose to introduce a continuous-time noising dynamics to efficiently learn the generative process without having to choose predefined noise levels.
 
 \section{Score-based generative models}
 
-Generative diffusion models aim at creating synthetic instances of $\pi_{\mathrm{data}}$ when only independent samples are available. It is crucial to note that the complexity of real data prohibits a thorough depiction of the distribution $\pi_{\mathrm{data}}$ through standard non-parametric density estimation strategies.
-Score-based Generative Models (SGMs) are probabilistic models designed to address this challenge using two main phases. The first phase, the noising phase (also referred to as the forward phase), involves progressively perturbing the empirical distribution by adding noise to the training data until its distribution approximately reaches an {easy-to-sample} distribution $\pi_{\infty}$. The second phase involves learning to reverse this noising dynamics by sequentially removing the noise, which is referred to as the sampling phase (or backward phase). 
+Score-based Generative Models (SGMs) are probabilistic models designed to address this challenge using two main phases. The first phase, also referred to as the forward phase, involves progressively perturbing the empirical distribution by adding noise to the training data until its distribution approximately reaches an {easy-to-sample} distribution $\pi_{\infty}$. The second phase involves learning to reverse this noising dynamics by sequentially removing the noise, which is referred to as the sampling phase or backward phase. 
 Reversing the dynamics during the backward phase would require in principle knowledge of the score function, i.e., the gradient of the logarithm of the density at each time step of the diffusion. 
 To circumvent this issue, the score function is learned based on the evolution of the noised data samples and using a deep neural network architecture. When applying these learned reverse dynamics to samples from  $\pi_\infty$, we obtain a generative distribution that approximates  $\pi_{\rm data}$. 
 
@@ -1147,7 +1153,7 @@ To circumvent this issue, the score function is learned based on the evolution o
 
 \subsubsection*{Forward process}
 Denote as $\sched : [0,T] \mapsto \mathbb{R}_{>0}$ the noise schedule, assumed to be continuous and non decreasing.
-Although originally developed using a finite number of noising steps \cite{dickstein2015, song2019generative, ho2020denoising,song2021score}, most recent approaches consider time-continuous noise perturbations through the use of stochastic differential equations (SDEs) \cite{song2021score}. 
+Although originally developed using a finite number of noising steps \cite{dickstein2015, song2019generative, ho2020denoising}, most recent approaches consider time-continuous noise perturbations through the use of stochastic differential equations (SDEs) \cite{song2021score}. 
 Consider, therefore, a forward process given by
 \begin{equation} \label{eq:forward-SDE:beta}
     \rmd  \overrightarrow{X}_t = - \frac{\sched(t)}{2 \sigma^2}  \overrightarrow{X}_t \rmd t + \sqrt{ \sched(t)}  \rmd B_t, \quad \ora{X}_0 \sim \pi_{\mathrm{data}}\eqsp. 
@@ -1158,73 +1164,109 @@ Note that, up to the time change  $t\mapsto \int_0^t\sched(s) / 2\rmd s$, this p
     \rmd  \overrightarrow{X}_t = - \frac{1}{\sigma^2}  \overrightarrow{X}_t \rmd t + \sqrt{ 2}  \rmd B_t, \quad \ora{X}_0 \sim \pi_{\mathrm{data}}\eqsp,
 \end{align*}
 see, e.g., \cite[Chapter 3]{karatzas2012brownian}. 
-Due to the linear nature of the drift with respect to $(X_t)_t$, it is well-known that an exact simulation can be performed for this process.
-The stationary distribution $\pi_{\infty}$ of the forward process is the Gaussian distribution with mean $0$ and variance $\sigma^2 \mathrm{I}_d$.
-In the literature, when $\beta(t)$ is constant equal to $2$ (meaning that there is no time change), this diffusion process is referred  to as the Variance-Preserving SDE 
+Due to the linear nature of the drift with respect to $(X_t)_t$, it is well-known that an exact simulation can be performed for this process. Indeed, the marginal distribution of (\ref{eq:forward-SDE:beta}) at time $t$ writes as 
+\begin{equation}
+\label{eq:noised:data}
+ \overrightarrow X_t = m_t X_0 + \sigma_t Z\eqsp,
+\end{equation}
+with 
+$Z \sim \mathcal{N} \left( 0, \mathrm{I}_d \right)$ independent of $X_0$, $X_0 \sim \pi_{\mathrm{data}}$, $m_t = \exp\{-\int_0^t \beta(s) \rm d s/(2 \sigma^2)\}$ and $ \sigma^2_t = \sigma^2 ( 1 - \exp\{- \int_0^t \beta(s)/\sigma^2 \rm d s\}) $. Therefore, sampling from the forward process only necessitates access to samples from $\pi_0$ and $\mathcal{N}(0,\mathrm{I}_d)$. Lemma~\ref{lem:stat:forward} establishes that the stationary distribution $\pi_{\infty}$ of the forward process is the Gaussian distribution with mean $0$ and variance $\sigma^2 \mathrm{I}_d$.
+
+\begin{lemma}\label{lem:stat:forward}
+    Assume that $\sched$ is continuous, positive, non decreasing and such that $\int_0^\infty \beta(t)\rmd t = \infty$. Let $(\ora X_t)_{t\geq 0}$ be a weak solution to the forward process (\ref{eq:forward-SDE:beta}). Then, the stationary distribution of $(\ora X_t)_{t\geq 0}$ is Gaussian with mean 0 and variance $\sigma^2 \mathrm{I}_d$.
+\end{lemma}
+
+\begin{proof}
+Consider the process
+\begin{align*}
+\bar X_t = \exp \left(\frac{1}{2 \sigma^2} \int_0^t \sched(s) \rmd s\right) \ora X_t\eqsp. 
+\end{align*}
+It\^o's formula yields
+\begin{equation*}\label{eq:stationary_dirst1}
+    \ora X_t  =  \exp \left(-\frac{1}{2 \sigma^2} \int_0^t \sched(s) \rmd s\right) \left(\ora X_0 +  \int_0^t \sqrt{ \sched(s)} \exp \left( \int_0^s \sched(u)/(2\sigma^2) \rmd u\right) \rmd B_s\right)\eqsp.
+\end{equation*}
+Note that
+\begin{align*}
+\lim_{t\to\infty}\exp \left(-\frac{1}{2 \sigma^2} \int_0^t \sched(s) \rmd s\right) \ora X_0 = 0\eqsp.
+\end{align*}
+Then, the second term in the r.h.s. of \eqref{eq:stationary_dirst1} is Gaussian with mean $0$ and variance $\sigma^2_t \mathrm{I}_d$, where
+\begin{equation*}
+\sigma^2_t = \exp \left(-\frac{1}{ \sigma^2} \int_0^t \sched(s) \rmd s\right) \int_0^t \sched(s) \rme^{ \int_0^s \sched(u)/\sigma^2 \rmd u} \rmd s = \sigma^2 \left( 1 - \exp \left(-\frac{1}{ \sigma^2} \int_0^t \sched(s) \rmd s\right) \right)\eqsp.
+\end{equation*}
+By assumption on $\sched$, $\lim_{t \to \infty} \sigma_t^2  = \sigma^2$, which concludes the proof. 
+\end{proof}
+In the literature, when $t\mapsto\beta(t)$ is constant equal to $2$ (meaning that there is no time change), this diffusion process is referred  to as the Variance-Preserving SDE 
 \cite{conforti2023}, leading to the so-called  
 Denoising Diffusion Probabilistic Models \cite{ho2020denoising}.
-Understanding the effects of the general diffusion model \eqref{eq:forward-SDE:beta}, in particular when reversing the dynamic,
-remains a challenging problem, to which we devote the rest of our analysis.
+Several continuous-time models could be used to noise data sampled from $\pi_{\mathrm{data}}$. The choice of \eqref{eq:forward-SDE:beta} is deeply related to two main properties.
+\begin{itemize}
+\item It is straightforward and computationally easy to sample from $p_t$ i.e. to obtain a perturbed data point at all time steps by \eqref{eq:noised:data}.
+\item The stationary distribution of \eqref{eq:forward-SDE:beta}, i.e. the asymptotic distribution of perturbed data when $t\to \infty$, is known and easy to sample from.
+\end{itemize}
 
 \subsubsection*{Backward process}
-The corresponding backward process is given by
-\begin{align*}
-\left\{
-\begin{array}{l}
-\rmd \overleftarrow{X}_t  =\eta(t,\overleftarrow{X}_t)\rmd t +   \sqrt{\bar \sched(t)} \rmd B_t, \\
-\ola X_0 \sim \pi_{\infty},
-\end{array}
-\right.
-\text{ with }
-\left\{
-\begin{array}{l}
-\bar \sched(t) \eqdef \sched(T- t) \\ 
-\eta(t,\overleftarrow{X}_t) \eqdef \frac{\bar \sched (t)}{2\sigma^2}\overleftarrow{X}_t + \bar \sched (t) \nabla \log  p_{T-t}\left( \ola{X}_t \right).
-\end{array}
-\right.
-\end{align*}
+The backward process associated with \eqref{eq:forward-SDE:beta} is given by $\ola X_0 \sim p_T$ and
+\begin{equation}
+\label{eq:backward:sde}
+\overleftarrow{X}_t  =\eta(t,\overleftarrow{X}_t)\rmd t +   \sqrt{\bar \sched(t)} \rmd B_t\eqsp,
+\end{equation}
+where
+$$
+\bar \sched(t) \eqdef \sched(T- t) \quad\mbox{and}\quad\eta(t,\overleftarrow{X}_t) \eqdef \frac{\bar \sched (t)}{2\sigma^2}\overleftarrow{X}_t + \bar \sched (t) \nabla \log  p_{T-t}\left( \ola{X}_t \right)\eqsp.
+$$
+This SDE is crucial in score-based generative models since if $(\overleftarrow{X}_t)_{0\leq t \leq T}$ is a weak solution to \eqref{eq:backward:sde}, then $(\overrightarrow{X}_{t})_{0\leq t \leq T}$ and $(\ola{X}_{t})_{0\leq t \leq T}$ have the same distribution. This means that if $\ola X_0 \sim p_T$, i.e. $\ola X_0$ is distributed as a noised data point at time $T$ and if $\ola X_T$ is obtained by sampling from \eqref{eq:backward:sde}, then $\ola X_T\sim\pi_{\mathrm{data}}$. In order to use this property to sample approximately from $\pi_{\mathrm{data}}$ we need to consider three steps.
+\begin{enumerate}
+\item For all $0\leq t\leq T$, $ \nabla \log  p_{T-t}$ depends on the score of the data distribution and is unknown. This quantity has to be replaced by an estimator in \eqref{eq:backward:sde}.
+\item Even if the score is replaced by an estimator, we do not know how to sample from \eqref{eq:backward:sde}. In standard approaches, SBGMs usually use discretization techniques to obtain samples.
+\item The backward process is initialized with the stationary distribution, i.e.  $\ola X_0 \sim \mathcal{N}(0,\sigma^2 I_d)$, instead of sampled from $p_T$.
+\end{enumerate}
+These three steps allow to introduce a training procedure to learn the score functions and a sampling procedure to obtain random variables approximately distributed according to $\pi_{\mathrm{data}}$. However, they all introduce approximation errors that need to be controlled if we aim at obtaining convergence guarantees.
 
-
-
-We consider the marginal time distribution of the forward process divided by the density of its stationary distribution, introducing 
-\begin{align}
-\label{eq:renormalized_density}
-\forall x \in \mathbb{R}^d, \quad \tilde p_{t}(x) \eqdef {p_t(x)} / {\gausspdf_{\sigma^2}(x)}, 
-\end{align}
-where $\gausspdf_{\sigma^2}$ denote the density function of $\pi_\infty$, a Gaussian distribution with mean $0$ and variance $\sigma^2 \mathrm{I}_d$.
-Thus, the backward process can be rewritten as
-\begin{align}\label{eq:backward_SDE}
-\rmd \overleftarrow{X}_t =  \bar \eta \left(t,\overleftarrow{X}_t\right)  \rmd t  +  \sqrt{\bar \sched(t)} \rmd B_t, \quad \ola X_0 \sim \pi_{\infty},
-\end{align}
-where $\bar \eta(t,\overleftarrow{X}_t) \eqdef  - \frac{\bar \sched (t)}{2 \sigma^2} \overleftarrow{X}_t + \bar \sched (t) \nabla \log  \tilde p_{T-t}( \ola{X}_t)$. 
-The benefit of using the renormalization $\tilde{p}_t$ in our analysis results in considering the backward equation as a perturbation of an OU process. This trick is crucial to highlight the central role of the relative Fisher information in the performance of the SGM. It has already been used by \cite{conforti2023}.
+%We consider the marginal time distribution of the forward process divided by the density of its stationary distribution, introducing 
+%\begin{align}
+%\label{eq:renormalized_density}
+%\forall x \in \mathbb{R}^d, \quad \tilde p_{t}(x) \eqdef {p_t(x)} / {\gausspdf_{\sigma^2}(x)}, 
+%\end{align}
+%where $\gausspdf_{\sigma^2}$ denote the density function of $\pi_\infty$, a Gaussian distribution with mean $0$ and variance $\sigma^2 \mathrm{I}_d$.
+%Thus, the backward process can be rewritten as
+%\begin{align}\label{eq:backward_SDE}
+%\rmd \overleftarrow{X}_t =  \bar \eta \left(t,\overleftarrow{X}_t\right)  \rmd t  +  \sqrt{\bar \sched(t)} \rmd B_t, \quad \ola X_0 \sim \pi_{\infty},
+%\end{align}
+%where $\bar \eta(t,\overleftarrow{X}_t) \eqdef  - \frac{\bar \sched (t)}{2 \sigma^2} \overleftarrow{X}_t + \bar \sched (t) \nabla \log  \tilde p_{T-t}( \ola{X}_t)$. 
+%The benefit of using the renormalization $\tilde{p}_t$ in our analysis results in considering the backward equation as a perturbation of an OU process. This trick is crucial to highlight the central role of the relative Fisher information in the performance of the SGM. It has already been used by \cite{conforti2023}.
 
 \subsubsection*{Score estimation}
 Simulating the backward process means knowing how to operate the score.
-However, the (modified) score function $\nabla \log \tilde p_t(x)= \nabla \log p_t(x) + x/\sigma^2$ cannot be evaluated directly, because it depends on the unknown data distribution. To work around this problem, the score function $\nabla \log p_t$ needs to be estimated. In \cite{hyvarinen2005estimation}, the authors proposed to estimate the score function associated with a distribution by minimizing the expected $\mathrm{L}^2$-squared distance between the true score function  and the proposed approximation. In the context of diffusion models, this is typically done with the use of a deep neural network architecture $s_{\param} : [0,T] \times \mathbb{R}^d \mapsto \mathbb{R}^d$ parameterized by $\theta \in \Theta$,  and trained to minimize:
+However, the score function $x\mapsto \nabla \log p_t(x)$ cannot be evaluated directly, because it depends on the unknown data distribution. In \cite{hyvarinen2005estimation}, the authors proposed to estimate the score function associated with a distribution by minimizing the expected $\mathrm{L}^2$-squared distance between the true score function  and the proposed approximation. In the context of diffusion models, this is typically done with the use of a deep neural network architecture $s_{\param} : [0,T] \times \mathbb{R}^d \mapsto \mathbb{R}^d$ parameterized by $\theta \in \Theta$,  and trained to minimize:
 \begin{align} \label{eq:explicit_score_matching_objective}
-\mathcal{L}_{\rm explicit} (\theta) &= \mathbb{E} \left[ \left\|  s_{\theta} \left(\tau, \ora X_{\tau}\right) - \nabla \log p_{\tau} \left(\ora X_{\tau}\right)  \right\|^2 \right]\eqsp,
+\mathcal{L}_{\rm explicit} (\theta) &= \mathbb{E} \left[ \left\|  s_{\theta} \left(\tau, \ora X_{\tau}\right) - \nabla \log p_{\tau} \left(\ora X_{\tau}\right)  \right\|_2^2 \right]\eqsp,
 \end{align}
 with $\tau \sim \mathcal{U}(0,T)$ independent of the forward process $(\ora X_t)_{t\geq 0}$. However, this estimation problem still suffers from the fact that the regression target is not explicitly known. A tractable optimization problem sharing the same optima can be defined though, through the marginalization over $\pi_{\rm data}$ of $p_{\tau}$ \cite{song2021score}: 
 \begin{align}
 \label{eq:cond_score_matching_objective}
-\mathcal{L}_{\mathrm{score}}(\param) = \mathbb{E}\left[ \left\|s_{\param} \left( \tau, \overrightarrow{X}_{\tau} \right) - \nabla \log p_\tau \left(\ora X _\tau| X _0 \right)\right\|^2\right]\eqsp,
+\mathcal{L}_{\mathrm{score}}(\param) = \mathbb{E}\left[ \left\|s_{\param} \left( \tau, \overrightarrow{X}_{\tau} \right) - \nabla \log p_\tau \left(\ora X _\tau| X _0 \right)\right\|_2^2\right]\eqsp,
 \end{align}
-where $\tau$ is uniformly distributed on $[0,T]$, and independent of $X_0\sim \pi_{\mathrm{data}}$ and $\ora X _\tau \sim p_\tau(\cdot| X _0)$. This loss function is appealing as it only requires to know the transition kernel of the forward process. In \eqref{eq:forward-SDE:beta}, this is a Gaussian kernel with explicit mean and variance. 
+where $\tau$ is uniformly distributed on $[0,T]$, and independent of $X_0\sim \pi_{\mathrm{data}}$ and $\ora X _\tau \sim p_\tau(\cdot| X _0)$. This loss function is appealing as it only requires to know the transition kernel of the forward process. In \eqref{eq:forward-SDE:beta}, this is a Gaussian kernel with explicit mean and variance. By \eqref{eq:noised:data}, we obtain 
+\begin{align}
+\label{eq:cond_score_matching_objective:explicit}
+\mathcal{L}_{\mathrm{score}}(\param) = \mathbb{E}\left[ \left\|s_{\param} \left( \tau, \overrightarrow{X}_{\tau} \right) + \frac{\ora X _\tau -m_tX_0}{\sigma_t^2}\right\|_2^2\right]\eqsp,
+\end{align}
+where
+$$
+m_t = \exp\left\{-\int_0^t \beta(s) \rm d s/(2 \sigma^2)\right\} \quad \mbox{and}\quad\sigma^2_t = \sigma^2 \left( 1 - \exp\left\{- \int_0^t \beta(s)/\sigma^2 \rm d s\right\}\right) \eqsp.
+$$
 
-\subsubsection*{Discretization} 
+\subsubsection*{Discretization and sampling} 
 Once the score function is learned, it remains that, in most cases, the backward dynamics no longer enjoys a linear drift, which makes its exact simulation challenging.  
 To address this issue, one solution is to discretize the continuous dynamics of the backward process. 
 In this way, \cite{song2021score} propose an Euler-Maruyama (EM) discretization scheme  in which both the drift and the diffusion coefficients are discretized recursively. 
-The Euler Exponential Integrator \cite{durmus2015quantitative}, as already used in \cite{conforti2023},
-only requires to discretize the part associated with the modified score function.
-Introduce $ \tilde s_{\theta} (t, x) \eqdef s_{\theta}(t, x) + x/\sigma^2$ and consider the regular time discretization $0 = t_0 \leq t_1 \leq \dots \leq t_{N}= T$. Then,  $(\ola X_t^{\param})_{t \in [0,T]}$ is such that, for $t \in  [ t_k , t_{k+1} ]$,
+The Euler Exponential Integrator  can also be used, see for instance  \cite{conforti2023}. The Euler-Maruyama process  $(\ola X_t^{\param})_{t \in [0,T]}$ is such that, for $t \in  [ t_k , t_{k+1} ]$,
 \begin{align}
 \label{eq:backward_EI_main}
-\rmd \overleftarrow{X}^{\param}_t  &=  \bar \sched (t)\left( - \frac{1}{2 \sigma^2} \overleftarrow{X}^{\param}_t +  \tilde s_{\param} \left( T-{t_k}, \ola{X}_{t_k}^{\param}  \right) \right)  \rmd t  
-+  \sqrt{\bar \sched(t)} \rmd B_t, \quad \overleftarrow{X}^{\param}_0 \sim \pi_{\infty} \eqsp. 
+\rmd \overleftarrow{X}^{\param}_t  &=  \bar \sched (t_k)\left(\frac{1}{2 \sigma^2} \overleftarrow{X}^{\param}_{t_k} +  \tilde s_{\param} \left( T-{t_k}, \ola{X}_{t_k}^{\param}  \right) \right)  \rmd t  
++  \sqrt{\bar \sched(t_k)} \rmd B_t, \quad \overleftarrow{X}^{\param}_0 \sim \pi_{\infty} \eqsp. 
 \end{align} 
-This scheme can be seen as a refinement of the classical EM one as it handles the linear drift term by integrating it explicitly. In addition, $(\ola X_t^{\param})_{t \in \{t_0, \hdots, t_N\}}$ can be sampled exactly.
+In this setting, $(\ola X_t^{\param})_{t \in \{t_0, \hdots, t_N\}}$ can be sampled exactly.
 
 \section{Some theoretical guarantees}
 
@@ -1298,12 +1340,12 @@ $\mcf_{k}$ as soon as we know that $(X_{k})_{k\geq0}$ is $(\mcf_{k})_{k\geq0}$-a
 
 If $\seq{\mcf_{k}}{k\in\nset}$
 is a sequence of embedded sigma-fields on $\Xset$ (that is, $\mcf_{k}\subset\mcf_{k+1}$
-for all $k\in\nset$), then $\seq{\mcf_{k}}{k\in\nset}$ is called a \textbf{filtration} \index{filtration}
+for all $k\in\nset$), then $\seq{\mcf_{k}}{k\in\nset}$ is called a filtration \index{filtration}
 on $\Xset$ and we say that $(X_{k})_{k\geq0}$ is $(\mcf_{k})_{k\geq0}$-adapted
 if $X_{k}$ is $\mcg/\mcf_{k}$-measurable for all $k\in\nset$. Of
 course, the most natural filtration for $\seq{X_{k}}{k\in\nset}$
 is indeed $\mcf_{k}=\sigma(X_{0:k})$ and unsurprisingly, we call
-it the \textbf{natural filtration}\index{filtration!natural}. But other possibilities exist,
+it the natural filtration \index{filtration!natural}. But other possibilities exist,
 where $\mcf_{k}$ is enlarged to include some other variables alongside
 with $X_{0:k}$. For example, let $\seq{Y_{k}}{k\in\nset}$ be any
 other sequence of random variables on $(\Omega,\mcg,\PP)$ and taking
@@ -1342,7 +1384,7 @@ we deduce that $(X_{k})_{k\geq0}$ is $(\mcf_{k})_{k\geq0}$-adapted.
 Therefore, we only need to check \Eqref{def:MC:F-k}. Now, for any
 non-negative or bounded measurable function $h$ on $\Xset$, 
 \[
-\PE[h(X_{k+1})|\mcf_{k}]=\int_{-\infty}^{\infty}h(\underbrace{aX_{k}+b\epsilon}_{y})f(\epsilon)\rmd\epsilon=\int_{-\infty}^{\infty}h(y)\underbrace{f\lr{\frac{y-aX_{k}}{b}}\frac{1}{b^{p}}\rmd y}_{P(X_{k},\rmd y)},
+\PE[h(X_{k+1})|\mcf_{k}]=\int_{-\infty}^{\infty}h(aX_{k}+b\epsilon)f(\epsilon)\rmd\epsilon=\int_{-\infty}^{\infty}h(y)f\lr{\frac{y-aX_{k}}{b}}\frac{1}{b^{p}}\rmd y\eqsp,
 \]
 where the last equality follows from an adequate change of variable.
 Therefore, $\seq{X_{k}}{k\in\nset}$ is a Markov chain with Markov
@@ -1355,12 +1397,12 @@ filtration of $\seq{X_{k}}{k\in\nset}$ but we even do not need to
 check this property for getting that $\seq{X_{k}}{k\in\nset}$ is
 a Markov chain.
 \end{example}
-\blb\textbf{ Key notions. } At this stage, we know how 
-to solve typical exercises where some random variables are given and
-the question is to determine whether these random variables form a
-Markov chain or not and if yes, what is the expression of the associated
-Markov kernel. \elb
-As an illustration, interested readers might try to solve Exercise~\ref{ex:arch}.
+%\blb\textbf{ Key notions. } At this stage, we know how 
+%to solve typical exercises where some random variables are given and
+%the question is to determine whether these random variables form a
+%Markov chain or not and if yes, what is the expression of the associated
+%Markov kernel. \elb
+%As an illustration, interested readers might try to solve Exercise~\ref{ex:arch}.
 
 
 \subsection{Additional notation}
@@ -1393,7 +1435,7 @@ Markov kernel $P$ on $\Xset\times\Xsigma$, define $P^{0}=I$ where
 $I$ is the identity kernel: $(x,A)\mapsto\indi A(x)$, and set for
 $k\geq0$, $P^{k+1}=P^{k}P$.
 
-\bfr
+
 \begin{lemma}
 Let $\seq{X_{k}}{k\in\nset}$ be a Markov chain on the same probability
 space $(\Omega,\mcg,\PP)$ and taking values on $\Xset$, with Markov
@@ -1401,8 +1443,8 @@ kernel $P$ and with initial distribution $\nu\in\meas 1(\Xset)$.
 Then, for any $n\in\nset$, the law of $X_{0:n}$ is $\nu(\rmd x_{0})\prod_{i=0}^{n-1}P(x_{i},\rmd x_{i+1})$
 (with the convention that $\prod_{i=0}^{-1}=1$).
 \end{lemma}
-\efr
-\begin{svmultproof}
+
+\begin{proof}
 Recall that for all $(n,A)\in\nset\times\Xsigma$, $\PP(X_{n+1}\in A|X_{0:n})=P(X_{n},A)$,
 $\PP$-a.s. or equivalently for all non-negative measurable functions
 $h_{n+1}$ on $\Xset$, $\PE\left[h_{n+1}(X_{n+1})|X_{0:n}\right]=Ph_{n+1}(X_{n})$ $\PP$-a.s.
@@ -1426,7 +1468,7 @@ can apply $(H_{n})$ and thus,
 \end{align*}
 which shows that the law of $X_{0:n+1}$ is $\nu(\rmd x_{0})\prod_{i=0}^{n}P(x_{i},\rmd x_{i+1})$
 and $\left(H_{n+1}\right)$ is thus proved.
-\end{svmultproof}
+\end{proof}
 As a consequence, the marginal law of $X_{n}$ is given by integrating
 $\nu(\rmd x_{0})\prod_{i=0}^{n-1}P(x_{i},\rmd x_{i+1})$ over $x_{0:n-1}$
 and thus, for all $A\in\Xsigma$,
@@ -1434,7 +1476,7 @@ and thus, for all $A\in\Xsigma$,
 \PP(X_{n}\in A)=\int_{\Xset^{n+1}}\indi A(X_{n})\nu(\rmd x_{0})\prod_{i=0}^{n-1}P(x_{i},\rmd x_{i+1})=\nu P^{n}(A),
 \]
  that is, $\nu P^{n}$ is the distribution of $X_{n}$ or in a compact
-notation, $\boxed{X_{n}\sim\nu P^{n}}$.
+notation, $X_{n}\sim\nu P^{n}$.
 
 \section{Canonical space} \index{canonical space}
 
@@ -1450,9 +1492,9 @@ kernel $P$ and initial distribution $\nu$.
 
 \subsection{A simpler problem }
 
-We start with an easier problem where we only want to construct $\seq{X_{k}}{k\in[0:n-1]}$
+Consider an easier problem where we only want to construct $\seq{X_{k}}{k\in[0:n-1]}$
 where $n$ is some given positive integer. That is, we only consider
-\textbf{a finite range of integers} such that the first item in \defref{MarkovChain}
+a finite range of integers such that the first item in \defref{MarkovChain}
 is satisfied. For a given $\nu\in\meas 1(\Xset)$, define the triplet
 $(\Omega_{n},\mcg_{n},\PP_{\nu,n})$ as follows:
 \begin{itemize}
@@ -1506,11 +1548,11 @@ here that $(\Xset,\Xsigma)$ is a measurable space, which is quite
 minimal). In the canonical representation, we therefore set $\Omega=\Xset^{\nset}$,
 $\mcg=\Xsigma^{\otimes\nset}$ and $\PP=\PP_{\nu}$. In the particular
 case where the initial distribution $\nu$ is a Dirac mass, we use
-the compact notation $\boxed{\PP_{x}=\PP_{\delta_{x}}}$. Thus, Theorem~\ref{th:canonical} allows to define not only one probability measure but a family
+the compact notation $\PP_{x}=\PP_{\delta_{x}}$. Thus, Theorem~\ref{th:canonical} allows to define not only one probability measure but a family
 of probability measures $(\PP_{\nu})_{\nu\in\meas 1(\Xset)}$ on the
 space of trajectories.
 
-\textbf{What are the relations between the probability measures $(\PP_{\nu})_{\nu\in\meas 1(\Xset)}$?}
+What are the relations between the probability measures $(\PP_{\nu})_{\nu\in\meas 1(\Xset)}$?
 A consequence of this theorem is that for all $A\in\Xsigma^{\otimes(n+1)}$,
 $\PP_{\nu}(X_{0:n}\in A)=\int_{A}\nu(\rmd\omega_{0})\prod_{i=1}^{n}P(\omega_{i-1},\rmd\omega_{i})$.
 Replacing $\nu$ by $\delta_{x_{0}}$ and comparing the two obtained
@@ -1520,15 +1562,10 @@ expressions, we get
 \]
 We can actually extend this result to any $A\in\Xsigma^{\otimes\nset}$
 by replacing the $n+1$ -tuple $X_{0:n}$ by the (infinite) trajectory
-$X_{0:\infty}$. First note the following equalities: $A=\left\{ \omega\in A\right\} =\set{\omega\in\Omega}{X_{0:\infty}(\omega)\in A}=\left\{ X_{0:\infty}\in A\right\} $.
-\begin{framed}
-We then obtain the following identity: for all $A\in\Xsigma^{\otimes\nset}$,
-
+$X_{0:\infty}$. First note the following equalities: $A=\left\{ \omega\in A\right\} =\set{\omega\in\Omega}{X_{0:\infty}(\omega)\in A}=\left\{ X_{0:\infty}\in A\right\} $. We then obtain the following identity: for all $A\in\Xsigma^{\otimes\nset}$,
 \begin{equation}
 \PP_{\nu}(A)=\PP_{\nu}(X_{0:\infty}\in A)=\int_{\Xset}\nu(\rmd x_{0})\PP_{x_{0}}(X_{0:\infty}\in A)=\int_{\Xset}\nu(\rmd x_{0})\PP_{x_{0}}(A).\label{eq:relation:P}
 \end{equation}
-
-\end{framed}
 
 An illustration is given in Exercise~\ref{exo:solidarite}.
 \subsection{The Markov property.} \index{Markov property}
@@ -1536,7 +1573,7 @@ An illustration is given in Exercise~\ref{exo:solidarite}.
 Define the shift operator $S$ by $S:\Xset^{\nset}\ni\omega\mapsto\omega'\in\Xset^{\nset}$
 where $\omega=(\omega_{i})_{i\in\nset}$ and $\omega'=(\omega_{i+1})_{i\in\nset}$.
 
-\bs
+
 \begin{theorem}
 \textbf{(The Markov property)} For any $\nu\in\meas 1(\Xset)$, any
 non-negative or bounded function $h$ on $\Xset^{\nset}$ and any
@@ -1546,7 +1583,7 @@ $n\in\nset$,
 \end{equation}
 where $\mathcal{F}_{k}=\sigma(X_{0:k})$.
 \end{theorem}
-\es
+
 
 By definition of $X_{k:\infty}$, we have $\PP_{\nu}-a.s.$,
 \begin{align*}
@@ -1558,8 +1595,7 @@ By definition of $X_{k:\infty}$, we have $\PP_{\nu}-a.s.$,
 \[
 \boxed{\PE_{\nu}\left[h(X_{k:\infty})|\mcf_{k}\right]=\PE_{X_{k}}[h(X_{0:\infty})]\,,\quad\PP_{\nu}-a.s.}
 \]
- is another \textbf{equivalent expression of the Markov property.
-}This expression may seem easier to deal with but the reader has to
+ is another equivalent expression of the Markov property. This expression may seem easier to deal with but the reader has to
 be at ease with both formulations. A stronger version of the Markov
 property exists and is called (as expected) the strong Markov property:
 its statement is \Eqref{MarkovProperty} with the exception that $k$
@@ -1622,19 +1658,19 @@ surprisingly, it is not needed in this course.  Exercise~\ref{exo:strongMarkov} 
 %
 %\end{subappendices}
 
-\chapter{Invariant probability measures}
+\chapter{Metroppolis-Hastings algorithms}
 \minitoc
-\begin{keywords}
-Invariant probability measures, existence, uniqueness, reversibility.
-\end{keywords}
+%\begin{keywords}
+%Invariant probability measures, existence, uniqueness, reversibility.
+%\end{keywords}
 \section{Invariant probability measures: existence}
 \index{invariant!probability measure}
-\begin{framed}%
+%\begin{framed}%
 \begin{definition}
 We say that $\pi\in\meas 1(\Xset)$ is an invariant probability measure
 for the Markov kernel $P$ on $\Xset\times\Xsigma$ if $\pi P=\pi$.
 \end{definition}
-\end{framed}
+%\end{framed}
 
 If $(X_{k})$ is a Markov chain with Markov kernel $P$
 and assuming that $X_{0}\sim\pi$, then for all $k\geq1$, we have
@@ -1655,7 +1691,7 @@ We now introduce the notion of reversibility for a Markov kernel.
 This will be of crucial importance for designing Markov kernels with
 a given invariant probability measure.
 
-\bs
+%\bs
 \begin{definition}
 Let $\pi\in\meas 1(\Xset)$ and $P$ be a Markov kernel on $\Xset\times\Xsigma$.
 We say that $P$ is $\pi$-reversible if and only if (with infinitesimal
@@ -1671,16 +1707,17 @@ on $\left(\Xset^{2},\Xsigma^{\otimes2}\right)$,
 \iint_{\Xset^{2}}h(x,y)\pi(\rmd x)P(x,\rmd y)=\iint_{\Xset^{2}}h(x,y)\pi(\rmd y)P(y,\rmd x).\label{eq:reversibility:h}
 \end{equation}
 \end{definition}
-\es A Markov kernel $P$ is $\pi$-reversible if and only
+%\es 
+A Markov kernel $P$ is $\pi$-reversible if and only
 if the probability measure $\pi(\rmd x)P(x,\rmd y)$ is symmetric
-with respect to $(x,y)$. \bs
+with respect to $(x,y)$. %\bs
 \begin{proposition}
 Let $P$ be a Markov kernel on $\Xset\times\Xsigma$. Let $\pi\in\meas 1(\Xset)$
 such that $P$ is $\pi$-reversible, then the Markov kernel $P$ is
 $\pi$-invariant.
 \end{proposition}
-\es
-\begin{svmultproof}
+%\es
+\begin{proof}
 For any $A\in\Xsigma$, we have by the reversibility relation
 
 \[
@@ -1688,7 +1725,7 @@ For any $A\in\Xsigma$, we have by the reversibility relation
 \]
 
 which finishes the proof.
-\end{svmultproof}
+\end{proof}
 
 
 Therefore, if we want to check easily that
@@ -1718,12 +1755,12 @@ For simplicity we now assume that $\pi$ has a density with respect
 to some dominating $\sigma$-finite measure $\lambda$ and by abuse
 of notation, we also denote by $\pi$ this density, that is we write
 $\pi(\rmd x)=\pi(x)\lambda(\rmd x)$ and we assume that this density
-$\pi$ is \textbf{positive}.
+$\pi$ is positive.
 
 Moreover, let $Q$ be Markov kernel on $\Xset\times\Xsigma$ such
 that $Q(x,\rmd y)=q(x,y)\lambda(\rmd y)$, that is, for any $x\in\Xset$,
 $Q(x,\cdot)$ is also dominated by $\lambda$ and denoting by $q(x,\cdot)$
-this density, we assume for simplicity that $q(x,y)$ is \textbf{positive}
+this density, we assume for simplicity that $q(x,y)$ is positive
 for all $x,y\in\Xset$. 
 
 For a given function $\alpha:\Xset^{2}\to[0,1]$,  Algorithm~\ref{alg:mh} describes the Metropolis algorithm.
@@ -1748,14 +1785,14 @@ For a given function $\alpha:\Xset^{2}\to[0,1]$,  Algorithm~\ref{alg:mh} describ
 \centering
 \begin{algorithmic}
 \State At $t=0$, draw $X_{0}$ according to some arbitrary distribution.
-\State Set $m_{0} = 0$ and $v_{0} = 0$.
+%\State Set $m_{0} = 0$ and $v_{0} = 0$.
 \For{$t = 0$ to $t = n-1$}
 \State Draw independently $Y_{t+1}\sim Q(X_{t},\cdot)$ and $U_{t+1}\sim\mathrm{Unif}(0,1)$.
 \State Set $X_{t+1}=\begin{cases} Y_{t+1} & \mbox{if }U_{t+1}\leq\alpha(X_{t},Y_{t+1})\\ X_{t} & \mbox{otherwise} \end{cases}$. 
 \EndFor
 \end{algorithmic}
 \caption{The Metropolis Algorithm.}
-\label{alg:ùh}
+\label{alg:mh}
 \end{algorithm}
 
  In words, $Q$ allows to propose a candidate for the next value of
@@ -1780,14 +1817,14 @@ and any $t\in\nset$,
 \begin{align*}
 \PE\lrb{h(X_{t+1})|\mcf_{t}} & =\PE\lrb{\indiacc{U_{t+1}<\alpha(X_{t},Y_{t+1})}h(Y_{t+1})|\mcf_{t}}+\PE\lrb{\indiacc{U_{t+1}\geq\alpha(X_{t},Y_{t+1})}|\mcf_{t}}h(X_{t})\\
  & =\int_{\Xset}Q(X_{t},\rmd y)\alpha(X_{t},y)h(y)+\bar{\alpha}(X_{t})h(X_{t})\\
- & =\int_{\Xset}\lrb{\underbrace{Q(X_{t},\rmd y)\alpha(X_{t},y)+\bar{\alpha}(X_{t})\delta_{X_{t}}(\rmd y)}_{\mh{\pi,Q}(X_{t},\rmd y)}}h(y)=\mh{\pi,Q}h(X_{t}).
+ & =\int_{\Xset}\lrb{Q(X_{t},\rmd y)\alpha(X_{t},y)+\bar{\alpha}(X_{t})\delta_{X_{t}}(\rmd y)}h(y)=\mh{\pi,Q}h(X_{t}).
 \end{align*}
 Therefore, $\seq{X_{t}}{t\in\nset}$ is a Markov chain with Markov
 kernel
 \begin{equation}
 \mh{\pi,Q}(x,\rmd y)=Q(x,\rmd y)\alpha(x,y)+\bar{\alpha}(x)\delta_{x}(\rmd y).\label{eq:def:mh}
 \end{equation}
- \bs
+ 
 \begin{lemma}
 \label{lem:reversible} The Markov kernel $\mh{\pi,Q}$ is $\pi$-reversible
 if and only if
@@ -1796,9 +1833,9 @@ if and only if
 \pi(\rmd x)Q(x,\rmd y)\alpha(x,y)=\pi(\rmd y)Q(y,\rmd x)\alpha(y,x).\label{eq:balance:detaillee}
 \end{equation}
 \end{lemma}
-\es In this literature, \Eqref{balance:detaillee} is often called
-the \textbf{detailed balance condition.}
-\begin{svmultproof}
+Equation \Eqref{balance:detaillee} is often called
+the detailed balance condition.
+\begin{proof}
 First, note that
 \begin{equation}
 \pi(\rmd x)\bar{\alpha}(x)\delta_{x}(\rmd y)=\pi(\rmd y)\bar{\alpha}(y)\delta_{y}(\rmd x).\label{eq:balance:dirac}
@@ -1812,7 +1849,7 @@ Combining \Eqref{def:mh} with \Eqref{balance:dirac}, we obtain that
 $\mh{\pi,Q}$ is $\pi$-reversible if and only if the detailed balance
 condition \Eqref{balance:detaillee} is satisfied. This completes
 the proof.
-\end{svmultproof}
+\end{proof}
 
 
 \subsubsection{Acceptance probability}
@@ -1820,7 +1857,7 @@ the proof.
 We now make use of \Lemref{reversible} in order to find an explicit
 expression of the acceptance probability $\alpha$.
 
-\bfr
+
 \begin{lemma}
 \label{lem:acceptance} Define 
 $$
@@ -1839,8 +1876,8 @@ the sense that: for $\lambda^{\otimes2}$-almost all $x,y\in\Xset$,
 \end{equation}
 
 \end{lemma}
-\efr
-\begin{svmultproof}
+
+\begin{proof}
 The fact that any $\alpha\in\left\{ \alpha^{MH},\alpha^{b}\right\} $
 satisfies $\pi(x)q(x,y)\alpha(x,y)=\pi(y)q(y,x)\alpha(y,x)$ for $\lambda^{\otimes2}$-almost
 all $x,y\in\Xset$, is immediate, by plugging the value of $\alpha$ in the equation.
@@ -1855,7 +1892,7 @@ Moreover, $\alpha(x,y)\leq1$ and this finally implies
 \alpha(x,y)\leq\min\left(\frac{\pi(y)q(y,x)}{\pi(x)q(x,y)},1\right)=\alpha^{MH}(x,y),
 \]
 which completes the proof.
-\end{svmultproof}
+\end{proof}
 
 According to \Eqref{accept:max}, $\alpha^{MH}$ is actually the highest
 acceptance probability among the acceptance probabilities such that
@@ -1863,9 +1900,9 @@ $\mh{\pi,Q}$ is $\pi$-reversible and therefore, this acceptance
 is widely used in practice (in the sense that we expect that a Markov
 kernel that accepts often, explores the space more rapidly and therefore
 is preferable to another one with less acceptance probability). In
-what follows, unless otherwise stated, \textbf{\emph{we implicitly
+what follows, unless otherwise stated, we implicitly
 assume that the Markov kernel $\mh{\pi,Q}$ is associated with the acceptance
-probability $\alpha^{MH}$}}\emph{.}
+probability $\alpha^{MH}$.
 
 Exercise~\ref{exo:detailed} shows other examples of possible acceptance probabilities.
 
@@ -1900,15 +1937,15 @@ update is $Y_{k+1}=X_{k}+\eta_{k}$ where $\eta_{k}\sim q(\cdot)$.\textbf{ }
 \section{Invariant probability measure: uniqueness}
 
 We start with a very simple lemma that will be useful for finding
-sufficient conditions for uniqueness. \bfr
+sufficient conditions for uniqueness. 
 \begin{lemma}
 \label{lem:invariant:singular} If $P$ admits two distinct invariant
 probability measures, it also admits distinct invariant probability
 measures $\pi_{0}$ and $\pi_{1}$ that are mutually singular, i.e.,
 such that there exists $A\in\Xsigma$ such that $\pi_{0}(A)=\pi_{1}(A^{c})=0$.
 \end{lemma}
-\efr
-\begin{svmultproof}
+
+\begin{proof}
 Let $\zeta_{0},\zeta_{1}$ be two distinct invariant probability measures
 for $P$. Both have densities with respect to some common dominating
 measure (for example, choosing $\zeta=\zeta_{1}+\zeta_{2}$, we have
@@ -1944,12 +1981,9 @@ by $(\zeta_{1}-\zeta_{0})^{-}$, we obtain in the same way that $\pi_{1}=(\zeta_{
 is an invariant probability measure. We can easily check that taking
 $A=\left\{ f_{0}\geq f_{1}\right\} $, we have $\pi_{0}(A)=\pi_{1}(A^{c})=0$,
 showing that these probability measures are mutually singular.
-\end{svmultproof}
-
-To be rigorous, in the course of the proof, we actually need some
-results on the positive and negative part of a signed-measure. The
-interested reader may work on the following exercise to fully understand
-the previous proof. \blb
+\end{proof}
+In the course of the proof, we actually need some
+results on the positive and negative part of a signed-measure. The following exercise is useful to fully understand the previous proof. 
 \begin{exercise}
 Define $\meas s(\Xset)$ the set of signed-measures. Let $\mu\in\meas s(\Xset)$
 and assume that $\mu\preceq\zeta$ where $\zeta\in\meas +(\Xset)$
@@ -1967,10 +2001,9 @@ $A\in\Xsigma$, we have $\mu(A)\leq\nu(A)$. Show that $\mu^{+}(A)\leq\nu(A)$
 for all $A\in\Xsigma.$
 \end{enumerate}
 \end{exercise}
-\elb We now make use of \Lemref{invariant:singular} in order to
+We now make use of \Lemref{invariant:singular} in order to
 give a sufficient condition for uniqueness.
 
-\bs
 \begin{proposition}
 \label{prop:unique}Assume that there exists a non-null measure \textup{$\mu\in\meas +(\Xset)$}
 satisfying the following property:
@@ -1979,11 +2012,10 @@ satisfying the following property:
 there exists $n\in\nset$ such that $P^{n}(x,A)>0$.
 \end{itemize}
 Then, $P$ admits at most one invariant probability measure.
-\end{proposition}
-\es If the assumption of \Propref{unique} holds, we say that $P$
-is \textbf{$\mu$-irreducible}\index{irreducibility} and in such case, $\mu$ is called
-an \textbf{irreducibility measure} for $P$.
-\begin{svmultproof}
+\end{proposition}If the assumption of \Propref{unique} holds, we say that $P$
+is $\mu$-irreducible \index{irreducibility} and in such case, $\mu$ is called
+an irreducibility measure for $P$.
+\begin{proof}
 The proof is by contradiction. Assume that there exist two distinct
 invariant probability measures. According to \Lemref{invariant:singular},
 we can consider two invariant probability measures $\pi_{1}$ and
@@ -1998,7 +2030,7 @@ gives that if for some $i\in\left\{ 1,2\right\} $, $\pi_{i}(A)=0$,
 then $\mu(A)=0$. Now, since $\pi_1$ and $\pi_2$ 
 are mutually singular, there exists $A\in\Xsigma$ such that $\pi_{1}(A)=\pi_{2}(A^{c})=0$
 and this shows that $\mu(A)=\mu(A^{c})=0$ which is impossible.
-\end{svmultproof}
+\end{proof}
 
 Exercise~\ref{exo:arp} gives an example where \Propref{unique} applies.
 \subsection{\label{subsec:MH:uniq}Application to Metropolis-Hastings algorithms. }
@@ -2009,72 +2041,72 @@ and for simplicity, that for all $x,y\in\Xset$, $q(x,y)>0$
 and $\pi(y)>0$. This in turn implies that $\alpha(x,y)=\alpha^{MH}(x,y)>0$
 and therefore if $\lambda(A)>0$, then for all $x\in\Xset$,
 \[
-P(x,A)\geq\int_{A}\underbrace{q(x,y)\alpha(x,y)}_{>0}\lambda(\rmd y)>0.
+P(x,A)\geq\int_{A}q(x,y)\alpha(x,y)\lambda(\rmd y)>0.
 \]
-This shows that $P$ is $\lambda$-irreducible and therefore \textbf{$\pi$
-is the unique invariant probability measure for $P$.}
+This shows that $P$ is $\lambda$-irreducible and therefore $\pi$
+is the unique invariant probability measure for $P$.
 
-\section{Key notions}
-\begin{center}
-\shadowbox{\begin{minipage}{0.9\textwidth}
-\begin{enumerate}[a)]
-\item Understanding the link between reversibility and invariant measure.
-\item Checking that MH chains are reversible.
-\item Understanding the expression of the acceptance probability.
-\item Implementing the Independence sampler and the random walk MH.
-\item Showing that an invariant measure is unique by using \Propref{unique}.
-\end{enumerate}
-\end{minipage}
-}
-\end{center}
-
-
-\begin{subappendices}
-\section*{Highlights}
-\section{Monte Carlo methods. {\sf Source: Wikipedia}}
-The term "Monte Carlo method" was coined in the 1940s by physicists working on nuclear weapon projects in the Los Alamos National Laboratory.
-
-Enrico Fermi in the 1930s and Stanislaw Ulam in 1946 first had the idea. Ulam later contacted John Von Neumann to work on it.
-
-Physicists at Los Alamos Scientific Laboratory were investigating radiation shielding and the distance that neutrons would likely travel through various materials. Despite having most of the necessary data, such as the average distance a neutron would travel in a substance before it collided with an atomic nucleus or how much energy the neutron was likely to give off following a collision, the problem could not be solved with analytical calculations. John von Neumann and Stanislaw Ulam suggested that the problem be solved by modeling the experiment on a computer using chance. Being secret, their work required a code name. Von Neumann chose the name "Monte Carlo". The name is a reference to the Monte Carlo Casino in Monaco where Ulam's uncle would borrow money to gamble.
-
-Random methods of computation and experimentation (generally considered forms of stochastic simulation) can be arguably traced back to the earliest pioneers of probability theory (see, e.g., Buffon's needle, and the work on small samples by William Sealy Gosset), but are more specifically traced to the pre-electronic computing era. The general difference usually described about a Monte Carlo form of simulation is that it systematically "inverts" the typical mode of simulation, treating deterministic problems by first finding a probabilistic analog (see Simulated annealing). Previous methods of simulation and statistical sampling generally did the opposite: using simulation to test a previously understood deterministic problem. Though examples of an "inverted" approach do exist historically, they were not considered a general method until the popularity of the Monte Carlo method spread.
-
-Monte Carlo methods were central to the simulations required for the Manhattan Project, though were severely limited by the computational tools at the time. Therefore, it was only after electronic computers were first built (from 1945 on) that Monte Carlo methods began to be studied in depth. In the 1950s they were used at Los Alamos for early work relating to the development of the hydrogen bomb, and became popularized in the fields of physics, physical chemistry, and operations research. The Rand Corporation and the U.S. Air Force were two of the major organizations responsible for funding and disseminating information on Monte Carlo methods during this time, and they began to find a wide application in many different fields.
-
-Uses of Monte Carlo methods require large amounts of random numbers, and it was their use that spurred the development of pseudorandom number generators, which were far quicker to use than the tables of random numbers which had been previously used for statistical sampling.
+%\section{Key notions}
+%\begin{center}
+%\shadowbox{\begin{minipage}{0.9\textwidth}
+%\begin{enumerate}[a)]
+%\item Understanding the link between reversibility and invariant measure.
+%\item Checking that MH chains are reversible.
+%\item Understanding the expression of the acceptance probability.
+%\item Implementing the Independence sampler and the random walk MH.
+%\item Showing that an invariant measure is unique by using \Propref{unique}.
+%\end{enumerate}
+%\end{minipage}
+%}
+%\end{center}
 
 
-\end{subappendices}
+%\begin{subappendices}
+%\section*{Highlights}
+%\section{Monte Carlo methods. {\sf Source: Wikipedia}}
+%The term "Monte Carlo method" was coined in the 1940s by physicists working on nuclear weapon projects in the Los Alamos National Laboratory.
+%
+%Enrico Fermi in the 1930s and Stanislaw Ulam in 1946 first had the idea. Ulam later contacted John Von Neumann to work on it.
+%
+%Physicists at Los Alamos Scientific Laboratory were investigating radiation shielding and the distance that neutrons would likely travel through various materials. Despite having most of the necessary data, such as the average distance a neutron would travel in a substance before it collided with an atomic nucleus or how much energy the neutron was likely to give off following a collision, the problem could not be solved with analytical calculations. John von Neumann and Stanislaw Ulam suggested that the problem be solved by modeling the experiment on a computer using chance. Being secret, their work required a code name. Von Neumann chose the name "Monte Carlo". The name is a reference to the Monte Carlo Casino in Monaco where Ulam's uncle would borrow money to gamble.
+%
+%Random methods of computation and experimentation (generally considered forms of stochastic simulation) can be arguably traced back to the earliest pioneers of probability theory (see, e.g., Buffon's needle, and the work on small samples by William Sealy Gosset), but are more specifically traced to the pre-electronic computing era. The general difference usually described about a Monte Carlo form of simulation is that it systematically "inverts" the typical mode of simulation, treating deterministic problems by first finding a probabilistic analog (see Simulated annealing). Previous methods of simulation and statistical sampling generally did the opposite: using simulation to test a previously understood deterministic problem. Though examples of an "inverted" approach do exist historically, they were not considered a general method until the popularity of the Monte Carlo method spread.
+%
+%Monte Carlo methods were central to the simulations required for the Manhattan Project, though were severely limited by the computational tools at the time. Therefore, it was only after electronic computers were first built (from 1945 on) that Monte Carlo methods began to be studied in depth. In the 1950s they were used at Los Alamos for early work relating to the development of the hydrogen bomb, and became popularized in the fields of physics, physical chemistry, and operations research. The Rand Corporation and the U.S. Air Force were two of the major organizations responsible for funding and disseminating information on Monte Carlo methods during this time, and they began to find a wide application in many different fields.
+%
+%Uses of Monte Carlo methods require large amounts of random numbers, and it was their use that spurred the development of pseudorandom number generators, which were far quicker to use than the tables of random numbers which had been previously used for statistical sampling.
+%
+%
+%\end{subappendices}
 
 \chapter{Ergodicity and Law of Large numbers}
 \minitoc
-\begin{keywords}
-Ergodicity, Birkhoff ergodic theorem.
-\end{keywords}
+%\begin{keywords}
+%Ergodicity, Birkhoff ergodic theorem.
+%\end{keywords}
 
 We now focus on properties of Markov chains with unique invariant probability measures.
-We will show in this part that such Markov chains turn out to be ergodic
-in some sense to be defined (actually in this type of ergodicity is linked with ergodic dynamical systems) and this, in turn, allows to apply the
-Birkhoff ergodic theorem so that a law of large number will hold.
+We show in this chapter that such Markov chains turn out to be ergodic
+in some sense to be defined and this, in turn, allows to apply the
+Birkhoff ergodic theorem and use the law of large numbers.
 
-Let us start with a refresher on ergodic results.
+%Let us start with a refresher on ergodic results.
 
 \section{Dynamical systems.}
 
-\bs
+
 \begin{definition}
 \textbf{(Dynamical system)} A \emph{dynamical system}\index{dynamical system} $\mathcal{D}$
 is a quadruplet $\mathcal{D}=(\Omega,\mcf,\mathbb{P},T)$ where $(\Omega,\mcf,\mathbb{P})$
 is a probability space and $T:\Omega\rightarrow\Omega$ is a measurable
 mapping such that $\mathbb{P}=\mathbb{P}\circ T^{-1}$.
 \end{definition}
-\es
+
 \begin{lemma}
 The collection of sets $\mc I=\set{A\in\mcf}{\indi A=\indi A\circ T}$
-is a $\sigma$-field and any set in $\mc I$ is called an \fbox{invariant set.} \index{invariant!set}
+is a $\sigma$-field and any set in $\mc I$ is called an invariant set. \index{invariant!set}
 \end{lemma}
-\begin{svmultproof}
+\begin{proof}
 Indeed, obviously $\Omega\in\mc I$ . Moreover, if $A\in\mc I,$ then
 for all $\omega\in\Omega$,
 \[
@@ -2086,22 +2118,22 @@ if and only if for all $i\in\nset$, $\omega\in A_{i}$ which is in
 turn equivalent to $T(\omega)\in A_{i}$. All in all we have shown
 that $\omega\in\cap_{i\in\nset}A_{i}$ if and only if $T(\omega)\in\cap_{i\in\nset}A_{i}$.
 This shows that $\mc I$ is a $\sigma$-field.
-\end{svmultproof}
+\end{proof}
 
-\bs
+
 \begin{definition}
 \textbf{(Ergodicity)} \index{ergodic dynamical system} A dynamical system $(\Omega,\mcf,\mathbb{P},T)$
 is said to be \emph{ergodic} if $\mc I$ is trivial, that is, $A\in\mc I$
 implies that either $\mathbb{P}(A)=0$ or $\mathbb{P}(A)=1$.
 \end{definition}
-\es
+
 
 What interests us in the first place is that ergodic dynamical system
 satisfies the Birkhoff ergodic theorem, as detailed below. We first
 define the iterates of $T$ by $T^{0}=I$, and for all $k\geq1$,
 $T^{k}=T^{k-1}\circ T$.
 
-\bfr
+
 \begin{theorem}
 \textbf{\label{thm:birk:dynam}(The Birkhoff theorem)} \index{Birkhoff's theorem}Let $\mathcal{D}=(\Omega,\mcf,\mathbb{P},T)$
 be an ergodic dynamical system and let $h\in\lfuncset 1(\Omega)$.
@@ -2110,7 +2142,7 @@ Then,
 \lim_{n\to\infty}n^{-1}\sum_{k=0}^{n-1}h\circ T^{k}=\PE[h]\ ,\quad\PP-a.s.
 \]
 \end{theorem}
-\efr
+
 
 Exercise~\ref{exo:birk} proves this theorem.
 
@@ -2125,19 +2157,19 @@ It is important to note that in general $(\Xset^{\nset},\Xsigma^{\otimes\nset},\
 is not a dynamical system except if the initial distribution $\nu$
 is actually invariant wrt $P$.
 
-\bfr
+
 \begin{lemma}
 Let $P$ be a Markov kernel admitting an invariant probability measure
 $\pi$. Then, the quadruplet $(\Xset^{\nset},\Xsigma^{\otimes\nset},\PP_{\pi},S)$
 is a dynamical system.
 \end{lemma}
-\efr
-\begin{svmultproof}
+
+\begin{proof}
 Indeed, the relation $\PP_{\pi}=\PP_{\pi}\circ S^{-1}$ is equivalent
 to the fact that for any $A\in\Xsigma^{\otimes\nset},$ $\PP_{\pi}(A)=\PP_{\pi}(X_{0:\infty}\in A)=\PP_{\pi}\left(X_{0:\infty}\in S^{-1}(A)\right)=\PP_{\pi}(X_{1:\infty}\in A)$,
 which is a consequence of the fact that the sequence of random variables
 $\seq{X_{k}}{k\in\nset}$ is strongly stationary under $\PP_{\pi}$.
-\end{svmultproof}
+\end{proof}
 
 The relation $\PP_{\pi}=\PP_{\pi}\circ S^{-1}$ tells us that for
 any $A\in\Xsigma^{\otimes\nset}$, we have
@@ -2166,7 +2198,7 @@ such that
 \end{equation}
 \end{itemize}
 \end{lemma}
-\begin{svmultproof}
+\begin{proof}
 This is a typical use of the monotone class theorem. Consider the
 class $\mathcal{M}$ of sets $A\in\Xsigma^{\otimes\nset}$, for which
 the approximation (\ref{eq:approx}) holds.
@@ -2187,22 +2219,21 @@ we have
 and this immediately implies that $A\in\mathcal{M}$ (check it carefully).
 \end{itemize}
 Then, $\mathcal{M}$ is a monotone class that contains all the $(\mcf_{k})_{k\geq0}$
-and therefore, it contains $\sigma(\cup_{k=0}^{\infty}\mcf_{k})=\Xsigma^{\otimes\nset}$.
-This finishes the proof.
-\end{svmultproof}
+and therefore, it contains $\sigma(\cup_{k=0}^{\infty}\mcf_{k})=\Xsigma^{\otimes\nset}$, which completes the proof.
+\end{proof}
 
-We now have all the tools to state and prove an extremely powerful
-result on Markov chains and ergodicity.
+%We now have all the tools to state and prove an extremely powerful
+%result on Markov chains and ergodicity.
 
-\bs
+
 \begin{theorem}\label{ergodic}
 Let $P$ be a Markov kernel on $\Xset\times\Xsigma$. Assume that
 $P$ admits a unique invariant probability measure $\pi$. Then, the
 dynamical system $(\Xset^{\nset},\Xsigma^{\otimes\nset},\PP_{\pi},S)$
 is ergodic.
 \end{theorem}
-\es
-\begin{svmultproof}
+
+\begin{proof}
 Let $P$ be a Markov kernel that admits a unique invariant probability
 measure $\pi$ and let $A\in\mathcal{I}=\set{A\in\Xsigma^{\otimes\nset}}{\indi A=\indi A\circ S}$.
 
@@ -2275,11 +2306,10 @@ Then,
 Applying again (\ref{eq:uniq:fond}) yields $\PP_{\pi}(A)=\PE_{\pi}\left[\indi A\times\1_{A}\right]/\PP_{\pi}(A)=1$
 which completes the proof of the theorem.
 \end{enumerate}
-\end{svmultproof}
+\end{proof}
 
 As a consequence, the Birkhoff theorem for dynamical systems, \Thmref{birk:dynam},
-yields
-\begin{framed}
+yields the following result.
 \begin{theorem}
 \label{thm:birk:mrkv:genr}Let $P$ be a Markov kernel admitting a
 unique invariant probability measure $\pi.$ Then, for all $h\in\funcset{}(\Xset^{\nset})$
@@ -2292,9 +2322,9 @@ or equivalently,
 \lim_{n\to\infty}n^{-1}\sum_{k=0}^{n-1}h\circ S^{k}=\PE_{\pi}[h]\,,\quad\PP_{\pi}-a.s.
 \]
 \end{theorem}
-\end{framed}
+
  A particular case of \thmref{birk:mrkv:genr} is when $h(X_{0:\infty})=f(X_{0})$.
-In such case, we have the following corollary. \bs
+In such case, we have the following corollary. 
 \begin{corollary}
 \label{cor:birk:mrkv:part}Let $P$ be a Markov kernel admitting a
 unique invariant probability measure $\pi.$ Then, for all $f\in\funcset{}(\Xset)$
@@ -2303,12 +2333,12 @@ such that $\pi(|f|)=\int_{\Xset}\pi(\rmd x)|f(x)|<\infty$, we have
 \lim_{n\to\infty}n^{-1}\sum_{k=0}^{n-1}f(X_{k})=\pi(f)\,,\quad\PP_{\pi}-a.s.\label{eq:markov:LLN}
 \end{equation}
 \end{corollary}
-\es The limiting result \Eqref{markov:LLN} is nice but it holds
+ The limiting result \Eqref{markov:LLN} is nice but it holds
 $\PP_{\pi}-a.s.$ We now try to overcome this issue. Under the assumptions
 of \Corref{birk:mrkv:part}, set $A=\left\{ \lim_{n\to\infty}n^{-1}\sum_{k=0}^{n-1}f(X_{k})=\pi(f)\right\} $.
 Combining \Thmref{birk:mrkv:genr} with \Eqref{relation:P}, $0=\PP_{\pi}(A^{c})=\int_{\Xset}\pi(\rmd x)\PP_{x}(A^{c})$
 and this implies that $\PP_{x}(A^{c})=0$ (i.e. $\PP_{x}(A)=1$) for
-$\pi$-almost all $x\in\Xset$. Therefore, we finally get: \bs
+$\pi$-almost all $x\in\Xset$.  
 \begin{corollary}
 \label{cor:birk:mrkv:almost}Let $P$ be a Markov kernel admitting
 a unique invariant probability measure $\pi.$ Then, for all $f\in\funcset{}(\Xset)$
@@ -2318,20 +2348,14 @@ for $\pi$-almost all $x\in\Xset$,
 \lim_{n\to\infty}n^{-1}\sum_{k=0}^{n-1}f(X_{k})=\pi(f)\,,\quad\PP_{x}-a.s.\label{eq:lln:almost}
 \end{equation}
 \end{corollary}
-\es
 
-\blb
 
-\textbf{What about Metropolis-Hastings algorithms?} In \Subsecref{MH:uniq},
+What about Metropolis-Hastings algorithms? In \Subsecref{MH:uniq},
 we have seen that $\pi$ is the unique invariant probability measure
 for $\mh{\pi,Q}$ provided that $Q(x,\rmd y)=q(x,y)\lambda(\rmd y)$
 and $\pi(\rmd y)=\pi(y)\lambda(\rmd y)$ with $q>0$ and $\pi>0$.
-Therefore, \Eqref{markov:LLN} and \Eqref{lln:almost} hold. Actually
-we can have an even stronger result!!!
+Therefore, \Eqref{markov:LLN} and \Eqref{lln:almost} hold. 
 
-\elb
-
-\bs
 \begin{theorem} \label{thm:lln:hm}
 Let $Q$ be a Markov kernel on $\Xset\times\Xsigma$ and $\pi\in\meas 1(\Xset)$.
 Assume that $Q(x,\rmd y)=q(x,y)\lambda(\rmd y)$ and $\pi(\rmd y)=\pi(y)\lambda(\rmd y)$
@@ -2345,8 +2369,8 @@ such that $\pi(|f|)=\int_{\Xset}\pi(\rmd x)|f(x)|<\infty$,
 \lim_{n\to\infty}n^{-1}\sum_{k=0}^{n-1}f(X_{k})=\pi(f)\,,\quad\PP_{\nu}-a.s\label{eq:LLN:MH}
 \end{equation}
 \end{theorem}
-\es
-\begin{svmultproof}
+
+\begin{proof}
 Let $\nu\in\meas 1(\Xset)$. Set $A=\left\{ \lim_{n\to\infty}n^{-1}\sum_{k=0}^{n-1}f(X_{k})=\pi(f)\right\} $.
 From \Subsecref{MH:uniq}, we know that $\pi$ is the unique invariant
 probability measure for $\mh{\pi,Q}$ and therefore by \Corref{birk:mrkv:part},
@@ -2376,11 +2400,11 @@ Finally, $x$ being arbitrary, we obtain
 \]
  and this is equivalent to $\PP_{\nu}\left(\lim n^{-1}\sum_{k=0}^{n-1}f(X_{k})=\pi(f)\right)=1$. The
 proof is concluded.
-\end{svmultproof}
+\end{proof}
 
 \autoref{thm:lln:hm} is nice since the LLN holds $\PP_\nu$-a.s. for all starting distributions $\nu$ but the problem is that the result of \autoref{thm:lln:hm} only concerns MH kernels. For a general kernel $P$, we have the nice following result.
 
-\begin{shaded}
+
 \begin{theorem}
 If $P$ is a Markov kernel on $\Xset \times\Xsigma$ that admits a unique invariant probability measure $\pi$. Assume in addition that for all bounded functions $h$ and all measures $\nu\in\meas 1(\Xset)$,
 \begin{equation}
@@ -2395,20 +2419,20 @@ such that $\pi(|f|)=\int_{\Xset}\pi(\rmd x)|f(x)|<\infty$,
 \end{equation}
 \end{theorem}
 
-\end{shaded}
 
-\begin{svmultproof}
+\begin{proof}
 We start as in the proof of \autoref{thm:lln:hm}.
-Let $\nu\in\meas 1(\Xset)$. Set $A=\left\{ \lim_{n\to\infty}n^{-1}\sum_{k=0}^{n-1}f(X_{k})=\pi(f)\right\} $.
+Let $\nu\in\meas 1(\Xset)$. Set 
+$$
+A=\left\{ \lim_{n\to\infty}n^{-1}\sum_{k=0}^{n-1}f(X_{k})=\pi(f)\right\}.
+$$
 Since $\pi$ is the unique invariant
 probability measure for $P$, we have, by \Corref{birk:mrkv:part},
 $0=\PP_{\pi}(A^{c})=\int_{\Xset}\pi(\rmd x)h_{A^{c}}(x)=\pi(h_{A^{c}})$
 where we have set $h_{A^{c}}(x)=\PE_{x}[\indi{A^{c}}]$. As in the proof of \autoref{thm:lln:hm}, $A^c\in {\mathcal I}$. Moreover, $$
 \nu P^n h_{A^{c}}=\PE_\nu[h_{A^{c}}(X_n)]=\PE_\nu[\PE_{X_n}[\indi{A^{c}}]]\stackrel{(1)}{=}\PE_\nu[\PE_{\nu}[\indi{A^{c}}\circ S^n|\mcf_n]]\stackrel{(2)}{=}\PE_{\nu}[\indi{A^{c}}\circ S^n]\stackrel{(3)}{=}\PP_\nu(A^c)
 $$
-where $\stackrel{(1)}{=}$ follows from the Markov property, $\stackrel{(2)}{=}$ is the tower property, and $\stackrel{(1)}{=}$ follows from $\indi{A^{c}}\circ S^n=\indi{A^{c}}$, since $A^c\in {\mathcal I}$.
-
-Combined with \eqref{eq:setwise}, we get
+where $\stackrel{(1)}{=}$ follows from the Markov property, $\stackrel{(2)}{=}$ is the tower property, and $\stackrel{(1)}{=}$ follows from $\indi{A^{c}}\circ S^n=\indi{A^{c}}$, since $A^c\in {\mathcal I}$. Combined with \eqref{eq:setwise}, we get
 $$
 \PP_\nu(A^c)=\nu P^h h_{A^{c}}=\pi(h_{A^c})=\int \pi(\rmd x) \PE_x[\indi{A^c}]=\PP_\pi(A^c)=0
 $$
@@ -2416,200 +2440,200 @@ Finally $\PP_\nu(A^c)=0$, that is $\PP_\nu(A)=1$, which is equivalent to
 $$
 \lim_{n\to\infty}n^{-1}\sum_{k=0}^{n-1}f(X_{k})=\pi(f)\,,\quad\PP_{\nu}-a.s
 $$
-\end{svmultproof}
+\end{proof}
 
-\section{Key notions of this chapter}
-\begin{center}
-\shadowbox{\begin{minipage}{0.9\textwidth}
-\begin{enumerate}[a)]
-\item Law of Large Numbers for any MH algorithm starting from anywhere.
-\item In order to check a LLN, check if there is a unique invariant measure (\autoref{ergodic}).
-\item Proof of \autoref{ergodic}.
-\end{enumerate}
-\end{minipage}
-}
-\end{center}
-
-
-
-\begin{subappendices}
-
-\section*{Highlights}
+%\section{Key notions of this chapter}
+%\begin{center}
+%\shadowbox{\begin{minipage}{0.9\textwidth}
+%\begin{enumerate}[a)]
+%\item Law of Large Numbers for any MH algorithm starting from anywhere.
+%\item In order to check a LLN, check if there is a unique invariant measure (\autoref{ergodic}).
+%\item Proof of \autoref{ergodic}.
+%\end{enumerate}
+%\end{minipage}
+%}
+%\end{center}
 
 
-\section{Nicholas Metropolis (source: wikipedia).}
-
-\begin{wrapfigure}{L}{0.25\textwidth} \centering
-
-\includegraphics[scale=0.5]{metropolis}
-
-\end{wrapfigure} Nicholas Constantine Metropolis (June 11, 1915 -- October 17, 1999)
-was a Greek-American physicist.
-
-Metropolis received his BSc (1937) and PhD (1941) degrees in physics
-at the University of Chicago. Shortly afterwards, Robert Oppenheimer
-recruited him from Chicago, where he was at the time collaborating
-with Enrico Fermi and Edward Teller on the first nuclear reactors,
-to the Los Alamos National Laboratory. He arrived in Los Alamos in
-April 1943, as a member of the original staff of fifty scientists.
-
-After World War II, he returned to the faculty of the University of
-Chicago as an assistant professor. He came back to Los Alamos in 1948
-to lead the group in the Theoretical Division that designed and built
-the MANIAC I computer in 1952 that was modeled on the IAS machine,
-and the MANIAC II in 1957. (He chose the name MANIAC in the hope of
-stopping the rash of such acronyms for machine names, but may have,
-instead, only further stimulated such use.) (John von Neumann thought
-this acronym was too frivolous.) From 1957 to 1965 he was Professor
-of Physics at the University of Chicago and was the founding Director
-of its Institute for Computer Research. In 1965 he returned to Los
-Alamos where he was made a Laboratory Senior Fellow in 1980.
-
-In his memoirs, Stanislaw Ulam remembers that a small group, including
-himself, Metropolis, Calkin, Konopinski, Kistiakowsky, Teller and
-von Neumann, spent several evenings at Los Alamos playing poker. They
-played for very small sums, but: \textquotedbl Metropolis once described
-what a triumph it was to win ten dollars from John von Neumann, author
-of a famous treatise on game theory. He then bought his book for five
-dollars and pasted the other five inside the cover as a symbol of
-his victory.\textquotedbl{} In another passage of his book, Ulam describes
-Metropolis as \textquotedbl a Greek-American with a wonderful personality.\textquotedbl{}
-
-
-
-\section{Wilfried Keith Hastings (source: Jeffrey Rosenthal's homepage).}
-
-\begin{wrapfigure}{L}{0.25\textwidth} \centering
-
-\includegraphics[scale=0.3]{hastings}
-
-\end{wrapfigure} The Metropolis-Hastings algorithm (or, Hastings-Metropolis
-algorithm) is the most common Markov chain Monte Carlo (MCMC) method.
-It is extremely widely used in applied statistics and in statistical
-physics and computer science and finance and more, to sample from
-complicated, high-dimensional probability distributions. A primary
-source for this algorithm is the paper:
-\begin{itemize}
-\item W.K. Hastings (1970), Monte Carlo sampling methods using Markov chains
-and their applications. Biometrika 57, 97-109.
-\end{itemize}
-This paper has been cited well over two thousand times -{}- a huge
-number. However, despite this paper's importance, very little information
-about W.K. Hastings himself is publicly available. The following brief
-biography is intended to (partially) answer that need.
-
-W. Keith Hastings was born on July 21, 1930, in Toronto, Ontario,
-Canada. He received his B.A. in Applied Mathematics from the University
-of Toronto in 1953, and then worked from 1955-59 as a \textquotedbl Consultant
-in Computer Applications\textquotedbl{} for the Toronto company H.S.
-Gellman \& Co. Hastings recalls:
-
-\emph{Harvey Gellman was a good mentor and encouraged me to pursue
-my ideas. Some of the projects involved simulations and this was my
-first contact with statistics and generation of samples from probability
-distributions. }
-
-Overlapping somewhat with this, Hastings received his M.A. in 1958,
-and his Ph.D. in 1962, both from the University of Toronto's Department
-of Mathematics (which included Statistics at that time). His Ph.D.
-thesis title was \textquotedbl Invariant Fiducial Distributions\textquotedbl .
-His Ph.D. supervisor was initially Don Fraser (who mentioned Hastings'
-thesis results in a 1962 letter to R.A. Fisher), and later Geoffrey
-Watson (while Fraser visited Stanford in 1961-62). After completing
-his Ph.D., Hastings worked briefly at the University of Canterbury
-in New Zealand (1962-64), and at Bell Labs in New Jersey (1964-66).
-Hastings writes:
-
-\emph{I was never comfortable working on statistical inference for
-my thesis. My investigations led to too many dead ends and the work
-seemed to involve more mathematical considerations than statistical
-ones. When Geoff took over as my supervisor I briefly considered changing
-topics, but ended up sticking with my original topic and completed
-my thesis. In New Zealand, I continued this work for a while but eventually
-gave it up, the final blow coming when I learned that Fiducial Probability
-was declared 'dead' in a session during a statistics conference held
-in Ottawa. Bell Labs provided a welcome and effective antidote to
-all this as I gradually turned towards the computational aspects of
-statistics. In effect, I was then returning to my professional roots. }
-
-From 1966 to 1971, Hastings was an Associate Professor in the Department
-of Mathematics at the University of Toronto. During this period, he
-wrote the famous paper listed above (which generalised the work of
-N. Metropolis, A. Rosenbluth, M. Rosenbluth, A. Teller, and E. Teller
-(1953), \textquotedbl Equations of state calculations by fast computing
-machines\textquotedbl , J. Chem. Phys. 21, 1087-1091). Hastings explains:
-
-\emph{When I returned to the University of Toronto, after my time
-at Bell Labs, I focused on Monte Carlo methods and at first on methods
-of sampling from probability distributions with no particular area
-of application in mind. {[}University of Toronto Chemistry professor{]}
-John Valleau and his associates consulted me concerning their work.
-They were using Metropolis's method to estimate the mean energy of
-a system of particles in a defined potential field. With 6 coordinates
-per particle, a system of just 100 particles involved a dimension
-of 600. When I learned how easy it was to generate samples from high
-dimensional distributions using Markov chains, I realised how important
-this was for Statistics, and I devoted all my time to this method
-and its variants which resulted in the 1970 paper.}
-
-While at the University of Toronto, Hastings also supervised his one
-Ph.D. student, Peter Peskun (now at York University), whose 1970 dissertation
-\textquotedbl The Choice Of Transition Matrix In Monte Carlo Sampling
-Methods Using Markov Chains\textquotedbl{} developed the Peskun ordering
-on Markov chain kernels. Peskun recalls:
-
-\emph{Dr. Hastings was down to earth and very good natured. I can
-still picture him tugging at his waist band as he chuckled over some
-comment he had just made. It was a pleasure having Dr. Hastings as
-my Ph.D. supervisor. He never meddled in what I was trying to do but
-was always happy to hear and listen to any new results that I came
-up with. He did make one important suggestion to me which was to express
-my initial heuristic results in matrix form. This was of tremendous
-help in proving, in particular, Peskun orderings. }
-
-In 1971, Hastings joined the Department of Mathematics at the University
-of Victoria (in British Columbia, on the west coast of Canada) as
-an Associate Professor, and was granted tenure there in 1974. He taught
-at Victoria for 21 years, usually teaching six one-semester courses
-per year. He did not supervise any more Ph.D. students, but he did
-supervise two M.Sc. students, and serve on the committees of four
-Ph.D. and two M.Sc. students. He held NSERC research grants from 1969
-to 1980. Hastings' C.V. lists only two other refereed research papers
-besides the famous (1970) one:
-\begin{itemize}
-\item W.K. Hastings (1972), Test Data for Statistical Algorithms: Least
-Squares and ANOVA. J. Amer. Statist. Assoc. 67, 874-879.
-\item W.K. Hastings (1974), Variance Reduction and Non-normality. Biometrika
-61, 143-149.
-\end{itemize}
-It also lists one non-refereed publication (\textquotedbl Death and
-Taxes\textquotedbl , American Studies in Papyrology 10, joint with
-A.E. Samuel, A.K. Bowman, and R.S. Bagnall), and a couple of memoranda
-for Bell Labs (including the suggestive-sounding \textquotedbl An
-Overview of Statistical Computing Software\textquotedbl , 1966).
-Hastings retired from the University of Victoria in 1992. He passed
-away peacefully in Victoria on May 13, 2016, at the age of 85.
-
-\end{subappendices}
+%
+%\begin{subappendices}
+%
+%\section*{Highlights}
+%
+%
+%\section{Nicholas Metropolis (source: wikipedia).}
+%
+%\begin{wrapfigure}{L}{0.25\textwidth} \centering
+%
+%\includegraphics[scale=0.5]{metropolis}
+%
+%\end{wrapfigure} Nicholas Constantine Metropolis (June 11, 1915 -- October 17, 1999)
+%was a Greek-American physicist.
+%
+%Metropolis received his BSc (1937) and PhD (1941) degrees in physics
+%at the University of Chicago. Shortly afterwards, Robert Oppenheimer
+%recruited him from Chicago, where he was at the time collaborating
+%with Enrico Fermi and Edward Teller on the first nuclear reactors,
+%to the Los Alamos National Laboratory. He arrived in Los Alamos in
+%April 1943, as a member of the original staff of fifty scientists.
+%
+%After World War II, he returned to the faculty of the University of
+%Chicago as an assistant professor. He came back to Los Alamos in 1948
+%to lead the group in the Theoretical Division that designed and built
+%the MANIAC I computer in 1952 that was modeled on the IAS machine,
+%and the MANIAC II in 1957. (He chose the name MANIAC in the hope of
+%stopping the rash of such acronyms for machine names, but may have,
+%instead, only further stimulated such use.) (John von Neumann thought
+%this acronym was too frivolous.) From 1957 to 1965 he was Professor
+%of Physics at the University of Chicago and was the founding Director
+%of its Institute for Computer Research. In 1965 he returned to Los
+%Alamos where he was made a Laboratory Senior Fellow in 1980.
+%
+%In his memoirs, Stanislaw Ulam remembers that a small group, including
+%himself, Metropolis, Calkin, Konopinski, Kistiakowsky, Teller and
+%von Neumann, spent several evenings at Los Alamos playing poker. They
+%played for very small sums, but: \textquotedbl Metropolis once described
+%what a triumph it was to win ten dollars from John von Neumann, author
+%of a famous treatise on game theory. He then bought his book for five
+%dollars and pasted the other five inside the cover as a symbol of
+%his victory.\textquotedbl{} In another passage of his book, Ulam describes
+%Metropolis as \textquotedbl a Greek-American with a wonderful personality.\textquotedbl{}
+%
+%
+%
+%\section{Wilfried Keith Hastings (source: Jeffrey Rosenthal's homepage).}
+%
+%\begin{wrapfigure}{L}{0.25\textwidth} \centering
+%
+%\includegraphics[scale=0.3]{hastings}
+%
+%\end{wrapfigure} The Metropolis-Hastings algorithm (or, Hastings-Metropolis
+%algorithm) is the most common Markov chain Monte Carlo (MCMC) method.
+%It is extremely widely used in applied statistics and in statistical
+%physics and computer science and finance and more, to sample from
+%complicated, high-dimensional probability distributions. A primary
+%source for this algorithm is the paper:
+%\begin{itemize}
+%\item W.K. Hastings (1970), Monte Carlo sampling methods using Markov chains
+%and their applications. Biometrika 57, 97-109.
+%\end{itemize}
+%This paper has been cited well over two thousand times -{}- a huge
+%number. However, despite this paper's importance, very little information
+%about W.K. Hastings himself is publicly available. The following brief
+%biography is intended to (partially) answer that need.
+%
+%W. Keith Hastings was born on July 21, 1930, in Toronto, Ontario,
+%Canada. He received his B.A. in Applied Mathematics from the University
+%of Toronto in 1953, and then worked from 1955-59 as a \textquotedbl Consultant
+%in Computer Applications\textquotedbl{} for the Toronto company H.S.
+%Gellman \& Co. Hastings recalls:
+%
+%\emph{Harvey Gellman was a good mentor and encouraged me to pursue
+%my ideas. Some of the projects involved simulations and this was my
+%first contact with statistics and generation of samples from probability
+%distributions. }
+%
+%Overlapping somewhat with this, Hastings received his M.A. in 1958,
+%and his Ph.D. in 1962, both from the University of Toronto's Department
+%of Mathematics (which included Statistics at that time). His Ph.D.
+%thesis title was \textquotedbl Invariant Fiducial Distributions\textquotedbl .
+%His Ph.D. supervisor was initially Don Fraser (who mentioned Hastings'
+%thesis results in a 1962 letter to R.A. Fisher), and later Geoffrey
+%Watson (while Fraser visited Stanford in 1961-62). After completing
+%his Ph.D., Hastings worked briefly at the University of Canterbury
+%in New Zealand (1962-64), and at Bell Labs in New Jersey (1964-66).
+%Hastings writes:
+%
+%\emph{I was never comfortable working on statistical inference for
+%my thesis. My investigations led to too many dead ends and the work
+%seemed to involve more mathematical considerations than statistical
+%ones. When Geoff took over as my supervisor I briefly considered changing
+%topics, but ended up sticking with my original topic and completed
+%my thesis. In New Zealand, I continued this work for a while but eventually
+%gave it up, the final blow coming when I learned that Fiducial Probability
+%was declared 'dead' in a session during a statistics conference held
+%in Ottawa. Bell Labs provided a welcome and effective antidote to
+%all this as I gradually turned towards the computational aspects of
+%statistics. In effect, I was then returning to my professional roots. }
+%
+%From 1966 to 1971, Hastings was an Associate Professor in the Department
+%of Mathematics at the University of Toronto. During this period, he
+%wrote the famous paper listed above (which generalised the work of
+%N. Metropolis, A. Rosenbluth, M. Rosenbluth, A. Teller, and E. Teller
+%(1953), \textquotedbl Equations of state calculations by fast computing
+%machines\textquotedbl , J. Chem. Phys. 21, 1087-1091). Hastings explains:
+%
+%\emph{When I returned to the University of Toronto, after my time
+%at Bell Labs, I focused on Monte Carlo methods and at first on methods
+%of sampling from probability distributions with no particular area
+%of application in mind. {[}University of Toronto Chemistry professor{]}
+%John Valleau and his associates consulted me concerning their work.
+%They were using Metropolis's method to estimate the mean energy of
+%a system of particles in a defined potential field. With 6 coordinates
+%per particle, a system of just 100 particles involved a dimension
+%of 600. When I learned how easy it was to generate samples from high
+%dimensional distributions using Markov chains, I realised how important
+%this was for Statistics, and I devoted all my time to this method
+%and its variants which resulted in the 1970 paper.}
+%
+%While at the University of Toronto, Hastings also supervised his one
+%Ph.D. student, Peter Peskun (now at York University), whose 1970 dissertation
+%\textquotedbl The Choice Of Transition Matrix In Monte Carlo Sampling
+%Methods Using Markov Chains\textquotedbl{} developed the Peskun ordering
+%on Markov chain kernels. Peskun recalls:
+%
+%\emph{Dr. Hastings was down to earth and very good natured. I can
+%still picture him tugging at his waist band as he chuckled over some
+%comment he had just made. It was a pleasure having Dr. Hastings as
+%my Ph.D. supervisor. He never meddled in what I was trying to do but
+%was always happy to hear and listen to any new results that I came
+%up with. He did make one important suggestion to me which was to express
+%my initial heuristic results in matrix form. This was of tremendous
+%help in proving, in particular, Peskun orderings. }
+%
+%In 1971, Hastings joined the Department of Mathematics at the University
+%of Victoria (in British Columbia, on the west coast of Canada) as
+%an Associate Professor, and was granted tenure there in 1974. He taught
+%at Victoria for 21 years, usually teaching six one-semester courses
+%per year. He did not supervise any more Ph.D. students, but he did
+%supervise two M.Sc. students, and serve on the committees of four
+%Ph.D. and two M.Sc. students. He held NSERC research grants from 1969
+%to 1980. Hastings' C.V. lists only two other refereed research papers
+%besides the famous (1970) one:
+%\begin{itemize}
+%\item W.K. Hastings (1972), Test Data for Statistical Algorithms: Least
+%Squares and ANOVA. J. Amer. Statist. Assoc. 67, 874-879.
+%\item W.K. Hastings (1974), Variance Reduction and Non-normality. Biometrika
+%61, 143-149.
+%\end{itemize}
+%It also lists one non-refereed publication (\textquotedbl Death and
+%Taxes\textquotedbl , American Studies in Papyrology 10, joint with
+%A.E. Samuel, A.K. Bowman, and R.S. Bagnall), and a couple of memoranda
+%for Bell Labs (including the suggestive-sounding \textquotedbl An
+%Overview of Statistical Computing Software\textquotedbl , 1966).
+%Hastings retired from the University of Victoria in 1992. He passed
+%away peacefully in Victoria on May 13, 2016, at the age of 85.
+%
+%\end{subappendices}
 
 \chapter{Geometric ergodicity and Central Limit theorems}
 
 \minitoc
-\begin{keywords}
-Geometric Ergodicity, Coupling, Poisson equation, Martingales, Central Limit theorem.
-\end{keywords}
+%\begin{keywords}
+%Geometric Ergodicity, Coupling, Poisson equation, Martingales, Central Limit theorem.
+%\end{keywords}
 
 \newcommand{\tvnorm}[1]{\left\|#1\right\|_{\mathrm{TV}}}
 \newcommand{\coupling}{\mathcal{C}}
 
-Let $(X_n)$ be a Markov chain with Markov kernel $P$ and assume that $P$ admits an invariant probability measure $\pi$. In this chapter, we are interested in finding conditions under which we can have bound of the error between the marginal distribution of $X_n$ and the distribution $\pi$. To do so, we first need to define some notion of "distance" between probability measures (we will define here the total variation distance). Then, we will compare $\pi$ and $P^n(x,\cdot)$, the distribution of the $n$-th iterate of the Markov kernel starting from an arbitrary point $x\in\Xset$, by bounding the total variation distance between them.
+Let $(X_n)$ be a Markov chain with Markov kernel $P$ and assume that $P$ admits an invariant probability measure $\pi$. In this chapter, we are interested in finding conditions under which we can bound the error between the marginal distribution of $X_n$ and the distribution $\pi$. To do so, we first need to define some notion of distance or pseudo-distance between probability measures. In this chapter we focus on the total variation distance. Then, we aim at comparing $\pi$ and $P^n(x,\cdot)$, the distribution of the $n$-th iterate of the Markov kernel starting from an arbitrary point $x\in\Xset$, by bounding the total variation distance between them.
 
 
 \section{Total variation norm and coupling}
 \index{coupling}
 We start with the notion of coupling between probability measures.
-In words, if $\mu,\nu$ are two probability measures on $(\Xset,\Xsigma)$, then a coupling $\gamma$ of $(\mu,\nu)$ is a probability measure on the product space $(\Xset^2,\Xsigma^{\otimes 2})$ such that if $(X,Y) \sim \gamma$, then we have the marginal conditions: $X\sim\mu$ and $Y\sim \nu$.
-\begin{shaded}
+If $\mu,\nu$ are two probability measures on $(\Xset,\Xsigma)$, then a coupling $\gamma$ of $(\mu,\nu)$ is a probability measure on the product space $(\Xset^2,\Xsigma^{\otimes 2})$ such that if $(X,Y) \sim \gamma$, then  $X\sim\mu$ and $Y\sim \nu$.
+%\begin{shaded}
 \begin{definition}
 Let $(\Xset,\Xsigma)$ be a measurable space and let $\nu,\mu$ be two probability measures $\mu,\nu \in \meas 1(\Xset)$. We define $\coupling(\mu,\nu)$, the coupling set associated to $(\mu,\nu)$ as follows
 $$
@@ -2618,14 +2642,14 @@ $$
 Any $\gamma\in\coupling(\mu,\nu)$ is called a coupling of $(\mu,\nu)$.
 \end{definition}
 
-\end{shaded}
+%\end{shaded}
 
-Just to play with the definition of coupling, you can for example construct a coupling of $(\mu,\mu)$ by sampling $X\sim\mu$ and by setting $Y=X$. The distribution of $(X,Y)$ is then a coupling of $(\mu,\mu)$. This is a very "dependent" coupling (since we chose $X=Y$ by construction). We can also construct an "independent" coupling as follows: draw independently $X$ and $Y$ according to the same distribution $\mu$, then the distribution of $(X,Y)$ is a coupling of $(\mu,\mu)$ (since $X\sim \mu$ and $Y\sim \mu$).
+We can for example construct a coupling of $(\mu,\mu)$ by sampling $X\sim\mu$ and by setting $Y=X$. The distribution of $(X,Y)$ is then a coupling of $(\mu,\mu)$. This is a very "dependent" coupling (since we chose $X=Y$ by construction). We can also construct an "independent" coupling as follows: draw independently $X$ and $Y$ according to the same distribution $\mu$, then the distribution of $(X,Y)$ is a coupling of $(\mu,\mu)$ (since $X\sim \mu$ and $Y\sim \mu$).
 
-But then, which coupling is interesting? As we shall see in what follows, there is a real degree of freedom for choosing an adequate coupling. We will present some useful couplings but there is no general rule.
+%But then, which coupling is interesting? As we shall see in what follows, there is a real degree of freedom for choosing an adequate coupling. We will present some useful couplings but there is no general rule.
 
-Before going further into coupling techniques, let us define the total variation norm and let us link it with coupling.
-\begin{shaded}
+Before going further into coupling techniques,  define the total variation norm and let us link it with coupling.
+%\begin{shaded}
 \begin{definition} \label{def:totvar}
 \index{total variation distance}
 Let $(\Xset,\Xsigma)$ be a measurable space and let $\nu,\mu$ be two probability measures $\mu,\nu \in \meas 1(\Xset)$. Then the total variation norm between $\mu$ and $\nu$ noted $\tvnorm{\mu-\nu}$, is defined by
@@ -2636,11 +2660,9 @@ Let $(\Xset,\Xsigma)$ be a measurable space and let $\nu,\mu$ be two probability
 \end{align}
 where $\mu(\rmd x)=\varphi_0(x) \zeta(\rmd x)$ and $\nu(\rmd x)=\varphi_1(x) \zeta(\rmd x)$.
 \end{definition}
-
-\end{shaded}
-
+%\end{shaded}
 Before showing that these different expressions of the total variation are indeed equivalent, let us make a few comments.
-\begin{leftbar}
+%\begin{leftbar}
 \begin{enumerate}[(a)]
 \item The reader might wonder why we can always write $\mu(\rmd x)=\varphi_0(x) \zeta(\rmd x)$ and $\nu(\rmd x)=\varphi_1(x) \zeta(\rmd x)$ for some well-chosen measure $\zeta$, and measurable functions $\varphi_0$ and $\varphi_1$. Actually, if we take $\mu,\nu \in \meas 1(\Xset)$, then setting $\zeta=\mu+\nu$ yields the two iimplications:
  $$
@@ -2655,28 +2677,27 @@ $$
 $$
 This inequality will often be used in practice. It is due to such inequalities that coupling techniques are so successful.
 \end{enumerate}
-\end{leftbar}
+%\end{leftbar}
 
-\begin{svmultproof}[Proof of the equivalences in \Defref{totvar}] Call $A$, $B$ and $C$ the quantities that appear respectively in \eqref{eq:def:totvar:one}, \eqref{eq:def:totvar:two} and \eqref{eq:def:totvar:three}.
+\begin{proof}[Proof of the equivalences in \Defref{totvar}] Call $A$, $B$ and $C$ the quantities that appear respectively in \eqref{eq:def:totvar:one}, \eqref{eq:def:totvar:two} and \eqref{eq:def:totvar:three}.
 Any function $f$ satisfies $0\leq f\leq 1$ if and only if  the function $g=2f-1$ satisfies $|g| \leq 1$. This implies immediately
 $$
 A=2\sup\set{|\mu(f)-\nu(f)|}{f\in \funcset{}(\Xset), 0\leq f\leq 1}=\sup\set{|\mu(g)-\nu(g)|}{g\in \funcset{}(\Xset), |g|\leq 1}
 $$
 Moreover, for any $g\in \funcset{}(\Xset)$ such that $|g|\leq 1$,
 $$
-|\mu(g)-\nu(g)|=\left|\int (\varphi_1-\varphi_0)(x)g(x) \zeta(\rmd x) \right|\leq \int |\varphi_1-\varphi_0|(x)\underbrace{|g(x)|}_{\leq 1} \zeta(\rmd x)=B
+|\mu(g)-\nu(g)|=\left|\int (\varphi_1-\varphi_0)(x)g(x) \zeta(\rmd x) \right|\leq \int |\varphi_1-\varphi_0|(x)|g(x)| \zeta(\rmd x)=B.
 $$
 Therefore, $A\leq B$. Moreover, setting $g^*(x)=\mathrm{sign}(\varphi_0(x)-\varphi_1(x))$, we have $|g^*|=1$ and therefore,
 \begin{align*}
 B&=\int |\varphi_0-\varphi_1|(x) \zeta(\rmd x)=\int  \lr{\varphi_0(x)-\varphi_1(x)}{g^*(x)} \zeta(\rmd x)\\
- &= \mu(g^*) -\nu(g^*)\leq \sup\set{|\mu(g)-\nu(g)|}{g\in \funcset{}(\Xset), |g|\leq 1}=A
+ &= \mu(g^*) -\nu(g^*)\leq \sup\set{|\mu(g)-\nu(g)|}{g\in \funcset{}(\Xset), |g|\leq 1}=A.
 \end{align*}
-Thus \fbox{$A=B$}. Now let $f\in \funcset{}(\Xset)$ be such that $0\leq f\leq 1$ and let $X,Y$ be random variables such that $(X,Y)\sim \gamma$ with $\gamma\in \coupling(\mu,\nu)$, then
+Thus $A=B$. Now let $f\in \funcset{}(\Xset)$ be such that $0\leq f\leq 1$ and let $X,Y$ be random variables such that $(X,Y)\sim \gamma$ with $\gamma\in \coupling(\mu,\nu)$, then
 $$
-|\mu(f)-\nu(f)|=|\PE[f(X)-f(Y)]|=|\PE\lrb{\lrcb{f(X)-f(Y)}\indi{X\neq Y}}|\leq \PE[\underbrace{|f(X)-f(Y)|}_{\leq 1}\indi{X\neq Y}] \leq \PP(X\neq Y)
+|\mu(f)-\nu(f)|=|\PE[f(X)-f(Y)]|=|\PE\lrb{\lrcb{f(X)-f(Y)}\indi{X\neq Y}}|\leq \PE[|f(X)-f(Y)|\indi{X\neq Y}] \leq \PP(X\neq Y).
 $$
-This shows that \fbox{$A\leq C$}. To finish the proof, we will show that $C\leq B$ and to do so, we will exhibit an \textbf{optimal coupling} of $(\mu,\nu)$. \index{coupling!maximal}
-\begin{leftbar}
+This shows that $A\leq C$. To finish the proof, we will show that $C\leq B$ and to do so, we will exhibit an optimal coupling of $(\mu,\nu)$. \index{coupling!maximal}
 Define
 $$
 \epsilon=\int_\Xset \varphi_0\wedge \varphi_1(x) \zeta(\rmd x) \quad \mbox{and} \quad  \zeta'(\rmd x)=\frac{\varphi_0\wedge \varphi_1(x) }{\epsilon}\zeta(\rmd x)
@@ -2686,16 +2707,13 @@ Then, it can be readily checked that $\zeta'\in \meas{1}(\Xset)$, and $\mu(\rmd 
 \mu(\rmd x)=\epsilon \zeta'(\rmd x) + (1-\epsilon) \mu_1(\rmd x)\\
 \nu(\rmd x)=\epsilon \zeta'(\rmd x) + (1-\epsilon) \nu_1(\rmd x)
 \end{align*}
-
-\end{leftbar}
-
 Define $\gamma(\rmd x\rmd y)=\epsilon \zeta'(\rmd x) \delta _x(\rmd y)+(1-\epsilon) \mu_1(\rmd x) \nu_1(\rmd y)$. Obviously, $\gamma \in \coupling(\mu,\nu)$. Let $X,Y$ be two random variables such that $(X,Y)\sim\gamma$. We can draw $(X,Y)$ in the following way: draw a Bernoulli variable $U\sim \mathrm{Ber}(\epsilon)$. If $U=1$, draw $X\sim\zeta'$ and set $Y=X$. If $U=0$, then draw independently $X\sim \mu_1$ and $Y\sim \nu_1$. Then, clearly
 \begin{align*}
 \PP(X\neq Y)&=1-\PP(X=Y) \leq 1-\epsilon=1-\int_\Xset \varphi_0\wedge \varphi_1(x) \zeta(\rmd x)\\
-&=\frac{1}{2}\int_\Xset \underbrace{\varphi_0+ \varphi_1(x)-2 \varphi_0\wedge \varphi_1(x)}_{|\varphi_0- \varphi_1(x)|}\;\zeta(\rmd x)
+&=\frac{1}{2}\int_\Xset \varphi_0+ \varphi_1(x)-2 \varphi_0\wedge \varphi_1(x)\zeta(\rmd x)
 \end{align*}
-This shows that \fbox{$C\leq B$} and the proof is completed.
-\end{svmultproof}
+This shows that $C\leq B$ and the proof is completed.
+\end{proof}
 
 \begin{exercise}
 Show that the supremum in \eqref{eq:def:totvar:one} is attained with a convenient choice of $f$.
@@ -2739,9 +2757,9 @@ See \autoref{eq:indice}.
 
 \end{example}
 \section{Geometric ergodicity}
-In what follows, we assume that for {\bf some measurable function $V:\Xset \to [1,\infty)$}, we have
+In what follows, we assume that for some measurable function $V:\Xset \to [1,\infty)$, we have
 
-\begin{shaded}
+
 \begin{hyp}{A}
 \item\label{assum:Aone} [{\bf Minorizing condition}] for all $d>0$, there exists $\epsilon_d>0$ and a probability measure $\nu_d$ such that \index{minorizing condition}
 \begin{equation}
@@ -2751,17 +2769,13 @@ P(x,\cdot) \geq \epsilon_d \nu_d(\cdot)
 \end{equation}
 \end{hyp}
 
-\end{shaded}
 
-\begin{shaded}
 \begin{hyp}{A}
 \item\label{assum:Atwo} [{\bf Drift condition}] \index{drift condition}there exists a constants $(\lambda,b)\in (0,1) \times \rset^+$ such that for all $x\in\Xset$,
 $$
 PV(x) \leq \lambda V(x)+b
 $$
 \end{hyp}
-
-\end{shaded}
 
 Typically, the function $V$ is unbounded (but in particular situations, it can also be bounded) and the level set $\{V\leq d\}$ is typically compact (when the chain takes value a topological space)... Roughly speaking, \ref{assum:Aone} tells you that wherever $x$ moves in a set $C_d$, the measure $P(x,\cdot)$ is lower bounded by the non-trivial measure $\epsilon_d \nu_d(\cdot)$. In many cases, $\Xset=\rset^n$, and $P$ is dominated by the Lebesgue measure: $P(x,\rmd y)=p(x,y)\rmd y$. In that case, we usually take $P(x,A)\geq \epsilon_d  \nu_d(A)$ where
 $$
@@ -2771,9 +2785,8 @@ i.e. we only need to bound from below the kernel density $p(x,y)$ when $x\in C_d
 
 The drift condition \ref{assum:Atwo} tells you that in the mean sense, the drift function $V$ is shrinked by a factor $\lambda$ up to the additive constant $b$... Intuitively speaking, the Markov kernel $P$ does not bring to regions where $V$ is too large so that the chain does not go to infinity too quickly (since limited values of $V$ corresponds typically to bounded sets). And we can easily  imagine that such chains will have nice ergodic properties.
 
-Before stating the result, we must say that, in practise, for a given Markov kernel $P$, there is no general rule for guessing the expression of a drift function $V$ that satisfies \ref{assum:Atwo}, and we have to try different functions $V$ for checking the assumptions... For example, if $X_{k+1}=\alpha X_k+\epsilon_k$ where $(\epsilon_k)$ are iid and $\alpha\in (0,1)$. If we know that $\PE[|\epsilon_1|^r]<\infty$, then we can try a drift function $V(x)=|x|^r$ and if $\PE[\rme^{\beta \epsilon_1}]<\infty$, then we can  try $V(x)=\rme^{\beta x}$. For MH algorithms, we also sometimes use a negative power of the target density. But once again, the choice of $V$ is very model specific (and in some sense, this is a good opportunity to be imaginative!!!).
+Before stating the result, we must say that, in practise, for a given Markov kernel $P$, there is no general rule for guessing the expression of a drift function $V$ that satisfies \ref{assum:Atwo}, and we have to try different functions $V$ for checking the assumptions... For example, if $X_{k+1}=\alpha X_k+\epsilon_k$ where $(\epsilon_k)$ are iid and $\alpha\in (0,1)$. If we know that $\PE[|\epsilon_1|^r]<\infty$, then we can try a drift function $V(x)=|x|^r$ and if $\PE[\rme^{\beta \epsilon_1}]<\infty$, then we can  try $V(x)=\rme^{\beta x}$. For MH algorithms, we also sometimes use a negative power of the target density. But once again, the choice of $V$ is very model specific.
 We now show that assumptions \ref{assum:Aone} and \ref{assum:Atwo} imply that the Markov kernel $P$ is "geometrically ergodic" in the following sense.
-\begin{shaded}
 \begin{theorem}\label{thm:ergo:geom} [{\bf Geometric ergodicity}] \index{geometric ergodicity}
 Assume \ref{assum:Aone} and \ref{assum:Atwo}\ for some measurable function $V\geq1$.
 Then, there exists a constant $\varrho \in (0,1)$ such that for all $x,x'\in\Xset$ and all $n\in\nset$,
@@ -2781,7 +2794,7 @@ $$
 \tvnorm{P^n(x,\cdot)-P^n(x',\cdot)} \leq \varrho^n \lrb{V(x)+V(x')}  .
 $$
 \end{theorem}
-\end{shaded}
+
 \begin{remark}
 Assume that there exist a constant $\epsilon>0$ and a probability measure $\nu$ such that for all $x\in\Xset$, $P(x,\cdot)\geq \epsilon \nu(\cdot)$. In that case, \ref{assum:Aone} and \ref{assum:Atwo} are satisfied with the constant function $V(x)=1$ and \autoref{thm:ergo:geom} then shows that
 $$
@@ -2869,8 +2882,7 @@ The following inequalities are immediate:
 %\end{itemize}
 
 We now have all the tools for proving \autoref{thm:ergo:geom}.
-\begin{svmultproof}[of  \autoref{thm:ergo:geom}]
-
+\begin{proof}[of  \autoref{thm:ergo:geom}]
 For any $\beta\in (0,1)$, define
 \begin{equation}
 \varrho_\beta=\max((1-\epsilon_d)^{1-\beta} (\lambda +b)^\beta, \bar \lambda^{\beta})
@@ -2899,7 +2911,7 @@ $$
 W(x,x')\leq \lr{\frac{V(x)+V(x')}{2}}^{\beta} \leq \frac{V(x)+V(x')}{2}
 $$
 since $V\geq 1$ and $\beta\in(0,1)$.
-\end{svmultproof}
+\end{proof}
 
 
 \begin{corollary} \label{cor:ergod}
@@ -2908,7 +2920,7 @@ $$
 \tvnorm{\mu P^n-\pi} \leq \alpha \varrho^n \mu(V)  .
 $$
 \end{corollary}
-\begin{svmultproof}
+\begin{proof}
 For any $\mu,\nu \in\meas 1(\Xset)$ and any $h\in\funcset(\Xset)$ such that $|h|\leq 1$,  we have, using \autoref{thm:ergo:geom},
 $$
 |\mu P^n h-\nu P^n h|=|\int_{\Xset^2}\mu(\rmd x)\nu(\rmd y) [P^nh(x)-P^nh(y)]| \leq \int_{\Xset^2}\mu(\rmd x)\nu(\rmd y)| [P^nh(x)-P^nh(y)]| \leq \varrho^n [\mu(V) +\nu(V)]
@@ -2942,14 +2954,13 @@ $$
 \|\mu P^n -\underbrace{\pi P^n}_{\pi}\|_{\mathrm{TV}}\leq \varrho^n [\mu(V) +\pi(V)]\leq \alpha \varrho^n [\mu(V)
 $$
 with $\alpha=1+\pi(V)<\infty$.
-\end{svmultproof}
+\end{proof}
 
 
 Exercise~\ref{exo:LLN:Aone:Atwo} shows that under \ref{assum:Aone} and \ref{assum:Atwo} a Law of Large number is valid, starting from any initial distribution.
 
 \autoref{cor:ergod} is nice but it is expressed only as a bound on the total variation norm, this implies that we can bound $|\mu P^n h -\pi(h)|$ where $|h|\leq 1$. Under the same assumptions, we can actually obtain more general bounds for possibly unbounded functions $h$. The proof is slightly more complicated so we decide to just state the result.
 
-\begin{shaded}
 \begin{theorem} \label{thm:ergo:gener}
  Assume that \ref{assum:Aone} and \ref{assum:Atwo}\ hold for some function $V\geq 1$. Then, there exist constants $(\varrho,\alpha) \in (0,1) \times \rset^+$ such that for all $\mu\in\meas 1(\Xset)$ satisfying $\mu(V)<\infty$, all $n\in\nset$ and all measurable functions $|h|\leq V$,
 $$
@@ -2957,23 +2968,20 @@ $$
 $$
 \end{theorem}
 
-\end{shaded}
 
 \section{The Poisson Equation}
 \subsection{Definition}
 We start with a general definition of a Poisson equation.
-\begin{framed}
+
 \begin{definition} \index{Poisson equation}
 For a given measurable function $h$ such that $\pi|h|<\infty$, the Poisson equation is defined by
 \begin{equation} \label{eq:Poisson}
 \hat h - P \hat h=h-\pi(h)
 \end{equation}
 A solution to Poisson equation \eqref{eq:Poisson} is a function $\hat h$ such that $P|\hat h|(x)<\infty$ for all $x\in\Xset$ and for all $x\in\Xset$, $\hat h(x) - P \hat h(x)=h(x)-\pi(h)$.
-
 \end{definition}
-\end{framed}
+
 The following result holds under the set of assumptions \ref{assum:Aone} and \ref{assum:Atwo}.
-\begin{shaded}
  \begin{theorem} \label{thm:solPoiss}
  Assume \ref{assum:Aone} and \ref{assum:Atwo} hold for some measurable function $V\geq 1$. Then, for any function $h$ such that $|h|\leq V$, the function
 \begin{equation}\label{eq:solPoisson}
@@ -2985,9 +2993,7 @@ $$
 $$
  \end{theorem}
 
-\end{shaded}
-
- \begin{svmultproof}
+ \begin{proof}
 To see the existence of a solution to the Poisson equation under \ref{assum:Aone} and \ref{assum:Atwo}, note that by \autoref{thm:ergo:gener}, $\sum_{n=0}^\infty \lrcb{P^n h(x)-\pi(h)}$ converges for any $|h|\leq V$ and we can thus define
 \begin{equation*}
 \hat h(x)=\sum_{n=0}^\infty \lrcb{P^n h(x)-\pi(h)}
@@ -3000,7 +3006,7 @@ which immediately shows \eqref{eq:Poisson}. Moreover, setting $\hat h$ as in \eq
 $$
 |\hat h(x)|\leq \frac{\alpha}{1-\varrho} V(x)
 $$
- \end{svmultproof}
+ \end{proof}
 
 
 
@@ -3020,7 +3026,7 @@ $$
 The {\em increment process} of the martingale is by definition $(M_{n+1}-M_n)_{n\in\nset}$.
 
 The following CLT result holds for martingales with stationary increments. It is stated without proof.
-\begin{framed}
+
 \begin{theorem} \label{thm:clt:marting} \index{martingales!central limit theorem}
 If a sequence $(M_n)_{n \in \nset}$ is a $(\mcf_n)$-martingale with stationary and square integrable increments, then
 $$
@@ -3028,7 +3034,6 @@ $$
 $$
 \end{theorem}
 
-\end{framed}
 
 \subsubsection{Link with martingales}
 
@@ -3053,7 +3058,6 @@ This link with martingales allows to obtain LLN and Central Limit theorems for o
 
 \subsection{Central Limit theorems}
 
-\begin{shaded}
  \begin{theorem}
   \label{thm:clt-poisson} \index{central limit theorem}
   Let $P$ be a  Markov kernel with a unique invariant probability measure $\pi$. Let
@@ -3070,9 +3074,8 @@ This link with martingales allows to obtain LLN and Central Limit theorems for o
   \end{equation}
 \end{theorem}
 
-\end{shaded}
 
-\begin{svmultproof}
+\begin{proof}
 Without loss of generality, we assume $\pi(h)=0$.
   The sequence $(M_n(\hat h))_{n \in \nset}$ defined in
   \eqref{eq:def:marting} is such that
@@ -3094,9 +3097,8 @@ Combining it with \eqref{eq:convMarting} and \eqref{eq:decomp:marting} and using
 $$
     n^{-1/2} \sum_{k=0}^{n-1} h(X_k) \dlim{\PP_\pi} \gauss(0,\sigma_\pi^2(h))
 $$
-\end{svmultproof}
+\end{proof}
 
-\begin{shaded}
 \begin{theorem} \label{thm:clrHairer}
 Assume that \ref{assum:Aone} and \ref{assum:Atwo}\ hold for some function $V$. Then, for all measurable functions $h$ such that $|h|^2\leq V$,
   \begin{align*}
@@ -3111,60 +3113,58 @@ Assume that \ref{assum:Aone} and \ref{assum:Atwo}\ hold for some function $V$. T
 and $\hat h$ is defined as in \eqref{eq:solPoisson}.
 \end{theorem}
 
-\end{shaded}
-
-\begin{svmultproof}
+\begin{proof}
 Assume that \ref{assum:Aone} and \ref{assum:Atwo}\ hold for some function $V$. Then, \ref{assum:Aone} also holds with $V$ replaced by $V^{1/2}$. Moreover, since $PV\leq \lambda V +b$, we have by Cauchy-Schwarz,
 $$
 P(V^{1/2}) \leq (PV)^{1/2}\leq (\lambda V +b)^{1/2}\leq  \lambda^{1/2} V^{1/2}+b^{1/2}
 $$
 Finally, \ref{assum:Aone} and \ref{assum:Atwo}\ hold for the function $V^{1/2}$. We can therefore apply \autoref{thm:solPoiss} with $V$ replaced by $V^{1/2}$. Then, for all $h\leq V^{1/2}$, the function $\hat h$ defined by \eqref{eq:solPoisson} is solution to the Poisson equation and there exists a constant $\gamma>0$ such that
 $\hat h\leq \gamma V^{1/2}$. This implies that $\pi(\hat h^2) \leq \gamma \pi(V)<\infty$ by \autoref{cor:ergod}. Therefore $\hat{h} \in \ltwo(\pi)$ and  \autoref{thm:clt-poisson} applies. The proof is completed.
-\end{svmultproof}
+\end{proof}
 
 Under the assumptions of \autoref{thm:clrHairer}, the CLT holds under $\PP_\pi$. We can actually extend this result to all $\PP_\nu$ where $\nu$ is any probability measure in $\meas 1(\Xset)$.
-\section{Key notions of  this chapter}
-\begin{center}
-\shadowbox{\begin{minipage}{0.9\textwidth}
-\begin{enumerate}[a)]
-\item The three expressions of the total variation norm.
-\item Prove that a Markov kernel is geometrically ergodic by checking the minorizing condition and the drift condition.
-\item The coupling inequality.
-\item The proof of \autoref{thm:ergo:geom}.
-\item A Poisson equation and and its solution as a series.
-\item Links between Markov Chains and martingales using Poisson equations.
-\end{enumerate}
-\end{minipage}
-}
-\end{center}
+%\section{Key notions of  this chapter}
+%\begin{center}
+%\shadowbox{\begin{minipage}{0.9\textwidth}
+%\begin{enumerate}[a)]
+%\item The three expressions of the total variation norm.
+%\item Prove that a Markov kernel is geometrically ergodic by checking the minorizing condition and the drift condition.
+%\item The coupling inequality.
+%\item The proof of \autoref{thm:ergo:geom}.
+%\item A Poisson equation and and its solution as a series.
+%\item Links between Markov Chains and martingales using Poisson equations.
+%\end{enumerate}
+%\end{minipage}
+%}
+%\end{center}
 
 
 
-\section*{Highlights}
-
-\begin{subappendices}
-
-\section{Stanislaw Ulam (source: wikipedia).}
-
-\begin{wrapfigure}{L}{0.25\textwidth} \centering
-
-\includegraphics[scale=1.5]{ulam}
-
-\end{wrapfigure}
-Stanislaw Marcin Ulam (3 april 1909-13 may 1984) was a Polish-American scientist in the fields of mathematics and nuclear physics. He participated in the Manhattan Project, originated the Teller-Ulam design of thermonuclear weapons, discovered the concept of the cellular automaton, invented the Monte Carlo method of computation, and suggested nuclear pulse propulsion. In pure and applied mathematics, he proved some theorems and proposed several conjectures.
-
-Born into a wealthy Polish Jewish family, Ulam studied mathematics at the Lwow Polytechnic Institute, where he earned his PhD in 1933 under the supervision of Kazimierz Kuratowski. In 1935, John von Neumann, whom Ulam had met in Warsaw, invited him to come to the Institute for Advanced Study in Princeton, New Jersey, for a few months. From 1936 to 1939, he spent summers in Poland and academic years at Harvard University in Cambridge, Massachusetts, where he worked to establish important results regarding ergodic theory. On 20 August 1939, he sailed for the United States for the last time with his 17-year-old brother Adam Ulam. He became an assistant professor at the University of Wisconsin-Madison in 1940, and a United States citizen in 1941.
-
-In October 1943, he received an invitation from Hans Bethe to join the Manhattan Project at the secret Los Alamos Laboratory in New Mexico. There, he worked on the hydrodynamic calculations to predict the behavior of the explosive lenses that were needed by an implosion-type weapon. He was assigned to Edward Teller's group, where he worked on Teller's "Super" bomb for Teller and Enrico Fermi. After the war he left to become an associate professor at the University of Southern California, but returned to Los Alamos in 1946 to work on thermonuclear weapons. With the aid of a cadre of female "computers", including his wife Fran\c{c}oise Aron Ulam, he found that Teller's "Super" design was unworkable. In January 1951, Ulam and Teller came up with the Teller-Ulam design, which is the basis for all thermonuclear weapons.
-
-Ulam considered the problem of nuclear propulsion of rockets, which was pursued by Project Rover, and proposed, as an alternative to Rover's nuclear thermal rocket, to harness small nuclear explosions for propulsion, which became Project Orion. With Fermi, John Pasta, and Mary Tsingou, Ulam studied the Fermi-Pasta-Ulam-Tsingou problem, which became the inspiration for the field of non-linear science. He is probably best known for realising that electronic computers made it practical to apply statistical methods to functions without known solutions, and as computers have developed, the Monte Carlo method has become a common and standard approach to many problems.
-\end{subappendices}
+%\section*{Highlights}
+%
+%\begin{subappendices}
+%
+%\section{Stanislaw Ulam (source: wikipedia).}
+%
+%\begin{wrapfigure}{L}{0.25\textwidth} \centering
+%
+%\includegraphics[scale=1.5]{ulam}
+%
+%\end{wrapfigure}
+%Stanislaw Marcin Ulam (3 april 1909-13 may 1984) was a Polish-American scientist in the fields of mathematics and nuclear physics. He participated in the Manhattan Project, originated the Teller-Ulam design of thermonuclear weapons, discovered the concept of the cellular automaton, invented the Monte Carlo method of computation, and suggested nuclear pulse propulsion. In pure and applied mathematics, he proved some theorems and proposed several conjectures.
+%
+%Born into a wealthy Polish Jewish family, Ulam studied mathematics at the Lwow Polytechnic Institute, where he earned his PhD in 1933 under the supervision of Kazimierz Kuratowski. In 1935, John von Neumann, whom Ulam had met in Warsaw, invited him to come to the Institute for Advanced Study in Princeton, New Jersey, for a few months. From 1936 to 1939, he spent summers in Poland and academic years at Harvard University in Cambridge, Massachusetts, where he worked to establish important results regarding ergodic theory. On 20 August 1939, he sailed for the United States for the last time with his 17-year-old brother Adam Ulam. He became an assistant professor at the University of Wisconsin-Madison in 1940, and a United States citizen in 1941.
+%
+%In October 1943, he received an invitation from Hans Bethe to join the Manhattan Project at the secret Los Alamos Laboratory in New Mexico. There, he worked on the hydrodynamic calculations to predict the behavior of the explosive lenses that were needed by an implosion-type weapon. He was assigned to Edward Teller's group, where he worked on Teller's "Super" bomb for Teller and Enrico Fermi. After the war he left to become an associate professor at the University of Southern California, but returned to Los Alamos in 1946 to work on thermonuclear weapons. With the aid of a cadre of female "computers", including his wife Fran\c{c}oise Aron Ulam, he found that Teller's "Super" design was unworkable. In January 1951, Ulam and Teller came up with the Teller-Ulam design, which is the basis for all thermonuclear weapons.
+%
+%Ulam considered the problem of nuclear propulsion of rockets, which was pursued by Project Rover, and proposed, as an alternative to Rover's nuclear thermal rocket, to harness small nuclear explosions for propulsion, which became Project Orion. With Fermi, John Pasta, and Mary Tsingou, Ulam studied the Fermi-Pasta-Ulam-Tsingou problem, which became the inspiration for the field of non-linear science. He is probably best known for realising that electronic computers made it practical to apply statistical methods to functions without known solutions, and as computers have developed, the Monte Carlo method has become a common and standard approach to many problems.
+%\end{subappendices}
 
 \chapter{Variants of MH algorithms}
 \minitoc
-\begin{keywords}
-Pseudo-marginal algorithms, Hamiltonian Monte Carlo, leapfrog, Gibbs sampler.
-\end{keywords}
+%\begin{keywords}
+%Pseudo-marginal algorithms, Hamiltonian Monte Carlo, leapfrog, Gibbs sampler.
+%\end{keywords}
 
 
 In this chapter, we describe diverse variants of MH algorithms. Recall that we are given a target distribution $\pi$. In classical MH, we construct a Markov chain $(X_k)$ that admits $\pi$ as invariant probability  measure. In most of the variants presented in this chapter, we extend $(X_k)$ by adding a component, say $(U_k)$ and such that $(X_k,U_k)$ is a Markov chain that admits an invariant probability measure $\Pi$ with the property that $\Pi$ has $\pi$ as its marginal distribution wrt the first component.
@@ -3178,7 +3178,7 @@ Let $\pi\in\meas{1}(\Xset)$ and let $Q$ be a Markov kernel on $\Xset \times\Xsig
 $$
 \mu_0(\rmd x \rmd y)=\pi(\rmd x) Q(x,\rmd y)\quad \mbox{and} \quad \mu_1(\rmd x \rmd y)=\pi(\rmd y) Q(y,\rmd x).
 $$
-\begin{shaded}
+
 \begin{hyp}{B}
 \item \label{assum:detailed}  There exists a function $(x,y)\mapsto r(x,y)$ such that $r(x,y)>0$, $\mu_0$-a.s. and for all $h\in \funcset{+}(\Xset^2)$,
 \begin{equation}
@@ -3187,15 +3187,13 @@ $$
 \end{equation}
 \end{hyp}
 
-\end{shaded}
-
 
 This equation shows that the measure $\mu_1$ is dominated by $\mu_0$ with a $\mu_0$-a.s. positive density: 
 $$
 r(x,y)=\frac{\rmd \mu_1}{\rmd \mu_0}(x,y).
 $$ 
 Then, by symmetry, we can easily show that $1/r(x,y)=r(y,x)$, $\mu_1$-a.s. And finally the two measures, $\mu_0$ and $\mu_1$ are equivalent (one is dominated by the other and conversely). In this case, the generalised version of the Metropolis-Hastings kernel, where $\alpha^{MH}$ given in \Lemref{acceptance} is replaced by \fbox{$\alpha(x,y)=r(x,y) \wedge 1$} is $\pi$-reversible.
-\begin{framed}
+
 \begin{lemma} \label{lem:generalMH}
 Assume \ref{assum:detailed}. Then, setting $\alpha(x,y)=r(x,y) \wedge 1$, the MH kernel:
 $$
@@ -3203,9 +3201,9 @@ $$
 $$
 is $\pi$-reversible.
 \end{lemma}
-\end{framed}
 
-\begin{svmultproof}
+
+\begin{proof}
 Similarly to \Lemref{reversible}, we only need to check the detailed balance condition. Let $h\in\funcset{+}(\Xset)$, then,
 \begin{align*}
 &\int_{\Xset^2} \pi(\rmd x) Q(x,\rmd y) \alpha(x,y) h(x,y)=\int_{\Xset^2} \mu_0(\rmd x\rmd y) (r(x,y)\wedge 1)  h(x,y)
@@ -3214,7 +3212,7 @@ Similarly to \Lemref{reversible}, we only need to check the detailed balance con
 &\quad =\int_{\Xset^2} \pi(\rmd y) Q(y,\rmd x) \alpha(y,x) h(x,y).
 \end{align*}
 Thus, the detailed balance condition is verified and the proof is completed.
-\end{svmultproof}
+\end{proof}
 
 
 
@@ -3402,7 +3400,7 @@ $$
 \alpha(x,y)=\frac{\rmd \mu_1}{\rmd \mu_0}(x,y) \wedge 1=\frac{\rmd \Pi\circ \varphi^{-1}}{\rmd \Pi}(x) \wedge 1
 $$
 
-\begin{leftbar}
+
 \begin{remark}
 \begin{enumerate}[(i)]
 \item A first point is that if we only use the involution, then after two steps we land up to the initial state... Not very interesting... Therefore, this deterministic transition is often combined with another move that is not deterministic. (In the Leapfrog, the first move is not deterministic: while we freeze the position, we refresh the momentum according to a Normal distribution).
@@ -3421,8 +3419,8 @@ $$
 \end{enumerate}
 \index{level set} \index{volume-preserving} \index{involution}
 \end{remark}
-\end{leftbar}
-To sum-up, MH with deterministic moves is possible but the mapping $\varphi$ should be an involution. If the mapping should stay on the same level set and is volume preserving, the acceptance probability is even exactly equal to one.
+
+MH with deterministic moves is possible but the mapping $\varphi$ should be an involution. If the mapping should stay on the same level set and is volume preserving, the acceptance probability is even exactly equal to one.
 \subsection{Hamiltonian dynamics}
 \subsubsection{Level sets}
 How can we find deterministic moves that stays on the same level set, ie, such that $\Pi$ and consequently, $H=U+K$ (the Hamiltonian) is constant.
@@ -3530,15 +3528,15 @@ A very last property on the Leapfrog HMC should be checked (in order to say that
 \subsubsection{The flip operator trick and the involution property}
 To be specific, if we add the flip mapping $s$ on the second component, then do we obtain an involution as for the ideal HMC?
 
-\begin{shaded}
+
 \begin{lemma}
 For any $L\geq 1$, write $\Phi^{h,L}$ the Leapfrog mapping and define $f^{h,L}=s\circ \Phi^{h,L}$.
 Then $f^{h,L}$ is an involution.
 \end{lemma}
 
-\end{shaded}
 
-\begin{svmultproof}
+
+\begin{proof}
 We will show that $f^{h,L} \circ f^{h,L}=Id$ by induction on $L$.
 
 \begin{enumerate}[(i)]
@@ -3565,7 +3563,7 @@ $$
 by the induction assumption.
 \end{enumerate}
 This completes the proof.
-\end{svmultproof}
+\end{proof}
 
 
 
@@ -3682,13 +3680,13 @@ probabilities $\alpha$ and $\beta$ defined above simplify to one, the candidates
 and we are back to the previous algorithm.
 
 
-\begin{framed}
+
 \begin{proposition}
   \label{prop:DA}
   The extended target distribution $\pi^*$ is reversible wrt the kernels $K_1^*$ and $K_2^*$ and
   invariant with respect to~$K$.
 \end{proposition}
-\end{framed}
+
 
 \begin{proof}
   The reversibility of $\pi^*$ with respect to $K_1^*$ and $K_2^*$ implies its invariance and
@@ -3852,39 +3850,39 @@ Metropolis-Hastings algorithm on each component as in the case of the DUGS algor
 is then called the Two-Stage Metropolis-within-Gibbs algorithm.
 
 
-\section{Key notions of this chapter}
-\begin{center}
-\shadowbox{\begin{minipage}{0.9\textwidth}
-\begin{enumerate}[a)]
-\item Pseudo marginal algorithms.
-\item Deterministic moves and the requirements linked with MH with deterministic moves (involution, volume-preserving and invariant level sets).
-\item The Gibbs moves.
-\item Implementations of these variants of MH, pseudo marginal algorithms, Leapfrog HMC...
-\end{enumerate}
-\end{minipage}
-}
-\end{center}
-
-
-\newpage
-\section*{Highlights}
-
-\begin{subappendices}
-
-\section{William Rowan Hamilton (source: wikipedia).}
-
-\begin{wrapfigure}{L}{0.25\textwidth} \centering
-
-\includegraphics[scale=0.45]{hamilton}
-
-\end{wrapfigure}
-
-Sir William Rowan Hamilton MRIA (3 August 1805 - 2 September 1865) was an Irish mathematician, Andrews Professor of Astronomy at Trinity College Dublin, and Royal Astronomer of Ireland. He worked in both pure mathematics and mathematics for physics. He made important contributions to optics, classical mechanics and algebra. Although Hamilton was not a physicist, he regarded himself as a pure mathematician, his work was of major importance to physics, particularly his reformulation of Newtonian mechanics, now called Hamiltonian mechanics. This work has proven central to the modern study of classical field theories such as electromagnetism, and to the development of quantum mechanics. In pure mathematics, he is best known as the inventor of quaternions.
-
-
-William Rowan Hamilton's scientific career included the study of geometrical optics, classical mechanics, adaptation of dynamic methods in optical systems, applying quaternion and vector methods to problems in mechanics and in geometry, development of theories of conjugate algebraic couple functions (in which complex numbers are constructed as ordered pairs of real numbers), solvability of polynomial equations and general quintic polynomial solvable by radicals, the analysis on Fluctuating Functions (and the ideas from Fourier analysis), linear operators on quaternions and proving a result for linear operators on the space of quaternions (which is a special case of the general theorem which today is known as the Cayley-Hamilton theorem). Hamilton also invented "icosian calculus", which he used to investigate closed edge paths on a dodecahedron that visit each vertex exactly once.
-\end{subappendices}
-
+%\section{Key notions of this chapter}
+%\begin{center}
+%\shadowbox{\begin{minipage}{0.9\textwidth}
+%\begin{enumerate}[a)]
+%\item Pseudo marginal algorithms.
+%\item Deterministic moves and the requirements linked with MH with deterministic moves (involution, volume-preserving and invariant level sets).
+%\item The Gibbs moves.
+%\item Implementations of these variants of MH, pseudo marginal algorithms, Leapfrog HMC...
+%\end{enumerate}
+%\end{minipage}
+%}
+%\end{center}
+%
+%
+%\newpage
+%\section*{Highlights}
+%
+%\begin{subappendices}
+%
+%\section{William Rowan Hamilton (source: wikipedia).}
+%
+%\begin{wrapfigure}{L}{0.25\textwidth} \centering
+%
+%\includegraphics[scale=0.45]{hamilton}
+%
+%\end{wrapfigure}
+%
+%Sir William Rowan Hamilton MRIA (3 August 1805 - 2 September 1865) was an Irish mathematician, Andrews Professor of Astronomy at Trinity College Dublin, and Royal Astronomer of Ireland. He worked in both pure mathematics and mathematics for physics. He made important contributions to optics, classical mechanics and algebra. Although Hamilton was not a physicist, he regarded himself as a pure mathematician, his work was of major importance to physics, particularly his reformulation of Newtonian mechanics, now called Hamiltonian mechanics. This work has proven central to the modern study of classical field theories such as electromagnetism, and to the development of quantum mechanics. In pure mathematics, he is best known as the inventor of quaternions.
+%
+%
+%William Rowan Hamilton's scientific career included the study of geometrical optics, classical mechanics, adaptation of dynamic methods in optical systems, applying quaternion and vector methods to problems in mechanics and in geometry, development of theories of conjugate algebraic couple functions (in which complex numbers are constructed as ordered pairs of real numbers), solvability of polynomial equations and general quintic polynomial solvable by radicals, the analysis on Fluctuating Functions (and the ideas from Fourier analysis), linear operators on quaternions and proving a result for linear operators on the space of quaternions (which is a special case of the general theorem which today is known as the Cayley-Hamilton theorem). Hamilton also invented "icosian calculus", which he used to investigate closed edge paths on a dodecahedron that visit each vertex exactly once.
+%\end{subappendices}
+%
 
 
 
