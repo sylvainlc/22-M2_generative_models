@@ -1114,7 +1114,7 @@ where $s_\theta$ is the parametric model for $\nabla_x\log\pi_{\mathrm{data}}$. 
 $$
 \mathcal{L}_{\mathrm{uc}}(\theta) = \mathbb{E}_{\pi_{\mathrm{data}}}\left[\sum_{j=1}^d\left(\partial_j s_\theta(X) + \frac{1}{2}s_{j,\theta}(X)^2\right)\right] + C\eqsp,
 $$
-where $s_{j,\theta}(X)$ is the $j$-th component of $s_{\theta}(X)$ and $C$ is a constant that does not depend on $\theta$. Therefore, the score estimator can be trained using stochastic optimization using an empirical estimate of the expectation under $\pi_{\mathrm{data}}$ computed with the samples $(X_1,\ldots,X_n)$.
+where $s_{j,\theta}(X)$ is the $j$-th component of $s_{\theta}(X)$ and $C$ is a constant that does not depend on $\theta$. Therefore, the score estimator can be trained using stochastic optimization and an empirical estimate of the expectation under $\pi_{\mathrm{data}}$ computed with the samples $(X_1,\ldots,X_n)$.
 
 Langevin dynamics offers a very good motivation to learn the score of the target distribution instead of $\pi_{\mathrm{data}}$ itself. Starting with $X_0$ sampled from some proposal distribution, Langevin dynamics iteratively samples $(X_k)_{k\geq 1}$ with, for all $k\geq 1$,
 $$
@@ -1122,7 +1122,7 @@ X_{k} = X_{k-1} +  \gamma_k \nabla_x\log\pi_{\mathrm{data}}(X_{k-1}) + \sqrt{2\g
 $$
 where $(\gamma_k)_{k\geq 1}$ is a sequence of positive step-sizes and $(\varepsilon_k)_{k\geq 1}$ are i.i.d. standard Gaussian random variables independent of $X_0$.  In \cite{durmus2017nonasymptotic}, the authors obtained nonasymptotic bounds for the convergence to the target distribution in total variation distance for both constant and decreasing step-sizes. Of course, $\nabla_x\log\pi_{\mathrm{data}}$ is not available and using Langevin dynamics with approximate score functions introduce additional errors which have to be controlled. In addition, the main limitation of this approach is that it requires to learn simultaneously the score estimate $s_\theta(X)$ and its partial derivatives $\partial_j s_\theta(X)$, $1\leq j \leq d$, which can be computationally very sensitive.
 
-In \cite{song2019generative}, the authors propose noise data with  multiple scales of noise $0<\sigma_1 < \ldots <\sigma_L$. The data distribution is then perturbed with Gaussian noise by considering, for all $1\leq i \leq L$,
+In \cite{song2019generative}, the authors propose to noise data with  multiple scales of noise $0<\sigma_1 < \ldots <\sigma_L$. The data distribution is then perturbed with Gaussian noise by considering, for all $1\leq i \leq L$,
 $$
 p_{\sigma_i}:x \mapsto \int \pi_{\mathrm{data}}(z)\varphi_{z,\sigma^2_i I_d}(x)\rmd z\eqsp,
 $$   
@@ -1130,7 +1130,7 @@ where $\varphi_{\mu,\Sigma}$ is the Gaussian probability density function with m
 $$
 \theta\mapsto \mathcal{L}_{\mathrm{wuc}}(\theta) = \sum_{i=1}^L\lambda_i\mathbb{E}_{p_{\sigma_i}}\left[\left\|s_\theta(X,\sigma_i) - \nabla_x\log p_{\sigma_i}(X)\right\|_2^2\right]\eqsp,
 $$ 
-where $\lambda_i>0$ and $s_\theta(X,\sigma_i)$ is the parametric estimation of $\nabla_x\log p_{\sigma_i}(X)$, $1\leq i \leq L$. After training all conditional scores, samples approximately distributed according to $\pi_{\mathrm{data}}$ can be obtained with annealed Langevin dynamics. Then, for all $i = L, \ldots, 1$, $1\leq k \leq n$, write 
+where $\lambda_i>0$ and $s_\theta(X,\sigma_i)$ is the parametric estimation of $\nabla_x\log p_{\sigma_i}(X)$, $1\leq i \leq L$. After training all conditional scores, samples approximately distributed according to $\pi_{\mathrm{data}}$ can be obtained with annealed Langevin dynamics. For all $i = L, \ldots, 1$, $1\leq k \leq n$, write 
 $$
 X^{(i)}_{k} = X^{(i)}_{k-1} +  \gamma_{i,k} s_\theta(X^{(i)}_{k-1},\sigma_i) + \sqrt{2\gamma_{i,k}}\varepsilon_{i,k}\eqsp,
 $$
@@ -1142,7 +1142,7 @@ Although adding noise to learn perturbed score functions and annealed Langevin d
 
 Score-based Generative Models (SGMs) are probabilistic models designed to address this challenge using two main phases. The first phase, also referred to as the forward phase, involves progressively perturbing the empirical distribution by adding noise to the training data until its distribution approximately reaches an {easy-to-sample} distribution $\pi_{\infty}$. The second phase involves learning to reverse this noising dynamics by sequentially removing the noise, which is referred to as the sampling phase or backward phase. 
 Reversing the dynamics during the backward phase would require in principle knowledge of the score function, i.e., the gradient of the logarithm of the density at each time step of the diffusion. 
-To circumvent this issue, the score function is learned based on the evolution of the noised data samples and using a deep neural network architecture. When applying these learned reverse dynamics to samples from  $\pi_\infty$, we obtain a generative distribution that approximates  $\pi_{\rm data}$. 
+To circumvent this issue, the score function is learned by training  a deep neural network. When applying these learned reverse dynamics to samples from  $\pi_\infty$, we obtain a generative distribution that approximates  $\pi_{\rm data}$. 
 
 
 \newcommand{\sched}{\beta}
@@ -1150,6 +1150,7 @@ To circumvent this issue, the score function is learned based on the evolution o
 \newcommand{\ora}{\overrightarrow}
 \newcommand{\gausspdf}{\varphi}
 \newcommand{\param}{\theta}
+\newcommand{\pihat}{\widehat{\pi}_N^{(\beta,\theta)}}
 
 \subsubsection*{Forward process}
 Denote as $\sched : [0,T] \mapsto \mathbb{R}_{>0}$ the noise schedule, assumed to be continuous and non decreasing.
@@ -1170,7 +1171,12 @@ Due to the linear nature of the drift with respect to $(X_t)_t$, it is well-know
  \overrightarrow X_t = m_t X_0 + \sigma_t Z\eqsp,
 \end{equation}
 with 
-$Z \sim \mathcal{N} \left( 0, \mathrm{I}_d \right)$ independent of $X_0$, $X_0 \sim \pi_{\mathrm{data}}$, $m_t = \exp\{-\int_0^t \beta(s) \rm d s/(2 \sigma^2)\}$ and $ \sigma^2_t = \sigma^2 ( 1 - \exp\{- \int_0^t \beta(s)/\sigma^2 \rm d s\}) $. Therefore, sampling from the forward process only necessitates access to samples from $\pi_0$ and $\mathcal{N}(0,\mathrm{I}_d)$. Lemma~\ref{lem:stat:forward} establishes that the stationary distribution $\pi_{\infty}$ of the forward process is the Gaussian distribution with mean $0$ and variance $\sigma^2 \mathrm{I}_d$.
+$Z \sim \mathcal{N} \left( 0, \mathrm{I}_d \right)$ independent of $X_0$, $X_0 \sim \pi_{\mathrm{data}}$, 
+\begin{equation}
+\label{eq:def:m:sigma}
+m_t = \exp\left\{-\int_0^t \beta(s) \rm d s/(2 \sigma^2)\right\} \quad \mathrm{and} \quad \sigma^2_t = \sigma^2 \left( 1 - \exp\left\{- \int_0^t \beta(s)/\sigma^2 \rm d s\right\}\right)\eqsp.
+\end{equation}
+Therefore, sampling from the forward process only necessitates access to samples from $\pi_0$ and $\mathcal{N}(0,\mathrm{I}_d)$. Lemma~\ref{lem:stat:forward} establishes that the stationary distribution $\pi_{\infty}$ of the forward process is the Gaussian distribution with mean $0$ and variance $\sigma^2 \mathrm{I}_d$.
 
 \begin{lemma}\label{lem:stat:forward}
     Assume that $\sched$ is continuous, positive, non decreasing and such that $\int_0^\infty \beta(t)\rmd t = \infty$. Let $(\ora X_t)_{t\geq 0}$ be a weak solution to the forward process (\ref{eq:forward-SDE:beta}). Then, the stationary distribution of $(\ora X_t)_{t\geq 0}$ is Gaussian with mean 0 and variance $\sigma^2 \mathrm{I}_d$.
@@ -1205,7 +1211,7 @@ Several continuous-time models could be used to noise data sampled from $\pi_{\m
 \end{itemize}
 
 \subsubsection*{Backward process}
-The backward process associated with \eqref{eq:forward-SDE:beta} is given by $\ola X_0 \sim p_T$ and
+Let $T>0$ be the time horizon. The backward process on $[0,T]$ associated with \eqref{eq:forward-SDE:beta} is given by $\ola X_0 \sim p_T$ and
 \begin{equation}
 \label{eq:backward:sde}
 \overleftarrow{X}_t  =\eta(t,\overleftarrow{X}_t)\rmd t +   \sqrt{\bar \sched(t)} \rmd B_t\eqsp,
@@ -1218,7 +1224,7 @@ This SDE is crucial in score-based generative models since if $(\overleftarrow{X
 \begin{enumerate}
 \item For all $0\leq t\leq T$, $ \nabla \log  p_{T-t}$ depends on the score of the data distribution and is unknown. This quantity has to be replaced by an estimator in \eqref{eq:backward:sde}.
 \item Even if the score is replaced by an estimator, we do not know how to sample from \eqref{eq:backward:sde}. In standard approaches, SBGMs usually use discretization techniques to obtain samples.
-\item The backward process is initialized with the stationary distribution, i.e.  $\ola X_0 \sim \mathcal{N}(0,\sigma^2 I_d)$, instead of sampled from $p_T$.
+\item In practice, the backward process is initialized with the stationary distribution, i.e.  $\ola X_0 \sim \mathcal{N}(0,\sigma^2 I_d)$, instead of sampled from $p_T$.
 \end{enumerate}
 These three steps allow to introduce a training procedure to learn the score functions and a sampling procedure to obtain random variables approximately distributed according to $\pi_{\mathrm{data}}$. However, they all introduce approximation errors that need to be controlled if we aim at obtaining convergence guarantees.
 
@@ -1249,28 +1255,57 @@ with $\tau \sim \mathcal{U}(0,T)$ independent of the forward process $(\ora X_t)
 where $\tau$ is uniformly distributed on $[0,T]$, and independent of $X_0\sim \pi_{\mathrm{data}}$ and $\ora X _\tau \sim p_\tau(\cdot| X _0)$. This loss function is appealing as it only requires to know the transition kernel of the forward process. In \eqref{eq:forward-SDE:beta}, this is a Gaussian kernel with explicit mean and variance. By \eqref{eq:noised:data}, we obtain 
 \begin{align}
 \label{eq:cond_score_matching_objective:explicit}
-\mathcal{L}_{\mathrm{score}}(\param) = \mathbb{E}\left[ \left\|s_{\param} \left( \tau, \overrightarrow{X}_{\tau} \right) + \frac{\ora X _\tau -m_tX_0}{\sigma_t^2}\right\|_2^2\right]\eqsp,
+\mathcal{L}_{\mathrm{score}}(\param) = \mathbb{E}\left[ \left\|s_{\param} \left( \tau, \overrightarrow{X}_{\tau} \right) + \frac{\ora X _\tau -m_\tau X_0}{\sigma_\tau^2}\right\|_2^2\right]\eqsp,
 \end{align}
-where
-$$
-m_t = \exp\left\{-\int_0^t \beta(s) \rm d s/(2 \sigma^2)\right\} \quad \mbox{and}\quad\sigma^2_t = \sigma^2 \left( 1 - \exp\left\{- \int_0^t \beta(s)/\sigma^2 \rm d s\right\}\right) \eqsp.
-$$
+where $t\to m_t$ and $t\to \sigma_t^2$ are defined in \eqref{eq:def:m:sigma}.
+%$$
+%m_t = \exp\left\{-\int_0^t \beta(s) \rm d s/(2 \sigma^2)\right\} \quad \mbox{and}\quad\sigma^2_t = \sigma^2 \left( 1 - \exp\left\{- \int_0^t \beta(s)/\sigma^2 \rm d s\right\}\right) \eqsp.
+%$$
 
 \subsubsection*{Discretization and sampling} 
 Once the score function is learned, it remains that, in most cases, the backward dynamics no longer enjoys a linear drift, which makes its exact simulation challenging.  
 To address this issue, one solution is to discretize the continuous dynamics of the backward process. 
 In this way, \cite{song2021score} propose an Euler-Maruyama (EM) discretization scheme  in which both the drift and the diffusion coefficients are discretized recursively. 
-The Euler Exponential Integrator  can also be used, see for instance  \cite{conforti2023}. The Euler-Maruyama process  $(\ola X_t^{\param})_{t \in [0,T]}$ is such that, for $t \in  [ t_k , t_{k+1} ]$,
+The Euler Exponential Integrator  can also be used, see for instance  \cite{conforti2023}. Consider $N\geqslant 1$ and a time discretization $t_0 = 0 < t_1 <\ldots <t_N = T$. The Euler-Maruyama process  $(\ola X_t^{\param})_{t \in [0,T]}$ is such that, for $t \in  [ t_k , t_{k+1} ]$,
 \begin{align}
 \label{eq:backward_EI_main}
-\rmd \overleftarrow{X}^{\param}_t  &=  \bar \sched (t_k)\left(\frac{1}{2 \sigma^2} \overleftarrow{X}^{\param}_{t_k} +  \tilde s_{\param} \left( T-{t_k}, \ola{X}_{t_k}^{\param}  \right) \right)  \rmd t  
+\rmd \overleftarrow{X}^{\param}_t  &=  \bar \sched (t_k)\left(\frac{1}{2 \sigma^2} \overleftarrow{X}^{\param}_{t_k} +  s_{\param} \left( T-{t_k}, \ola{X}_{t_k}^{\param}  \right) \right)  \rmd t  
 +  \sqrt{\bar \sched(t_k)} \rmd B_t, \quad \overleftarrow{X}^{\param}_0 \sim \pi_{\infty} \eqsp. 
 \end{align} 
-In this setting, $(\ola X_t^{\param})_{t \in \{t_0, \hdots, t_N\}}$ can be sampled exactly.
+In this setting, $(\ola X_t^{\param})_{t \in \{t_0, \hdots, t_N\}}$ can be sampled exactly. Starting with $\overleftarrow{X}^{\param}_0 \sim \pi_\infty$, write for $0\leq k \leq N-1$,
+$$
+\overleftarrow{X}^{\param}_{t_{k+1}} = \overleftarrow{X}^{\param}_{t_k} + \bar \sched (t_k)\left(\frac{1}{2 \sigma^2} \overleftarrow{X}^{\param}_{t_k} +  s_{\param} \left( T-{t_k}, \ola{X}_{t_k}^{\param}  \right) \right) (t_{k+1} - t_k) + \sqrt{\bar \sched(t_k)(t_{k+1} - t_k)}Z_{k+1}\eqsp,
+$$
+where $\{Z_k\}_{1\leq k \leq N}$ are i.i.d. with standard Gaussian distribution and independent of $\overleftarrow{X}^{\param}_0$. Deonte by $\pihat$ the distribution of $\overleftarrow{X}^{\param}_{t_N}$, i.e. the distribution of the random variable obtained after $N$ steps of the discretized backward process. After training of $\param$, this distribution is the generative model which aims at sampling approximately from $\pi_{\mathrm{data}}$.
 
 \section{Some theoretical guarantees}
+Many theoretical results have been proposed in the literature to control a distance or pseudo-distance between $\pihat$ and $\pi_{\mathrm{data}}$. Most results focus on controls for the Kullback-Leibler divergence, the total variation and 2-Wasserstein distances, see for instance \cite{debortoli2021, conforti2023, chen2023sampling}. Consider the following additional notations. The modified marginal distribution is the marginal distribution of the forward process divided by the density of its stationary distribution defined, for all $x\in\mathbb{R}^d$ and all $0\leqslant t \leqslant T$, by
+$$
+\tilde p_{t}(x) \eqdef {p_t(x)} / {\gausspdf_{\sigma^2}(x)}\eqsp, 
+$$
+and $ \tilde s_{\theta} (t, x) = s_{\theta}(t, x) + x/\sigma^2$ where $\gausspdf_{\sigma^2}$ denote the density function of $\pi_\infty$, a Gaussian distribution with mean $0$ and variance $\sigma^2 \mathrm{I}_d$. The modified score function is $\nabla \log \tilde p_t(x)= \nabla \log p_t(x) + x/\sigma^2$.
 
-\section{Some illustrations}
+\begin{theorem}
+\label{th:kl:sb}
+Define $h \eqdef \sup_{k \in \{1 , \ldots , N \} } (t_{k}-t_{k-1})$. Then,
+\begin{equation*}
+{\rm KL}\left( \pi_{\rm data} \middle|\middle| \pihat  \right) \leq \mathcal{E}_1^{\rm KL}(\sched) + \mathcal{E}_2^{\rm KL}(\param,\sched) + \mathcal{E}_3^{\rm KL}(\sched)\eqsp,
+\end{equation*}
+where 
+\begin{align*}
+    &\mathcal{E}_1^{\rm KL}(\sched) = {\rm KL}\left( \pi_{\rm data} \middle|\middle| \pi_\infty  \right)  \exp\Big\{- \frac{1}{\sigma^2} \int_0^T \sched(s) \rmd s\Big\}\eqsp,\\
+    &\mathcal{E}_2^{\rm KL}(\param,\sched) = \sum_{k = 0}^{N-1}  \mathbb{E} \bigg[  \Big\|   \nabla \log \tilde p_{T-t_k}\Big(\overrightarrow X_{T-t_k}\Big)  - \tilde s_{\param}\Big(T-t_k,  \overrightarrow X_{T-t_k}\Big) \Big\|^2 \bigg]
+    % \\
+    % &\hspace{2cm}\times
+    \int^{T-t_k}_{T-t_{k+1}} \sched (t) \rmd t\eqsp,\\
+    &\mathcal{E}_3^{\rm KL}(\sched) = 2 h  \sched (T) \mathcal{I}(\pi_{\rm data} | \pi_{\infty} )\eqsp.
+\end{align*}
+\end{theorem}
+
+The upper bound of Theorem \ref{th:kl:sb} involves  three different types of errors. The term $\mathcal{E}_1^{\rm KL}$ represents the mixing time of the OU forward process, 
+arising from the practical limitation of considering the forward process up to a finite time $T$. 
+The second term $\mathcal{E}_2^{\rm KL}$   corresponds to the approximation error, which stems from the use of a deep neural network to estimate the score function.  Finally, $\mathcal{E}_3^{\rm KL}$ is the  discretization error of the EI discretization scheme. This last term vanishes as the discretization grid is refined (i.e., $h\to 0$).
+
 
 \chapter{Basics in Markov chains}
 \minitoc
