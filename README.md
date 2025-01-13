@@ -14,6 +14,7 @@ Exercises and notebooks in Python are provided to understand the practical chall
 
 ### Labs
 - [VAE basics](https://github.com/sylvainlc/22-M2_generative_models/blob/main/Lab/vae_basics.ipynb)\
+Training of a simple VAE with detailed building blocks and example from Keras
 - [Score-based diffusion models](https://github.com/sylvainlc/22-M2_generative_models/blob/main/Lab/diffusionmodels_toy.ipynb)\
 Full training of a score-based diffusion model on a toy example
 - [Random walk Metropolis-Hastings algorithm](https://github.com/sylvainlc/22-M2_generative_models/blob/main/Lab/mcmc_mh.ipynb)\
