@@ -780,7 +780,7 @@ $$
 and the conditional distribution $p_{\theta}(z|x)\propto p_{\theta}(z)p_{\theta}(x|z)$. In most cases, maximizing the average
 marginal log-likelihood of the data is not possible, as the marginal likelihood functions $p_{\theta}(X_i)$, $1\leqslant i \leqslant n$, are not vailable explicitly as the integral for marginalizing the latent variable is intractable.  Since a maximum likelihood estimator cannot be computed simply, VAEs introduce a variational approach wich aims at simultaneously providing a parameter estimate  and an approximation of the conditional distribution of the latent variable given the observation.  Consider a family of probability density function $\{(z,x) \mapsto q_{\varphi}(z|x)\}_{\varphi\in\Phi}$. Then, we can write, for all $\varphi\in\Phi,\theta\in\Theta$, $x\in\mathsf{X}$, $z\in\mathsf{Z}$,
 \begin{align*}
-\log p_\theta(x) = \int p_\theta(x) q_{\varphi}(z|x) \rmd z &= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log p_\theta(x)\right] \\
+\log p_\theta(x) = \int \log p_\theta(x) q_{\varphi}(z|x) \rmd z &= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log p_\theta(x)\right] \\
 &= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z,x)}{p_\theta(Z|x)}\right] \\
 &= \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{q_{\varphi}(Z|x)}{p_\theta(Z|x)}\right]  + \mathbb{E}_{q_{\varphi}(\cdot|x)}\left[\log \frac{p_\theta(Z,x)}{q_{\varphi}(Z|x)}\right] .
 \end{align*}
@@ -1034,7 +1034,7 @@ with $\mathbb{E}_{\pi_{\mathrm{data}}}[b(X)]\leqslant a_1$.
 \label{th:vae:excess:risk}
 Assume that H\ref{assum:vae:orlicz}-\ref{assum:vae:lip} hold. Then, there exist $c_0,c_1,c_2,d>0$ such that with probability at least $1- c_0 \mathrm{exp}\{-c_1(d\log n)^{1\wedge \alpha}\}$,
 $$
-\mathbb{E}_{\pi_{\mathrm{data}}}\left[m(\widehat \theta,\widehat\varphi,X)\right]\leqslant \underset{\gamma>0}{\mathrm{inf}}\left\{(1+\gamma) \underset{\theta\in\Theta,\varphi\in\Phi}{\mathrm{min}}\mathbb{E}_{\pi_{\mathrm{data}}}[m(\theta,\varphi,X)] + c_2(1+\gamma^{-1})\frac{dD}{n}\log(nd)\log^{1/\alpha}n\right\}\eqsp.
+\mathbb{E}_{\pi_{\mathrm{data}}}\left[m(\widehat \theta_n,\widehat\varphi_n,X)\right]\leqslant \underset{\gamma>0}{\mathrm{inf}}\left\{(1+\gamma) \underset{\theta\in\Theta,\varphi\in\Phi}{\mathrm{min}}\mathbb{E}_{\pi_{\mathrm{data}}}[m(\theta,\varphi,X)] + c_2(1+\gamma^{-1})\frac{dD}{n}\log(nd)\log^{1/\alpha}n\right\}\eqsp.
 $$
 \end{theorem}
 The oracle inequality given in Theorem~\ref{th:vae:excess:risk} can be used to control the total variation distance between the target distribution and the generative model  using a Variational Mixture of Posteriors prior.
